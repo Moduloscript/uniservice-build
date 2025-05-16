@@ -1,0 +1,32 @@
+{
+	"dependencies": {
+		"@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
+		"@polar-sh/sdk": "^0.27.0",
+		"@repo/config": "workspace:*",
+		"@repo/database": "workspace:*",
+		"@repo/logs": "workspace:*",
+		"chargebee-typescript": "^2.45.0",
+		"stripe": "^17.7.0",
+		"ufo": "^1.5.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "^22.13.5"
+	},
+	"main": "./index.ts",
+	"exports": {
+		".": {
+			"types": "./index.ts",
+			"default": "./index.ts"
+		},
+		"./types": "./types.ts",
+		"./lib/helper": "./src/lib/helper.ts"
+	},
+	"name": "@repo/payments",
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"types": "./**/.ts",
+	"version": "0.0.0"
+}

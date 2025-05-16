@@ -1,0 +1,27 @@
+{
+	"dependencies": {
+		"@prisma/client": "^6.3.1",
+		"@repo/config": "workspace:*",
+		"zod": "^3.24.2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "22.13.5",
+		"dotenv-cli": "^8.0.0",
+		"prisma": "^6.3.1",
+		"prisma-json-types-generator": "^3.2.2",
+		"zod-prisma-types": "^3.2.4"
+	},
+	"main": "./index.ts",
+	"name": "@repo/database",
+	"scripts": {
+		"generate": "prisma generate --no-hints",
+		"push": "dotenv -c -e ../../.env -- prisma db push --skip-generate",
+		"migrate": "dotenv -c -e ../../.env -- prisma migrate dev",
+		"studio": "dotenv -c -e ../../.env -- prisma studio",
+		"type-check": "tsc --noEmit"
+	},
+	"types": "./**/.tsx",
+	"version": "0.0.0"
+}
