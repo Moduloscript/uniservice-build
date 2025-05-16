@@ -10,20 +10,20 @@
 		"@repo/payments": "workspace:*",
 		"@repo/storage": "workspace:*",
 		"@repo/utils": "workspace:*",
-		"@scalar/hono-api-reference": "^0.5.175",
+		"@scalar/hono-api-reference": "^0.8.10",
 		"@sindresorhus/slugify": "^2.2.1",
-		"hono": "^4.7.2",
-		"hono-openapi": "^0.4.5",
-		"nanoid": "^5.1.2",
-		"openai": "^4.85.4",
+		"hono": "^4.7.9",
+		"hono-openapi": "^0.4.8",
+		"nanoid": "^5.1.5",
+		"openai": "^4.98.0",
 		"openapi-merge": "^1.3.3",
-		"use-intl": "^3.26.5",
-		"zod": "^3.24.2"
+		"use-intl": "^4.1.0",
+		"zod": "^3.24.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@repo/tsconfig": "workspace:*",
-		"@types/react": "19.0.10",
+		"@types/react": "19.1.4",
 		"encoding": "^0.1.13",
 		"prisma": "^6.3.1",
 		"typescript": "5.7.3"
