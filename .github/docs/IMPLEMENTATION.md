@@ -5,11 +5,11 @@
 ### Core Packages Structure
 ```
 packages/
-  auth/             # Authentication & authorization
+  auth/             # Authentication & authorization (Better-auth config, helpers)
   database/         # Prisma schema & migrations
-  payments/         # Payment processing logic
-  storage/         # File storage
-  api/             # API routes (Hono)
+  payments/         # Payment processing logic (Paystack, Flutterwave)
+  storage/          # File storage (profile pictures, verification docs)
+  api/              # API routes (Hono)
 ```
 
 ### Development Setup
@@ -36,27 +36,27 @@ packages/
 ### Implementation Workflow
 
 1. Database Layer (packages/database)
-   - Schema definition
+   - Schema definition (single User model, Service, Booking, Payment, etc.)
    - Migrations
    - Type generation
 
 2. API Layer (packages/api)
    - Hono routes setup
-   - Middleware configuration
+   - Middleware configuration (auth, RBAC)
    - Type-safe endpoints
 
 3. Authentication (packages/auth)
-   - Student verification flow
-   - Provider verification
+   - Unified User model with userType, verification fields
+   - Student and provider onboarding flows
    - Role-based access
 
 4. Frontend Components (apps/web)
    - Page layouts
    - Shared components
-   - Module-specific features
+   - Module-specific features (onboarding, profile, bookings, payments)
 
 5. Payment Integration (packages/payments)
-   - Provider setup
+   - Provider setup (Paystack, Flutterwave)
    - Transaction flow
    - Webhook handling
 
@@ -127,32 +127,25 @@ Debug configurations in `.vscode/launch.json`:
 ## Code Implementation References
 
 1. **Authentication Flow**
-   - Location: `packages/auth/src/`
+   - Location: `packages/auth/`
    - Key files:
-     - `student-verification.ts`
-     - `provider-verification.ts`
-     - `role-management.ts`
+     - `auth.ts` (Better-auth config)
+     - `lib/` (helpers, RBAC)
 
 2. **Payment Processing**
-   - Location: `packages/payments/src/`
+   - Location: `packages/payments/`
    - Key files:
-     - `providers/paystack.ts`
-     - `providers/flutterwave.ts`
-     - `webhooks/handler.ts`
+     - `provider/paystack.ts`
+     - `provider/flutterwave.ts`
+     - `src/webhooks/handler.ts`
 
 3. **API Routes**
    - Location: `packages/api/src/routes/`
    - Implementation pattern:
      ```typescript
-     import { createRoute } from "hono/route";
-     
-     export const bookingRoutes = createRoute()
-       .get("/availability", async (c) => {
-         // Implementation
-       })
-       .post("/create", async (c) => {
-         // Implementation
-       });
+     import { Hono } from 'hono';
+     const router = new Hono();
+     router.post('/onboarding/register', ...)
      ```
 
 4. **Frontend Components**

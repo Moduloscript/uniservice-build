@@ -1,0 +1,33 @@
+# Product Requirements Document (PRD)
+
+## Project: UnibenServices - Student Service Marketplace
+
+### Overview
+A marketplace platform connecting University of Benin students with service providers and student entrepreneurs.
+
+### Core Features
+- Authentication & User Roles (Student, Service Provider, Admin)
+- Service Categories (Academic, Personal, Food, Beauty, Tech, Event)
+- Booking System (real-time, scheduling, payments)
+- Profile Management (students, providers, portfolios, reviews)
+- Search & Discovery (category/location/price/rating)
+- Chat & Communication (in-app messaging, notifications)
+- Payment System (Paystack, Flutterwave, escrow, payouts)
+
+### User Stories
+- As a student, I can sign up and verify my identity with my matriculation number and ID card.
+- As a provider, I can register, upload verification documents, and list my services.
+- As a student, I can browse, search, and book services.
+- As a provider, I can manage my bookings and receive payments.
+- As an admin, I can review verifications, manage users, and resolve disputes.
+
+### Technical Requirements
+- Next.js 15+ (App Router), TypeScript, Supabase, Prisma, Hono, Tailwind, Shadcn UI, Better-auth, Resend, Paystack, Flutterwave, PNPM Workspaces.
+
+### Security & Compliance
+- RLS, secure file uploads, webhook verification, session management, rate limiting, GDPR compliance.
+
+### Performance
+- Image optimization, caching, CDN, lazy loading, code splitting.
+
+---

@@ -12,8 +12,10 @@ import { adminRouter } from "./routes/admin/router";
 import { aiRouter } from "./routes/ai";
 import { authRouter } from "./routes/auth";
 import { contactRouter } from "./routes/contact/router";
+import { downloadsRouter } from "./routes/downloads";
 import { healthRouter } from "./routes/health";
 import { newsletterRouter } from "./routes/newsletter";
+import { onboardingRouter } from "./routes/onboarding";
 import { organizationsRouter } from "./routes/organizations/router";
 import { paymentsRouter } from "./routes/payments/router";
 import { uploadsRouter } from "./routes/uploads";
@@ -34,7 +36,9 @@ const appRouter = app
 	.route("/", newsletterRouter)
 	.route("/", organizationsRouter)
 	.route("/", adminRouter)
-	.route("/", healthRouter);
+	.route("/", healthRouter)
+	.route("/", onboardingRouter)
+	.route("/", downloadsRouter);
 
 app.get(
 	"/app-openapi",

@@ -1,7 +1,7 @@
 # API Documentation
 
 ## Overview
-UnibenServices API is built with Hono.js and follows REST principles. The API handles student services marketplace operations including authentication, bookings, payments, and service management.
+UnibenServices API is built with Hono.js and follows REST principles. The API handles authentication, onboarding, bookings, payments, and service management.
 
 ## Base URL
 - Development: `http://localhost:3000/api`
@@ -15,12 +15,12 @@ Authorization: Bearer <token>
 
 ## API Endpoints
 
-### Authentication
+### Authentication & Onboarding
 ```typescript
-POST /api/auth/register-student
-POST /api/auth/register-provider
-POST /api/auth/login
-POST /api/auth/verify-email
+POST /api/onboarding/register         // Student or provider registration (userType, matricNumber, providerCategory, etc.)
+POST /api/onboarding/verification-doc // Upload verification document (studentIdCardUrl or providerVerificationDocs)
+POST /api/auth/login                  // Login
+POST /api/auth/verify-email           // Email verification
 ```
 
 ### Services
@@ -71,7 +71,7 @@ POST /api/webhooks/flutterwave
 ```
 
 ## API Versioning
-All endpoints are prefixed with `/api/v1/` for future version management.
+All endpoints are currently under `/api/` (no version prefix yet).
 
 ## Testing
 Test endpoints with provided Postman collection:

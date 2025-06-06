@@ -16,6 +16,7 @@
 	"private": true,
 	"scripts": {
 		"create:user": "dotenv -c -e ../../.env -- tsx ./src/create-user.ts",
+		"seed:categories": "dotenv -c -e ../../.env -- tsx ./src/seed-service-categories.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"version": "0.0.0"

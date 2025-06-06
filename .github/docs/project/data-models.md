@@ -1,40 +1,44 @@
 # Database Schema & Models
 
 ## Overview
-UnibenServices uses Supabase as the primary database with Prisma as the ORM. This document outlines the database schema, relationships, and important considerations.
+UnibenServices uses Supabase (PostgreSQL) with Prisma as the ORM. All users are stored in a single `User` model with a `userType` (STUDENT, PROVIDER, ADMIN) and fields for verification, onboarding, and provider/student-specific data.
 
 ## Core Models
 
-### Student
+### User
 ```prisma
-model Student {
-  id            String    @id
-  matricNumber  String    @unique
-  email         String    @unique
-  name          String
-  department    String
-  level         Int
-  bookings      Booking[]
-  reviews       Review[]
-  verified      Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model User {
+  id                 String   @id
+  name               String
+  email              String   @unique
+  emailVerified      Boolean
+  username           String?  @unique
+  role               String?
+  userType           UserType?
+  matricNumber       String?  @unique
+  department         String?
+  level              Int?
+  isStudentVerified  Boolean  @default(false)
+  isVerified         Boolean  @default(false)
+  studentIdCardUrl   String?
+  providerCategory   String?
+  providerVerificationDocs Json?
+  verificationStatus VerificationStatus? @default(PENDING)
+  verificationNotes  String?
+  verificationReviewedAt DateTime?
+  verificationReviewedBy String?
+  onboardingComplete Boolean  @default(false)
+  // ...other fields and relations
 }
 ```
 
-### ServiceProvider
+### ServiceCategory
 ```prisma
-model ServiceProvider {
-  id            String    @id
-  name          String
-  email         String    @unique
-  services      Service[]
-  availability  Slot[]
-  reviews       Review[]
-  verified      Boolean   @default(false)
-  rating        Float?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model ServiceCategory {
+  id          String   @id
+  name        String   @unique
+  description String?
+  services    Service[]
 }
 ```
 
@@ -44,14 +48,90 @@ model Service {
   id          String   @id
   name        String
   description String
-  category    String
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id])
   price       Decimal
   duration    Int
-  provider    ServiceProvider @relation(fields: [providerId], references: [id])
   providerId  String
-  active      Boolean  @default(true)
+  provider    User     @relation("ProviderServices", fields: [providerId], references: [id])
+  bookings    Booking[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+}
+```
+
+### Booking
+```prisma
+model Booking {
+  id          String   @id
+  studentId   String
+  student     User     @relation("StudentBookings", fields: [studentId], references: [id])
+  providerId  String
+  provider    User     @relation("ProviderBookings", fields: [providerId], references: [id])
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  status      BookingStatus @default(PENDING)
+  dateTime    DateTime
+  payment     Payment?
+  review      Review?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
+
+### Payment
+```prisma
+model Payment {
+  id              String   @id
+  amount          Decimal
+  currency        String   @default("NGN")
+  status          PaymentStatus
+  provider        PaymentProvider
+  transactionRef  String   @unique
+  paymentMethod   String
+  bookingId       String   @unique
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  providerId      String
+  escrowStatus    EscrowStatus?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+
+### PayoutAccount
+```prisma
+model PayoutAccount {
+  id              String   @id
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  provider        PaymentProvider
+  accountNumber   String
+  accountName     String
+  bankCode        String
+  bankName        String
+  isDefault       Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+
+### Review
+```prisma
+model Review {
+  id        String   @id
+  rating    Int
+  comment   String?
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  authorId  String
+  author    User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetId  String
+  target    User     @relation("ReviewTarget", fields: [targetId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 ```
 

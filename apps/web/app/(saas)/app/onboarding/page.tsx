@@ -1,7 +1,7 @@
 import { config } from "@repo/config";
 import { getSession } from "@saas/auth/lib/server";
-import { OnboardingForm } from "@saas/onboarding/components/OnboardingForm";
 import { AuthWrapper } from "@saas/shared/components/AuthWrapper";
+import { OnboardingForm } from "@shared/components/onboarding-form";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 

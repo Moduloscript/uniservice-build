@@ -1,4 +1,3 @@
-import { config } from "@repo/config";
 import { getSignedUploadUrl } from "@repo/storage";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
@@ -37,14 +36,39 @@ export const uploadsRouter = new Hono().basePath("/uploads").post(
 	}),
 	async (c) => {
 		const { bucket, path } = c.req.valid("query");
-		// ATTENTION: be careful with how you give access to write to the storage
-		// always check if the user has the right to write to the desired bucket before giving them a signed url
-
-		if (bucket === config.storage.bucketNames.avatars) {
-			const signedUrl = await getSignedUploadUrl(path, { bucket });
-			return c.json({ signedUrl });
+		const user = c.get("user");
+		const allowedBuckets = [
+			"avatars",
+			"verification-docs",
+			"student-id-cards",
+		];
+		if (!allowedBuckets.includes(bucket)) {
+			throw new HTTPException(403, { message: "Invalid bucket" });
 		}
-
-		throw new HTTPException(403);
+		if (
+			bucket === "verification-docs" &&
+			!path.startsWith(`verification-docs/${user?.id || ""}-`)
+		) {
+			throw new HTTPException(403, {
+				message: "Invalid file path for verification docs",
+			});
+		}
+		if (
+			bucket === "student-id-cards" &&
+			!path.startsWith(`student-id-cards/${user?.id || ""}-`)
+		) {
+			throw new HTTPException(403, {
+				message: "Invalid file path for student ID cards",
+			});
+		}
+		const ext = path.split(".").pop()?.toLowerCase();
+		const allowedExts = ["jpg", "jpeg", "png", "pdf"];
+		if (!ext || !allowedExts.includes(ext)) {
+			throw new HTTPException(400, {
+				message: "Only JPG, PNG, and PDF files are allowed",
+			});
+		}
+		const signedUrl = await getSignedUploadUrl(path, { bucket });
+		return c.json({ signedUrl });
 	},
 );

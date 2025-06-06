@@ -1,4 +1,9 @@
 
+---
+applyTo: "**"
+---
+
+
 # UnibenServices - Student Service Marketplace
 
 ## Project Overview

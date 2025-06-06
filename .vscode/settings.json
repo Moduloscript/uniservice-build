@@ -16,5 +16,6 @@
 	"i18n-ally.keystyle": "nested",
 	"i18n-ally.enabledFrameworks": ["next-intl"],
 	"i18n-ally.keysInUse": ["mail.organizationInvitation.headline"],
-	"i18n-ally.tabStyle": "tab"
+	"i18n-ally.tabStyle": "tab",
+	"github.copilot.nextEditSuggestions.enabled": true
 }

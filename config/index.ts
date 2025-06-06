@@ -73,7 +73,7 @@ export const config = {
 	// Mails
 	mails: {
 		// the from address for mails
-		from: "hello@your-domain.com",
+		from: "onboarding@resend.dev",
 	},
 	// Frontend
 	ui: {
@@ -99,6 +99,12 @@ export const config = {
 		// define the name of the buckets for the different types of files
 		bucketNames: {
 			avatars: process.env.NEXT_PUBLIC_AVATARS_BUCKET_NAME ?? "avatars",
+			verificationDocs:
+				process.env.NEXT_PUBLIC_VERIFICATION_DOCS_BUCKET_NAME ??
+				"verification-docs",
+			studentIdCards:
+				process.env.NEXT_PUBLIC_STUDENT_ID_CARDS_BUCKET_NAME ??
+				"student-id-cards",
 		},
 	},
 	contactForm: {
