@@ -11,7 +11,9 @@ const orgCache = new Map<string, any>();
  * Uses caching to optimize repeated calls.
  */
 export async function getSession() {
-	const cacheKey = "session";
+	const headersList = await headers();
+	const sessionId = headersList.get('authorization') || headersList.get('cookie') || 'anonymous';
+	const cacheKey = `session:${sessionId}`;
 	if (sessionCache.has(cacheKey)) { return sessionCache.get(cacheKey); }
 	const session = await auth.api.getSession({
 		headers: await headers(),

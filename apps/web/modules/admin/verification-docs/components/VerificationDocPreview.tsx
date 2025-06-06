@@ -17,13 +17,13 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 				{/* Render image or PDF preview */}
 				{documentUrl.match(/\.(jpg|jpeg|png)$/i) ? (
 					<img
-						src={documentUrl}
+						src={`/api/secure-proxy?url=${encodeURIComponent(documentUrl)}`}
 						alt="Verification Document"
 						className="max-h-96 mx-auto"
 					/>
 				) : documentUrl.match(/\.pdf$/i) ? (
 					<iframe
-						src={documentUrl}
+						src={`/api/secure-proxy?url=${encodeURIComponent(documentUrl)}`}
 						title="Verification Document PDF"
 						className="w-full h-96 border-none"
 					/>
