@@ -19,6 +19,7 @@ import {
 	SelectValue,
 } from "@ui/components/select";
 import { cn } from "@ui/lib";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -48,7 +49,7 @@ export function OnboardingForm({ className }: { className?: string }) {
 	const form = useForm<OnboardingFormValues>({
 		resolver: zodResolver(onboardingSchema),
 		defaultValues: {
-			userType: undefined, 
+			userType: undefined,
 			matricNumber: "",
 			department: "",
 			level: undefined,
@@ -147,170 +148,224 @@ export function OnboardingForm({ className }: { className?: string }) {
 				className={cn("space-y-6", className)}
 			>
 				{serverError && (
-					<div className="text-sm text-destructive" role="alert">
-						{serverError}
+					<div
+						className="flex items-center gap-2 text-destructive bg-destructive/10 border border-destructive/30 rounded px-3 py-2 text-sm mt-2 shadow-sm animate-in fade-in"
+						role="alert"
+						aria-live="assertive"
+						tabIndex={-1}
+					>
+						<AlertCircle
+							className="size-4 shrink-0"
+							aria-hidden="true"
+						/>
+						<span className="font-medium">{serverError}</span>
 					</div>
 				)}
 
 				{/* Progress Steps */}
 				<StepProgress steps={steps} currentStep={step} />
 
-				{/* Step 0: Role Selection */}
-				{step === 0 && (
-					<FormField
-						control={form.control}
-						name="userType"
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FormLabel>I am a...</FormLabel>
-								<FormControl>
-									<Select
-										value={field.value ?? ""}
-										onValueChange={(value) => {
-											field.onChange(value);
-											// Reset all other fields when role changes
-											form.reset({
-												userType: value as
-													| "STUDENT"
-													| "PROVIDER",
-												matricNumber: "",
-												department: "",
-												level: undefined,
-												verificationDoc: "",
-												studentIdCard: "",
-												providerCategory: undefined,
-												providerDocs: {},
-											});
-										}}
-										disabled={isLoading}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select your role" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="STUDENT">
-												🎓 Student
-											</SelectItem>
-											<SelectItem value="PROVIDER">
-												💼 Service Provider
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)}
-				{/* Step 1: Details */}
-				{step === 1 && userType === "STUDENT" && (
-					<StudentDetailsStep form={form} isLoading={isLoading} />
-				)}
-				{step === 1 && userType === "PROVIDER" && (
-					<ProviderDetailsStep
-						form={form}
-						isLoading={isLoading}
-						setProviderCategory={(cat: string) =>
-							setProviderCategory(cat as ProviderCategory)
-						}
-					/>
-				)}
-
-				{/* Step 2: Document Uploads */}
-				{step === 2 && userType === "STUDENT" && (
-					<FormField
-						control={form.control}
-						name="studentIdCard"
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FileUploadField
-									label="Student ID Card"
-									description={undefined}
-									value={field.value || ""}
-									onFileChange={async (file) => {
-										if (!file) {
-											return;
-										}
-										const path =
-											await studentIdUpload.uploadFile(
-												file,
-												`verification-docs/${user?.id}-student-id-card-${uuid()}.${file.name.split(".").pop() || "jpg"}`,
-											);
-										if (path) {
-											field.onChange(path);
-										}
-									}}
-									isLoading={studentIdUpload.isUploading}
-									error={studentIdUpload.error}
-									accept="image/jpeg,image/png,application/pdf"
-									helpText="Upload a clear photo or scan of your UNIBEN student ID card (image or PDF, max 5MB)"
-									disabled={isLoading}
-								/>
-							</FormItem>
-						)}
-					/>
-				)}
-				{step === 2 && userType === "PROVIDER" && providerCategory && (
-					<div className="space-y-4">
-						{CATEGORY_VERIFICATION_REQUIREMENTS[
-							providerCategory
-						]?.requiredDocuments.map((doc) => (
+				{/* Step Content with Transition */}
+				<div className="relative min-h-[200px]">
+					<div
+						key={step}
+						className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-4 transition-all duration-300"
+					>
+						{/* Step 0: Role Selection */}
+						{step === 0 && (
 							<FormField
-								key={doc.key}
 								control={form.control}
-								name={`providerDocs.${doc.key}` as any}
+								name="userType"
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>I am a...</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value ?? ""}
+												onValueChange={(value) => {
+													field.onChange(value);
+													// Reset all other fields when role changes
+													form.reset({
+														userType: value as
+															| "STUDENT"
+															| "PROVIDER",
+														matricNumber: "",
+														department: "",
+														level: undefined,
+														verificationDoc: "",
+														studentIdCard: "",
+														providerCategory:
+															undefined,
+														providerDocs: {},
+													});
+												}}
+												disabled={isLoading}
+												aria-invalid={
+													!!form.formState.errors
+														.userType
+												}
+												aria-describedby="userType-help userType-error"
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select your role" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="STUDENT">
+														🎓 Student
+													</SelectItem>
+													<SelectItem value="PROVIDER">
+														💼 Service Provider
+													</SelectItem>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<p
+											id="userType-help"
+											className="text-xs text-muted-foreground"
+										>
+											Choose your role to continue
+											onboarding.
+										</p>
+										<FormMessage
+											id="userType-error"
+											className="text-xs"
+										/>
+									</FormItem>
+								)}
+							/>
+						)}
+						{/* Step 1: Details */}
+						{step === 1 && userType === "STUDENT" && (
+							<StudentDetailsStep
+								form={form}
+								isLoading={isLoading}
+							/>
+						)}
+						{step === 1 && userType === "PROVIDER" && (
+							<ProviderDetailsStep
+								form={form}
+								isLoading={isLoading}
+								setProviderCategory={(cat: string) =>
+									setProviderCategory(cat as ProviderCategory)
+								}
+							/>
+						)}
+
+						{/* Step 2: Document Uploads */}
+						{step === 2 && userType === "STUDENT" && (
+							<FormField
+								control={form.control}
+								name="studentIdCard"
 								render={({ field }) => (
 									<FormItem className="space-y-1">
 										<FileUploadField
-											label={doc.label}
-											description={doc.description}
-											value={field.value}
+											label="Student ID Card"
+											description={undefined}
+											value={field.value || ""}
 											onFileChange={async (file) => {
 												if (!file) {
 													return;
 												}
 												const path =
-													await providerDocUpload.uploadFile(
+													await studentIdUpload.uploadFile(
 														file,
+														`verification-docs/${user?.id}-student-id-card-${uuid()}.${file.name.split(".").pop() || "jpg"}`,
 													);
 												if (path) {
 													field.onChange(path);
 												}
 											}}
 											isLoading={
-												providerDocUpload.isUploading
+												studentIdUpload.isUploading
 											}
-											error={providerDocUpload.error}
+											error={studentIdUpload.error}
 											accept="image/jpeg,image/png,application/pdf"
-											helpText={undefined}
+											helpText="Upload a clear photo or scan of your UNIBEN student ID card (image or PDF, max 5MB)"
 											disabled={isLoading}
 										/>
+										<FormMessage className="text-xs" />
 									</FormItem>
 								)}
 							/>
-						))}
-					</div>
-				)}
+						)}
+						{step === 2 &&
+							userType === "PROVIDER" &&
+							providerCategory && (
+								<div className="space-y-4">
+									{CATEGORY_VERIFICATION_REQUIREMENTS[
+										providerCategory
+									]?.requiredDocuments.map((doc) => (
+										<FormField
+											key={doc.key}
+											control={form.control}
+											name={
+												`providerDocs.${doc.key}` as any
+											}
+											render={({ field }) => (
+												<FormItem className="space-y-1">
+													<FileUploadField
+														label={doc.label}
+														description={
+															doc.description
+														}
+														value={field.value}
+														onFileChange={async (
+															file,
+														) => {
+															if (!file) {
+																return;
+															}
+															const path =
+																await providerDocUpload.uploadFile(
+																	file,
+																);
+															if (path) {
+																field.onChange(
+																	path,
+																);
+															}
+														}}
+														isLoading={
+															providerDocUpload.isUploading
+														}
+														error={
+															providerDocUpload.error
+														}
+														accept="image/jpeg,image/png,application/pdf"
+														helpText="Upload a valid document (max 5MB)"
+														disabled={isLoading}
+													/>
+													<FormMessage className="text-xs" />
+												</FormItem>
+											)}
+										/>
+									))}
+								</div>
+							)}
 
-				{/* Step 3: Review */}
-				{step === 3 && (
-					<div className="space-y-4">
-						<h3 className="text-lg font-semibold">
-							Review Your Information
-						</h3>
-						{userType === "STUDENT" ? (
-							<StudentReviewStep form={form} />
-						) : (
-							<ProviderReviewStep
-								form={form}
-								providerCategory={providerCategory || ""}
-								CATEGORY_VERIFICATION_REQUIREMENTS={
-									CATEGORY_VERIFICATION_REQUIREMENTS
-								}
-							/>
+						{/* Step 3: Review */}
+						{step === 3 && (
+							<div className="space-y-4">
+								<h3 className="text-lg font-semibold">
+									Review Your Information
+								</h3>
+								{userType === "STUDENT" ? (
+									<StudentReviewStep form={form} />
+								) : (
+									<ProviderReviewStep
+										form={form}
+										providerCategory={
+											providerCategory || ""
+										}
+										CATEGORY_VERIFICATION_REQUIREMENTS={
+											CATEGORY_VERIFICATION_REQUIREMENTS
+										}
+									/>
+								)}
+							</div>
 						)}
 					</div>
-				)}
+				</div>
 
 				{/* Navigation Buttons */}
 				<NavigationButtons
@@ -331,6 +386,7 @@ export function OnboardingForm({ className }: { className?: string }) {
 					onNext={() =>
 						setStep((s) => Math.min(s + 1, steps.length - 1))
 					}
+					aria-label="Onboarding navigation buttons"
 				/>
 			</form>
 		</Form>
