@@ -16,10 +16,10 @@ type AdminUser = {
 
 // RBAC middleware: only allow admins/superadmins
 async function adminOnly(c: any, next: any) {
-	const session = await getSession(); // FIX: getSession takes no arguments
+	const session = await getSession();
 	if (
 		!session ||
-		(session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")
+		(session.user.role !== "admin" && session.user.role !== "superadmin")
 	) {
 		return c.json({ error: "Forbidden: Admins only" }, 403);
 	}

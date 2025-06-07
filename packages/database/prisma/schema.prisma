@@ -68,6 +68,8 @@ model account {
   scope                 String?
   createdAt             DateTime
   updatedAt             DateTime
+
+  user user @relation(fields: [userId], references: [id], name: "UserAccounts")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -246,6 +248,8 @@ model user {
   verificationStatus       VerificationStatus? @default(PENDING)
   providerCategory         String?
   providerVerificationDocs Json?
+
+  accounts account[] @relation("UserAccounts")
 
   @@index([userType])
 }
