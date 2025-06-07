@@ -126,6 +126,23 @@ export default async function middleware(req: NextRequest) {
 		return NextResponse.next();
 	}
 
+	// Admin route protection
+	if (pathname.startsWith("/admin")) {
+		const session = await getSession(req);
+		if (!session) {
+			return NextResponse.redirect(
+				new URL(
+					withQuery("/auth/login", { redirectTo: pathname }),
+					origin,
+				),
+			);
+		}
+		if (session.user.role !== "admin") {
+			return NextResponse.redirect(new URL("/app", origin));
+		}
+		return NextResponse.next();
+	}
+
 	if (!appConfig.ui.marketing.enabled) {
 		return NextResponse.redirect(new URL("/app", origin));
 	}

@@ -4,7 +4,7 @@ import { SettingsMenu } from "@saas/settings/components/SettingsMenu";
 import { PageHeader } from "@saas/shared/components/PageHeader";
 import { SidebarContentLayout } from "@saas/shared/components/SidebarContentLayout";
 import { Logo } from "@shared/components/Logo";
-import { Building2Icon, UsersIcon } from "lucide-react";
+import { Building2Icon, FileCheck2Icon, UsersIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
@@ -45,6 +45,13 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 										href: "/app/admin/users",
 										icon: (
 											<UsersIcon className="size-4 opacity-50" />
+										),
+									},
+									{
+										title: "Verification Docs",
+										href: "/app/admin/verification-docs",
+										icon: (
+											<FileCheck2Icon className="size-4 opacity-50" />
 										),
 									},
 									...(config.organizations.enable
