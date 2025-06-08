@@ -106,14 +106,14 @@ const AdminVerificationDocsPage: React.FC = () => {
 		},
 	});
 
-	const handleApprove = (docId: string, notes?: string) => {
+	const handleApprove = async (docId: string, notes?: string): Promise<void> => {
 		setSuccess(null);
-		approveMutation.mutate({ docId, notes });
+		await approveMutation.mutateAsync({ docId, notes });
 	};
 
-	const handleReject = (docId: string, notes?: string) => {
+	const handleReject = async (docId: string, notes?: string): Promise<void> => {
 		setSuccess(null);
-		rejectMutation.mutate({ docId, notes });
+		await rejectMutation.mutateAsync({ docId, notes });
 	};
 
 	return (
