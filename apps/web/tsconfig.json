@@ -10,7 +10,11 @@
 			"@i18n": ["./modules/i18n"],
 			"@i18n/*": ["./modules/i18n/*"],
 			"@shared/*": ["./modules/shared/*"],
-			"content-collections": ["./.content-collections/generated"]
+			"@/components/*": ["./modules/ui/components/*"],
+			"content-collections": ["./.content-collections/generated"],
+			"@lib/*": ["./modules/admin/verification-docs/lib/*"],
+			"@types": ["./modules/admin/verification-docs/types/index.ts"],
+			"@types/*": ["./modules/admin/verification-docs/types/*"]
 		}
 	},
 	"include": [

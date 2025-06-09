@@ -1,5 +1,5 @@
 import { getSession } from "@repo/auth/lib/server";
-import { db } from "@repo/database";
+import { Prisma, db } from "@repo/database";
 import { sendEmail } from "@repo/mail";
 import { Hono } from "hono";
 import { validator } from "hono-openapi/zod";
@@ -53,7 +53,10 @@ export const verificationDocsAdminRouter = new Hono()
 		const users = await db.user.findMany({
 			where: {
 				verificationStatus: "PENDING",
-				verificationDoc: { not: null },
+				OR: [
+					{ verificationDoc: { not: null } },
+					{ providerVerificationDocs: { not: Prisma.JsonNull } },
+				],
 			},
 			select: {
 				id: true,
