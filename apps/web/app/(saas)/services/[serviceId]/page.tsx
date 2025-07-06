@@ -1,5 +1,6 @@
 import { fetchServiceById } from "../../../modules/services/api";
 import type { Service } from "../../../modules/services/types";
+import { BookingDialog } from "../../../modules/bookings/components/booking-dialog";
 import { notFound } from "next/navigation";
 
 interface ServiceDetailPageProps {
@@ -32,11 +33,15 @@ export default async function ServiceDetailPage({
 				Duration: {service.duration} min
 			</div>
 			{service.provider && (
-				<div className="mb-2 text-sm text-gray-500">
+				<div className="mb-6 text-sm text-gray-500">
 					Provider: {service.provider.name}
 				</div>
 			)}
-			{/* Add booking button, reviews, etc. here as needed */}
+			
+			{/* Booking Button */}
+			<div className="mt-6">
+				<BookingDialog service={service} />
+			</div>
 		</main>
 	);
 }
