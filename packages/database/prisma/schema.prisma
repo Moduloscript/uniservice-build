@@ -48,9 +48,10 @@ model Purchase {
 }
 
 model ServiceCategory {
-  id          String  @id
-  name        String  @unique
+  id          String    @id
+  name        String    @unique
   description String?
+  services    service[]
 }
 
 model account {
@@ -188,6 +189,7 @@ model service {
   updatedAt   DateTime
   isActive    Boolean  @default(true)
   categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id])
 
   @@index([categoryId])
 }

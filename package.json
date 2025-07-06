@@ -3,7 +3,7 @@
 	"private": true,
 	"scripts": {
 		"build": "dotenv -c -- turbo build",
-		"dev": "dotenv -c -- turbo dev --concurrency 15",
+		"dev": "pnpm --filter database generate && dotenv -c -- turbo dev --concurrency 15",
 		"start": "dotenv -c -- turbo start",
 		"lint": "biome lint .",
 		"clean": "turbo clean",

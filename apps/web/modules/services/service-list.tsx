@@ -12,19 +12,16 @@ export function ServiceList({ services, className }: ServiceListProps) {
 		<div
 			className={
 				className ??
-				"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+				"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
 			}
 		>
 			{services.map((service) => (
 				<Link
 					key={service.id}
 					href={`/app/services/${service.id}`}
-					passHref
-					legacyBehavior
+					className="block h-full"
 				>
-					<a href={`/app/services/${service.id}`} style={{ display: "block" }}>
-						<ServiceCard service={service} />
-					</a>
+					<ServiceCard service={service} />
 				</Link>
 			))}
 		</div>
