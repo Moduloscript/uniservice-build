@@ -1,6 +1,6 @@
-import { fetchServiceById } from "../../../modules/services/api";
-import type { Service } from "../../../modules/services/types";
-import { BookingDialog } from "../../../modules/bookings/components/booking-dialog";
+import { fetchServiceById } from "../../../../../modules/services/api";
+import type { Service } from "../../../../../modules/services/types";
+import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { notFound } from "next/navigation";
 
 interface ServiceDetailPageProps {

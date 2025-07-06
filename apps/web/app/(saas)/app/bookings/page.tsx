@@ -1,4 +1,4 @@
-import { BookingList } from "../../modules/bookings/components/booking-list";
+import { BookingList } from "../../../../modules/bookings/components/booking-list";
 import { auth } from "@repo/auth";
 import { redirect } from "next/navigation";
 

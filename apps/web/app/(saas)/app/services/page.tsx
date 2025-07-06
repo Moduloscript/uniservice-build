@@ -1,6 +1,6 @@
-import { CategoryList } from "../../../modules/service-categories/category-list";
-import { fetchServiceCategories } from "../../../modules/service-categories/api";
-import type { ServiceCategory } from "../../../modules/service-categories/types";
+import { CategoryList } from "../../../../modules/service-categories/category-list";
+import { fetchServiceCategories } from "../../../../modules/service-categories/api";
+import type { ServiceCategory } from "../../../../modules/service-categories/types";
 import { Suspense } from "react";
 
 async function CategoriesSection() {
