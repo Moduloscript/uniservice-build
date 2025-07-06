@@ -11,6 +11,7 @@ export async function fetchServices(categoryId?: string): Promise<Service[]> {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
 		cache: "no-store",
+		credentials: "include",
 	});
 	if (!res.ok) {
 		throw new Error("Failed to fetch services");
@@ -27,6 +28,7 @@ export async function fetchServiceById(id: string): Promise<Service> {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
 		cache: "no-store",
+		credentials: "include",
 	});
 	if (!res.ok) {
 		throw new Error("Failed to fetch service");

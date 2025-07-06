@@ -8,6 +8,7 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
 		cache: "no-store",
+		credentials: "include",
 	});
 	if (!res.ok) {
 		throw new Error("Failed to fetch service categories");
