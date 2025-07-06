@@ -22,6 +22,7 @@ import { uploadsRouter } from "./routes/uploads";
 import { webhooksRouter } from "./routes/webhooks";
 import { serviceCategoriesRouter } from "./routes/service-categories";
 import { servicesRouter } from "./routes/services";
+import { bookingsRouter } from "./routes/bookings";
 
 export const app = new Hono().basePath("/api");
 
@@ -42,7 +43,8 @@ const appRouter = app
 	.route("/", onboardingRouter)
 	.route("/", downloadsRouter)
 	.route("/service-categories", serviceCategoriesRouter)
-	.route("/services", servicesRouter);
+	.route("/services", servicesRouter)
+	.route("/bookings", bookingsRouter);
 
 app.get(
 	"/app-openapi",
