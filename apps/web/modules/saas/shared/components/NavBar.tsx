@@ -7,9 +7,11 @@ import { Logo } from "@shared/components/Logo";
 import { cn } from "@ui/lib";
 import {
 	BotMessageSquareIcon,
+	CalendarIcon,
 	ChevronRightIcon,
 	HomeIcon,
 	SettingsIcon,
+	StoreIcon,
 	UserCog2Icon,
 	UserCogIcon,
 } from "lucide-react";
@@ -44,6 +46,18 @@ export function NavBar() {
 				: "/app/chatbot",
 			icon: BotMessageSquareIcon,
 			isActive: pathname.includes("/chatbot"),
+		},
+		{
+			label: "Services",
+			href: "/app/services",
+			icon: StoreIcon,
+			isActive: pathname.startsWith("/app/services"),
+		},
+		{
+			label: "Bookings",
+			href: "/app/bookings",
+			icon: CalendarIcon,
+			isActive: pathname.startsWith("/app/bookings"),
 		},
 		...(activeOrganization
 			? [

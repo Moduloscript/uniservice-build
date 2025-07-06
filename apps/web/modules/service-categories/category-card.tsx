@@ -10,7 +10,7 @@ interface CategoryCardProps {
 export function CategoryCard({ category, className }: CategoryCardProps) {
 	return (
 		<Link
-			href={`/services/category/${category.id}`}
+			href={`/app/services/category/${category.id}`}
 			className={cn(
 				"flex flex-col items-center justify-center rounded-lg border bg-white shadow-sm hover:shadow-md transition p-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary",
 				className,

@@ -13,7 +13,7 @@ export default async function BookingsPage() {
 	const userType = session.user.userType as "STUDENT" | "PROVIDER" | "ADMIN";
 
 	if (!userType) {
-		redirect("/onboarding");
+		redirect("/app/onboarding");
 	}
 
 	return (

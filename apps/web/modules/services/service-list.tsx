@@ -18,11 +18,11 @@ export function ServiceList({ services, className }: ServiceListProps) {
 			{services.map((service) => (
 				<Link
 					key={service.id}
-					href={`/services/${service.id}`}
+					href={`/app/services/${service.id}`}
 					passHref
 					legacyBehavior
 				>
-					<a href={`/services/${service.id}`} style={{ display: "block" }}>
+					<a href={`/app/services/${service.id}`} style={{ display: "block" }}>
 						<ServiceCard service={service} />
 					</a>
 				</Link>
