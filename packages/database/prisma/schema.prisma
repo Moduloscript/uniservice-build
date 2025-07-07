@@ -78,6 +78,8 @@ model booking {
   id         String        @id
   studentId  String
   providerId String
+  student    user            @relation("StudentBookings", fields: [studentId], references: [id])
+  provider   user            @relation("ProviderBookings", fields: [providerId], references: [id])
   serviceId  String
   status     BookingStatus @default(PENDING)
   dateTime   DateTime
@@ -189,6 +191,7 @@ model service {
   updatedAt   DateTime
   isActive    Boolean  @default(true)
   categoryId  String
+  provider    user     @relation("ProvidedServices", fields: [providerId], references: [id])
   category    ServiceCategory @relation(fields: [categoryId], references: [id])
 
   @@index([categoryId])
@@ -251,7 +254,10 @@ model user {
   providerCategory         String?
   providerVerificationDocs Json?
 
-  accounts account[] @relation("UserAccounts")
+  services           service[]       @relation("ProvidedServices")
+  providedBookings   booking[]       @relation("ProviderBookings")
+  studentBookings    booking[]       @relation("StudentBookings")
+  accounts           account[]       @relation("UserAccounts")
 
   @@index([userType])
 }

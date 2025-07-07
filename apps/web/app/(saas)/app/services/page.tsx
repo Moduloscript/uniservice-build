@@ -1,29 +1,41 @@
 import { Suspense } from "react";
 import { ServicesMarketplace } from "../../../../modules/services/services-marketplace";
-import { PageHeader } from "@saas/shared/components/PageHeader";
-import { ArrowLeft, Store } from "lucide-react";
+import { ChevronRight, Home, Store } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@ui/components/button";
 
 export default function ServicesPage() {
 	return (
-		<>
-			{/* Breadcrumb Navigation */}
-			<div className="flex items-center gap-2 mb-6 text-sm">
-				<Link 
-					href="/app" 
-					className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-				>
-					<ArrowLeft className="h-4 w-4" />
-					Back to Dashboard
-				</Link>
+		<div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+			{/* Professional Header with Navigation */}
+			<div className="pt-6 mb-8 pb-6 border-b border-border">
+				{/* Enhanced Breadcrumb Navigation */}
+				<nav aria-label="Breadcrumb" className="mb-4">
+					<ol className="flex items-center space-x-3 text-base">
+						<li>
+							<Link 
+								href="/app" 
+								className="flex items-center px-3 py-2 rounded-md bg-muted/50 hover:bg-muted text-foreground hover:text-primary transition-all duration-200 font-medium"
+							>
+								<Home className="h-5 w-5 mr-2" />
+								Dashboard
+							</Link>
+						</li>
+						<li>
+							<ChevronRight className="h-5 w-5 text-muted-foreground" />
+						</li>
+						<li aria-current="page">
+							<span className="flex items-center px-3 py-2 rounded-md bg-primary/10 text-primary font-medium">
+								<Store className="h-5 w-5 mr-2" />
+								Services
+							</span>
+						</li>
+					</ol>
+				</nav>
+				
+				{/* Professional Page Title */}
+				<h1 className="text-3xl font-bold text-foreground mb-2">Service Marketplace</h1>
+				<p className="text-muted-foreground">Discover and book trusted services from the UNIBEN community</p>
 			</div>
-
-			{/* Professional Page Header */}
-			<PageHeader 
-				title="Service Marketplace"
-				subtitle="Discover and book trusted services from the UNIBEN community"
-			/>
 
 			{/* Services Content */}
 			<Suspense fallback={
@@ -36,6 +48,6 @@ export default function ServicesPage() {
 			}>
 				<ServicesMarketplace />
 			</Suspense>
-		</>
+		</div>
 	);
 }
