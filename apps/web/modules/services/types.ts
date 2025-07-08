@@ -20,6 +20,14 @@ export interface Service {
 		name: string;
 		email?: string;
 		userType?: string;
+		verified?: boolean;
+		isVerified?: boolean;
+		createdAt?: string;
+		verificationStatus?: string;
+		department?: string;
+		level?: number;
+		providerCategory?: string;
+		matricNumber?: string;
 	};
 }
 

@@ -74,6 +74,14 @@ export const servicesRouter = new Hono()
 							name: true,
 							email: true,
 							userType: true,
+							verified: true,
+							isVerified: true,
+							createdAt: true,
+							verificationStatus: true,
+							department: true,
+							level: true,
+							providerCategory: true,
+							matricNumber: true,
 						}
 					}
 				},
