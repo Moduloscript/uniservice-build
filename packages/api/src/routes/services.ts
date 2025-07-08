@@ -14,9 +14,8 @@ const createServiceSchema = z.object({
 });
 
 export const servicesRouter = new Hono()
-	.use(authMiddleware)
 	// Create a new service
-	.post("/", validator("json", createServiceSchema), async (c) => {
+	.post("/", authMiddleware, validator("json", createServiceSchema), async (c) => {
 		const user = c.get("user");
 		const data = c.req.valid("json");
 
@@ -53,20 +52,47 @@ export const servicesRouter = new Hono()
 	// Get a service by ID
 	.get(":id", async (c) => {
 		const id = c.req.param("id");
+		console.log(`[Services API] Fetching service with ID: ${id}`);
+		
+		if (!id || id.trim() === '') {
+			return c.json({ error: "Service ID is required" }, 400);
+		}
+		
 		if (!z.string().cuid().safeParse(id).success) {
-			return c.json({ error: "Invalid service ID" }, 400);
+			console.log(`[Services API] Invalid CUID format for ID: ${id}`);
+			return c.json({ error: "Invalid service ID format" }, 400);
 		}
-		const service = await db.service.findUnique({
-			where: { id },
-			include: { category: true, provider: true },
-		});
-		if (!service) {
-			return c.json({ error: "Service not found" }, 404);
+		
+		try {
+			const service = await db.service.findUnique({
+				where: { id },
+				include: { 
+					category: true, 
+					provider: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+							userType: true,
+						}
+					}
+				},
+			});
+			
+			if (!service) {
+				console.log(`[Services API] Service not found for ID: ${id}`);
+				return c.json({ error: "Service not found" }, 404);
+			}
+			
+			console.log(`[Services API] Successfully found service: ${service.name}`);
+			return c.json({ service });
+		} catch (error) {
+			console.error(`[Services API] Database error for ID ${id}:`, error);
+			return c.json({ error: "Internal server error" }, 500);
 		}
-		return c.json({ service });
 	})
 	// Update a service by ID
-	.put(":id", validator("json", createServiceSchema.partial()), async (c) => {
+	.put(":id", authMiddleware, validator("json", createServiceSchema.partial()), async (c) => {
 		const id = c.req.param("id");
 		if (!z.string().cuid().safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
@@ -98,7 +124,7 @@ export const servicesRouter = new Hono()
 		return c.json({ service: updated });
 	})
 	// Delete a service by ID
-	.delete(":id", async (c) => {
+	.delete(":id", authMiddleware, async (c) => {
 		const id = c.req.param("id");
 		if (!z.string().cuid().safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);

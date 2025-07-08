@@ -1,4 +1,4 @@
-import { fetchServiceById } from "../../../../../modules/services/api";
+import { fetchServiceByIdServer } from "../../../../../modules/services/api";
 import type { Service } from "../../../../../modules/services/types";
 import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { notFound } from "next/navigation";
@@ -10,13 +10,27 @@ interface ServiceDetailPageProps {
 export default async function ServiceDetailPage({
 	params,
 }: ServiceDetailPageProps) {
+	// Await params for Next.js 15 compatibility
+	const resolvedParams = await params;
+	
 	let service: Service | null = null;
 	let error: string | null = null;
+	
+	// Validate serviceId format
+	if (!resolvedParams.serviceId || resolvedParams.serviceId.trim() === '') {
+		return notFound();
+	}
+	
 	try {
-		service = await fetchServiceById(params.serviceId);
+		service = await fetchServiceByIdServer(resolvedParams.serviceId);
 	} catch (e) {
 		error = (e as Error).message;
+		console.error('Error fetching service:', {
+			serviceId: resolvedParams.serviceId,
+			error: e,
+		});
 	}
+	
 	if (error || !service) {
 		return notFound();
 	}
