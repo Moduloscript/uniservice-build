@@ -12,14 +12,14 @@ export function ServiceList({ services, className }: ServiceListProps) {
 		<div
 			className={
 				className ??
-				"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+				"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
 			}
 		>
 			{services.map((service) => (
 				<Link
 					key={service.id}
 					href={`/app/services/${service.id}`}
-					className="block h-full"
+					className="block h-full transition-transform hover:-translate-y-1 duration-200"
 				>
 					<ServiceCard service={service} />
 				</Link>

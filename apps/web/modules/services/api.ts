@@ -32,11 +32,21 @@ function getBaseUrl(): string {
 /**
  * Fetch all services, optionally filtered by categoryId.
  */
-export async function fetchServices(categoryId?: string): Promise<Service[]> {
+export async function fetchServices(): Promise<Service[]>;
+export async function fetchServices(categoryId: string): Promise<Service[]>;
+export async function fetchServices(filters: { categoryId?: string; providerId?: string }): Promise<Service[]>;
+export async function fetchServices(categoryIdOrFilters?: string | { categoryId?: string; providerId?: string }): Promise<Service[]> {
 	const baseUrl = getBaseUrl();
-	const path = categoryId
-		? `/api/services?categoryId=${encodeURIComponent(categoryId)}`
-		: "/api/services";
+const filters = typeof categoryIdOrFilters === 'string' 
+  ? { categoryId: categoryIdOrFilters }
+  : categoryIdOrFilters;
+
+const queryParams = new URLSearchParams();
+if (filters?.categoryId) queryParams.append("categoryId", filters.categoryId);
+if (filters?.providerId) queryParams.append("providerId", filters.providerId);
+const path = queryParams.toString() 
+  ? `/api/services?${queryParams.toString()}`
+  : "/api/services";
 	const url = `${baseUrl}${path}`;
 	
 	const res = await fetch(url, {

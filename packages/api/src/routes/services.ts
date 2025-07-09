@@ -39,13 +39,34 @@ export const servicesRouter = new Hono()
 		});
 		return c.json({ service });
 	})
-	// List all services (optionally filter by categoryId)
+	// List all services (optionally filter by categoryId and/or providerId)
 	.get("/", async (c) => {
 		const categoryId = c.req.query("categoryId");
-		const where = categoryId ? { categoryId } : {};
+const providerId = c.req.query("providerId");
+const where: any = {};
+if (categoryId) where.categoryId = categoryId;
+if (providerId) where.providerId = providerId;
 		const services = await db.service.findMany({
 			where,
-			include: { category: true },
+			include: { 
+				category: true,
+				provider: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+						userType: true,
+						verified: true,
+						isVerified: true,
+						createdAt: true,
+						verificationStatus: true,
+						department: true,
+						level: true,
+						providerCategory: true,
+						matricNumber: true,
+					}
+				}
+			},
 		});
 		return c.json({ services });
 	})

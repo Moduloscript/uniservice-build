@@ -2,10 +2,31 @@ import { fetchServiceByIdServer } from "../../../../../modules/services/api";
 import type { Service } from "../../../../../modules/services/types";
 import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { ProviderInfo } from "../../../../../modules/services/components/provider-info";
+import { RelatedServices } from "../../../../../modules/services/components/related-services";
 import { Badge } from "../../../../../modules/ui/components/badge";
+import { Button } from "../../../../../modules/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../modules/ui/components/card";
 import { notFound } from "next/navigation";
-import { Clock, DollarSign, Tag } from "lucide-react";
+import Link from "next/link";
+import { ContactProviderButton } from "./components/contact-provider-button";
+import { SupportButtons } from "./components/support-buttons";
+import { 
+	Clock, 
+	DollarSign, 
+	Tag, 
+	Home, 
+	ChevronRight, 
+	Star, 
+	CheckCircle, 
+	Calendar,
+	Users,
+	BookOpen,
+	Target,
+	Mail,
+	Phone,
+	MessageSquare,
+	HelpCircle
+} from "lucide-react";
 
 interface ServiceDetailPageProps {
 	params: { serviceId: string };
@@ -40,81 +61,259 @@ export default async function ServiceDetailPage({
 	}
 
 	return (
-		<main className="max-w-6xl mx-auto py-8 px-4">
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				{/* Main Content - Left Column */}
-				<div className="lg:col-span-2 space-y-6">
-					{/* Service Header */}
-					<Card>
-						<CardHeader>
-							<div className="flex items-start justify-between">
-								<div>
-									<h1 className="text-3xl font-bold text-foreground mb-2">
-										{service.name}
-									</h1>
+		<main className="max-w-7xl mx-auto py-6 px-4">
+			{/* Breadcrumb Navigation */}
+			<nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
+				<Link href="/app" className="flex items-center hover:text-foreground transition-colors">
+					<Home className="h-4 w-4" />
+					<span className="ml-1">Home</span>
+				</Link>
+				<ChevronRight className="h-4 w-4" />
+				<Link href="/app/services" className="hover:text-foreground transition-colors">
+					Services
+				</Link>
+				{service.category && (
+					<>
+						<ChevronRight className="h-4 w-4" />
+						<Link 
+							href={`/app/services/category/${service.categoryId}`} 
+							className="hover:text-foreground transition-colors"
+						>
+							{service.category.name}
+						</Link>
+					</>
+				)}
+				<ChevronRight className="h-4 w-4" />
+				<span className="text-foreground font-medium">{service.name}</span>
+			</nav>
+
+			{/* Hero Section */}
+			<Card className="mb-8">
+				<CardContent className="p-8">
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+						{/* Service Image/Icon */}
+						<div className="lg:col-span-1">
+							<div className="aspect-square bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl flex items-center justify-center">
+								<BookOpen className="h-24 w-24 text-primary" />
+							</div>
+						</div>
+
+						{/* Service Info */}
+						<div className="lg:col-span-2 space-y-4">
+							<div className="space-y-2">
+								<h1 className="text-4xl font-bold text-foreground">
+									{service.name}
+								</h1>
+								<div className="flex items-center gap-4">
 									{service.category && (
-										<Badge variant="secondary" className="mb-3">
-											<Tag className="h-3 w-3 mr-1" />
+										<Badge variant="secondary" className="text-sm">
+											<Tag className="h-4 w-4 mr-1" />
 											{service.category.name}
 										</Badge>
 									)}
-								</div>
-								<div className="text-right">
-									<div className="text-3xl font-bold text-primary mb-1">
-										₦{service.price.toLocaleString()}
-									</div>
-									<div className="flex items-center text-sm text-muted-foreground">
-										<Clock className="h-4 w-4 mr-1" />
-										{service.duration} min
+									<div className="flex items-center gap-1">
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<span className="text-sm font-medium">4.8/5</span>
+										<span className="text-sm text-muted-foreground">(42 reviews)</span>
 									</div>
 								</div>
 							</div>
+
+							{/* Price and Duration */}
+							<div className="flex items-center gap-6">
+								<div className="flex items-center gap-2">
+									<DollarSign className="h-5 w-5 text-primary" />
+									<span className="text-3xl font-bold text-primary">
+										₦{service.price.toLocaleString()}
+									</span>
+								</div>
+								<div className="flex items-center gap-2 text-muted-foreground">
+									<Clock className="h-5 w-5" />
+									<span className="text-lg">{service.duration} min</span>
+								</div>
+								<div className="flex items-center gap-2 text-muted-foreground">
+									<Calendar className="h-5 w-5" />
+									<span className="text-lg">Available Now</span>
+								</div>
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex gap-4">
+								<BookingDialog service={service}>
+									<Button size="lg" className="text-lg px-8">
+										🚀 Book This Service
+									</Button>
+								</BookingDialog>
+								{service.provider?.email && (
+									<ContactProviderButton email={service.provider.email} />
+								)}
+							</div>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				{/* Main Content - Left Column */}
+				<div className="lg:col-span-2 space-y-6">
+					{/* Service Description */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<BookOpen className="h-5 w-5 text-primary" />
+								Service Description
+							</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<div className="prose prose-sm max-w-none">
-								<p className="text-foreground leading-relaxed">
+								<p className="text-foreground leading-relaxed text-lg">
 									{service.description}
 								</p>
 							</div>
 						</CardContent>
 					</Card>
 
-					{/* Service Details */}
+					{/* What's Included */}
 					<Card>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
-								<DollarSign className="h-5 w-5 text-primary" />
-								Service Details
+								<CheckCircle className="h-5 w-5 text-green-500" />
+								What's Included
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="grid grid-cols-2 gap-4 text-sm">
-								<div>
-									<span className="font-medium text-muted-foreground">Price:</span>
-									<p className="text-lg font-semibold text-primary">
-										₦{service.price.toLocaleString()}
-									</p>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>1-on-1 tutoring session</span>
 								</div>
-								<div>
-									<span className="font-medium text-muted-foreground">Duration:</span>
-									<p className="text-lg font-semibold text-foreground">
-										{service.duration} minutes
-									</p>
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>Study materials provided</span>
 								</div>
-								{service.category && (
-									<div className="col-span-2">
-										<span className="font-medium text-muted-foreground">Category:</span>
-										<p className="text-foreground">{service.category.name}</p>
-										{service.category.description && (
-											<p className="text-sm text-muted-foreground mt-1">
-												{service.category.description}
-											</p>
-										)}
-									</div>
-								)}
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>Practice exercises</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>Progress tracking</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>Follow-up support</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+									<span>Flexible scheduling</span>
+								</div>
 							</div>
 						</CardContent>
 					</Card>
+
+/* Learning Outcomes */
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Target className="h-5 w-5 text-primary" />
+								Learning Outcomes
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<p className="text-muted-foreground mb-4">
+								After completing this service, you will be able to:
+							</p>
+							<ul className="space-y-2">
+								<li className="flex items-start gap-3">
+									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+									<span>Master complex mathematical concepts and equations</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+									<span>Apply mathematical principles to real-world problems</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+									<span>Develop problem-solving strategies and techniques</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+									<span>Build confidence in mathematical reasoning</span>
+								</li>
+							</ul>
+						</CardContent>
+					</Card>
+
+					{/* Reviews & Ratings */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+								Reviews & Ratings
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<ul className="space-y-4">
+								<li>
+									<div className="flex space-x-2 items-center">
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4" />
+									</div>
+									<div className="mt-1">
+										<p className="text-foreground leading-relaxed">
+											Excellent tutoring! Really helped me understand calculus.
+										</p>
+										<p className="text-sm text-muted-foreground">
+											- Sarah M.
+										</p>
+									</div>
+								</li>
+								<li>
+									<div className="flex space-x-2 items-center">
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+										<Star className="h-4 w-4" />
+									</div>
+									<div className="mt-1">
+										<p className="text-foreground leading-relaxed">
+											Clear explanations and patient teaching style. Highly recommend!
+										</p>
+										<p className="text-sm text-muted-foreground">
+											- Mike J.
+										</p>
+									</div>
+								</li>
+							</ul>
+						</CardContent>
+					</Card>
+
+					{/* Booking Calendar */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="text-lg">Booking Calendar</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-4">
+								<div className="text-sm text-muted-foreground">
+									Select a time slot below to book:
+								</div>
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+									<Button variant="ghost" className="w-full">Today, 2:00 PM</Button>
+									<Button variant="ghost" className="w-full">Today, 4:00 PM</Button>
+									<Button variant="ghost" className="w-full">Tomorrow, 10:00 AM</Button>
+									<Button variant="ghost" className="w-full">Tomorrow, 2:00 PM</Button>
+									<Button variant="ghost" className="w-full">Friday, 9:00 AM</Button>
+									<Button variant="ghost" className="w-full">Friday, 11:00 AM</Button>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
 				</div>
 
 				{/* Sidebar - Right Column */}
@@ -124,21 +323,96 @@ export default async function ServiceDetailPage({
 						<ProviderInfo provider={service.provider} />
 					)}
 
-					{/* Booking Section */}
+					{/* Quick Stats */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-lg">Book This Service</CardTitle>
+							<CardTitle className="flex items-center gap-2">
+								<DollarSign className="h-5 w-5 text-primary" />
+								Quick Stats
+							</CardTitle>
 						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								<div className="text-sm text-muted-foreground">
-									Ready to book this service? Choose your preferred date and time.
-								</div>
-								<BookingDialog service={service} />
+						<CardContent className="space-y-3">
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">Price:</span>
+								<span className="font-semibold text-primary">₦{service.price.toLocaleString()}</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">Duration:</span>
+								<span className="font-semibold">{service.duration} min</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">Availability:</span>
+								<span className="font-semibold text-green-600">Available Now</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">Level:</span>
+								<span className="font-semibold">Advanced</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">Max Students:</span>
+								<span className="font-semibold">1</span>
 							</div>
 						</CardContent>
 					</Card>
+
+
+					{/* Need Help Section */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<HelpCircle className="h-5 w-5 text-primary" />
+								Need Help?
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<SupportButtons />
+						</CardContent>
+					</Card>
+
 				</div>
+			</div>
+
+			{/* Footer Sections */}
+			<div className="mt-12 space-y-8">
+				{/* More from this Provider */}
+				{service.provider && (
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Target className="h-5 w-5 text-primary" />
+								More from {service.provider.name}
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-sm text-muted-foreground mb-4">
+								Explore other services offered by this provider
+							</div>
+							{service.providerId && (
+								<RelatedServices currentService={service} type="provider" showAll />
+							)}
+						</CardContent>
+					</Card>
+				)}
+
+				{/* Similar Services */}
+				{service.category && (
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Tag className="h-5 w-5 text-primary" />
+								Similar Services in {service.category.name}
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="text-sm text-muted-foreground mb-4">
+								Discover more services in the same category
+							</div>
+							{service.categoryId && (
+								<RelatedServices currentService={service} type="category" showAll />
+							)}
+						</CardContent>
+					</Card>
+				)}
 			</div>
 		</main>
 	);

@@ -13,7 +13,7 @@ export function ServiceCard({ service, onClick, className }: ServiceCardProps) {
 		<button
 			type="button"
 			className={cn(
-				"group flex flex-col items-start rounded-lg border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 p-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-left w-full h-full",
+				"group flex flex-col items-start rounded-lg border bg-card shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-300 p-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-left w-full h-full min-h-[280px]",
 				className,
 			)}
 			onClick={onClick}
@@ -27,7 +27,7 @@ export function ServiceCard({ service, onClick, className }: ServiceCardProps) {
 			)}
 
 			{/* Service Name */}
-			<h3 className="text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+			<h3 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
 				{service.name}
 			</h3>
 
@@ -44,17 +44,17 @@ export function ServiceCard({ service, onClick, className }: ServiceCardProps) {
 					</span>
 					<span className="text-xs text-muted-foreground">per service</span>
 				</div>
-				<div className="flex items-center gap-1 px-2 py-1 bg-muted/50 rounded-md">
-					<Clock className="h-3.5 w-3.5 text-muted-foreground" />
-					<span className="text-sm font-medium text-muted-foreground">{service.duration}min</span>
-				</div>
+			<div className="flex items-center gap-1 px-3 py-2 bg-muted/30 rounded-md">
+				<Clock className="h-4 w-4 text-muted-foreground" />
+				<span className="text-sm font-medium text-muted-foreground">{service.duration} min</span>
+			</div>
 			</div>
 
 			{/* Provider Info */}
 			{service.provider && (
-				<div className="flex items-center gap-2 text-sm text-muted-foreground border-t border-border pt-4 w-full">
-					<div className="flex items-center justify-center w-6 h-6 bg-muted rounded-full">
-						<User className="h-3.5 w-3.5" />
+				<div className="flex items-center gap-3 text-sm text-muted-foreground border-t border-border pt-4 w-full">
+					<div className="flex items-center justify-center w-8 h-8 bg-muted rounded-full">
+						<User className="h-4 w-4" />
 					</div>
 					<span className="font-medium">by {service.provider.name}</span>
 				</div>

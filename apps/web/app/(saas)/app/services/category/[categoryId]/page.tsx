@@ -14,7 +14,7 @@ async function ServicesSection({ categoryId }: { categoryId: string }) {
 	let services: Service[] = [];
 	let error: string | null = null;
 	try {
-		services = await fetchServices(categoryId);
+services = await fetchServices({ categoryId });
 	} catch (e) {
 		error = (e as Error).message;
 	}
