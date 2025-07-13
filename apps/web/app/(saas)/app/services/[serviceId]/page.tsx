@@ -1,8 +1,9 @@
-import { fetchServiceByIdServer } from "../../../../../modules/services/api";
+import { fetchServiceByIdServer, fetchReviewStatsServer } from "../../../../../modules/services/api";
 import type { Service } from "../../../../../modules/services/types";
 import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { ProviderInfo } from "../../../../../modules/services/components/provider-info";
 import { RelatedServices } from "../../../../../modules/services/components/related-services";
+import { ServiceRatingDisplay } from "../../../../../modules/services/components/service-rating-display";
 import { Badge } from "../../../../../modules/ui/components/badge";
 import { Button } from "../../../../../modules/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../modules/ui/components/card";
@@ -10,6 +11,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ContactProviderButton } from "./components/contact-provider-button";
 import { SupportButtons } from "./components/support-buttons";
+import { ReviewSection } from "../../../../../modules/services/components/review-section";
+import { getSession } from "../../../../../modules/saas/auth/lib/server";
+import { db } from "@repo/database";
 import { 
 	Clock, 
 	DollarSign, 
@@ -54,6 +58,65 @@ export default async function ServiceDetailPage({
 			serviceId: resolvedParams.serviceId,
 			error: e,
 		});
+	}
+	
+	// Fetch review statistics for server-side rendering
+	let reviewStats: {
+		totalReviews: number;
+		averageRating: number;
+		ratingDistribution: Array<{
+			rating: number;
+			count: number;
+			percentage: number;
+		}>;
+		lastReviewDate: string | null;
+	} | null = null;
+	
+	if (service) {
+		try {
+			reviewStats = await fetchReviewStatsServer(service.id);
+		} catch (error) {
+			console.error('Error fetching review stats:', error);
+			// Continue without review stats - component will handle the loading
+		}
+	}
+	
+	// Get current session for review functionality
+	const session = await getSession();
+	
+	// Fetch user's bookings for this service to determine review eligibility
+	let userBookings: Array<{
+		id: string;
+		serviceId: string;
+		status: string;
+		hasReview: boolean;
+	}> = [];
+	
+	if (session?.user?.id && service) {
+		try {
+			const bookings = await db.booking.findMany({
+				where: {
+					studentId: session.user.id,
+					serviceId: service.id,
+				},
+				include: {
+					review: true,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+			});
+			
+			userBookings = bookings.map(booking => ({
+				id: booking.id,
+				serviceId: booking.serviceId,
+				status: booking.status,
+				hasReview: booking.review !== null,
+			}));
+		} catch (error) {
+			console.error('Error fetching user bookings:', error);
+			// Continue without booking data - user just won't be able to review
+		}
 	}
 	
 	if (error || !service) {
@@ -111,11 +174,10 @@ export default async function ServiceDetailPage({
 											{service.category.name}
 										</Badge>
 									)}
-									<div className="flex items-center gap-1">
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<span className="text-sm font-medium">4.8/5</span>
-										<span className="text-sm text-muted-foreground">(42 reviews)</span>
-									</div>
+									<ServiceRatingDisplay 
+										serviceId={service.id} 
+										initialStats={reviewStats || undefined}
+									/>
 								</div>
 							</div>
 
@@ -244,53 +306,13 @@ export default async function ServiceDetailPage({
 						</CardContent>
 					</Card>
 
-					{/* Reviews & Ratings */}
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-								Reviews & Ratings
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<ul className="space-y-4">
-								<li>
-									<div className="flex space-x-2 items-center">
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4" />
-									</div>
-									<div className="mt-1">
-										<p className="text-foreground leading-relaxed">
-											Excellent tutoring! Really helped me understand calculus.
-										</p>
-										<p className="text-sm text-muted-foreground">
-											- Sarah M.
-										</p>
-									</div>
-								</li>
-								<li>
-									<div className="flex space-x-2 items-center">
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-										<Star className="h-4 w-4" />
-									</div>
-									<div className="mt-1">
-										<p className="text-foreground leading-relaxed">
-											Clear explanations and patient teaching style. Highly recommend!
-										</p>
-										<p className="text-sm text-muted-foreground">
-											- Mike J.
-										</p>
-									</div>
-								</li>
-							</ul>
-						</CardContent>
-					</Card>
+				{/* Reviews Section */}
+				<ReviewSection
+					serviceId={service.id}
+					currentUserId={session?.user?.id}
+					userRole={session?.user?.userType}
+					userBookings={userBookings}
+				/>
 
 					{/* Booking Calendar */}
 					<Card>

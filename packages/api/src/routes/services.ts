@@ -42,10 +42,13 @@ export const servicesRouter = new Hono()
 	// List all services (optionally filter by categoryId and/or providerId)
 	.get("/", async (c) => {
 		const categoryId = c.req.query("categoryId");
-const providerId = c.req.query("providerId");
-const where: any = {};
-if (categoryId) where.categoryId = categoryId;
-if (providerId) where.providerId = providerId;
+		const providerId = c.req.query("providerId");
+		const includeRatings = c.req.query("includeRatings") === "true";
+		
+		const where: any = {};
+		if (categoryId) where.categoryId = categoryId;
+		if (providerId) where.providerId = providerId;
+		
 		const services = await db.service.findMany({
 			where,
 			include: { 
@@ -65,10 +68,42 @@ if (providerId) where.providerId = providerId;
 						providerCategory: true,
 						matricNumber: true,
 					}
-				}
+				},
+				...(includeRatings && {
+					bookings: {
+						include: {
+							review: {
+								select: {
+									rating: true,
+									createdAt: true,
+								}
+							}
+						}
+					}
+				})
 			},
 		});
-		return c.json({ services });
+		
+		// Calculate rating statistics if requested
+		const servicesWithRatings = includeRatings ? services.map(service => {
+			const reviews = service.bookings?.map(booking => booking.review).filter(Boolean) || [];
+			const totalReviews = reviews.length;
+			const averageRating = totalReviews > 0 
+				? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+				: 0;
+			
+			return {
+				...service,
+				bookings: undefined, // Remove bookings from response
+				ratingStats: {
+					totalReviews,
+					averageRating: Number(averageRating.toFixed(1)),
+					lastReviewDate: reviews.length > 0 ? reviews[0].createdAt : null,
+				}
+			};
+		}) : services;
+		
+		return c.json({ services: servicesWithRatings });
 	})
 	// Get a service by ID
 	.get(":id", async (c) => {
@@ -79,8 +114,9 @@ if (providerId) where.providerId = providerId;
 			return c.json({ error: "Service ID is required" }, 400);
 		}
 		
-		if (!z.string().cuid().safeParse(id).success) {
-			console.log(`[Services API] Invalid CUID format for ID: ${id}`);
+		// Validate service ID format (alphanumeric, 21 characters)
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
+			console.log(`[Services API] Invalid service ID format for ID: ${id}`);
 			return c.json({ error: "Invalid service ID format" }, 400);
 		}
 		
@@ -104,6 +140,16 @@ if (providerId) where.providerId = providerId;
 							providerCategory: true,
 							matricNumber: true,
 						}
+					},
+					bookings: {
+						include: {
+							review: {
+								select: {
+									rating: true,
+									createdAt: true,
+								}
+							}
+						}
 					}
 				},
 			});
@@ -114,7 +160,25 @@ if (providerId) where.providerId = providerId;
 			}
 			
 			console.log(`[Services API] Successfully found service: ${service.name}`);
-			return c.json({ service });
+			
+			// Calculate rating statistics
+			const reviews = service.bookings?.map(booking => booking.review).filter(Boolean) || [];
+			const totalReviews = reviews.length;
+			const averageRating = totalReviews > 0 
+				? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+				: 0;
+			
+			const serviceWithRatings = {
+				...service,
+				bookings: undefined, // Remove bookings from response
+				ratingStats: {
+					totalReviews,
+					averageRating: Number(averageRating.toFixed(1)),
+					lastReviewDate: reviews.length > 0 ? reviews[0].createdAt : null,
+				}
+			};
+			
+			return c.json({ service: serviceWithRatings });
 		} catch (error) {
 			console.error(`[Services API] Database error for ID ${id}:`, error);
 			return c.json({ error: "Internal server error" }, 500);
@@ -123,7 +187,7 @@ if (providerId) where.providerId = providerId;
 	// Update a service by ID
 	.put(":id", authMiddleware, validator("json", createServiceSchema.partial()), async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().cuid().safeParse(id).success) {
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");
@@ -155,7 +219,7 @@ if (providerId) where.providerId = providerId;
 	// Delete a service by ID
 	.delete(":id", authMiddleware, async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().cuid().safeParse(id).success) {
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");

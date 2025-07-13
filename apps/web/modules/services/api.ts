@@ -1,4 +1,5 @@
 import type { Service, ServicesResponse, ServiceResponse, ApiErrorResponse } from "./types";
+import type { Review, ReviewsResponse, ReviewResponse, CreateReviewData, UpdateReviewData, ReviewApiError } from "./types/review";
 import { db } from "@repo/database";
 import { headers } from "next/headers";
 
@@ -154,6 +155,261 @@ export async function fetchServiceByIdServer(id: string): Promise<Service | null
 		
 	} catch (error) {
 		console.error(`[Server] Database error for ID ${id}:`, error);
+	return null;
+	}
+}
+
+// REVIEWS API FUNCTIONS
+
+/**
+ * Fetch all reviews for a specific service
+ */
+export async function fetchReviewsForService(serviceId: string): Promise<Review[]> {
+	const baseUrl = getBaseUrl();
+	const url = `${baseUrl}/api/reviews/${serviceId}`;
+	
+	console.log(`[Client] Fetching reviews for service: ${serviceId}`);
+	
+	const res = await fetch(url, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+		cache: "no-store",
+		credentials: "include",
+	});
+	
+	if (!res.ok) {
+		let errorMessage = "Failed to fetch reviews";
+		try {
+			const errorData: ReviewApiError = await res.json();
+			errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+		} catch {
+			errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+		}
+		throw new Error(errorMessage);
+	}
+	
+	const data: ReviewsResponse = await res.json();
+	if (!data.reviews) {
+		throw new Error("Reviews not found in response");
+	}
+	return data.reviews;
+}
+
+/**
+ * Submit a new review
+ */
+export async function submitReview(reviewData: CreateReviewData): Promise<Review> {
+	const baseUrl = getBaseUrl();
+	const url = `${baseUrl}/api/reviews`;
+	
+	console.log(`[Client] Submitting review:`, reviewData);
+	
+	const res = await fetch(url, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(reviewData),
+		credentials: "include",
+	});
+	
+	if (!res.ok) {
+		let errorMessage = "Failed to submit review";
+		try {
+			const errorData: ReviewApiError = await res.json();
+			errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+		} catch {
+			errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+		}
+		throw new Error(errorMessage);
+	}
+	
+	const data: ReviewResponse = await res.json();
+	if (!data.review) {
+		throw new Error("Review not found in response");
+	}
+	return data.review;
+}
+
+/**
+ * Update an existing review
+ */
+export async function updateReview(reviewId: string, reviewData: UpdateReviewData): Promise<Review> {
+	const baseUrl = getBaseUrl();
+	const url = `${baseUrl}/api/reviews/${reviewId}`;
+	
+	console.log(`[Client] Updating review ${reviewId}:`, reviewData);
+	
+	const res = await fetch(url, {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(reviewData),
+		credentials: "include",
+	});
+	
+	if (!res.ok) {
+		let errorMessage = "Failed to update review";
+		try {
+			const errorData: ReviewApiError = await res.json();
+			errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+		} catch {
+			errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+		}
+		throw new Error(errorMessage);
+	}
+	
+	const data: ReviewResponse = await res.json();
+	if (!data.review) {
+		throw new Error("Review not found in response");
+	}
+	return data.review;
+}
+
+/**
+ * Delete a review
+ */
+export async function deleteReview(reviewId: string): Promise<void> {
+	const baseUrl = getBaseUrl();
+	const url = `${baseUrl}/api/reviews/${reviewId}`;
+	
+	console.log(`[Client] Deleting review: ${reviewId}`);
+	
+	const res = await fetch(url, {
+		method: "DELETE",
+		headers: { "Content-Type": "application/json" },
+		credentials: "include",
+	});
+	
+	if (!res.ok) {
+		let errorMessage = "Failed to delete review";
+		try {
+			const errorData: ReviewApiError = await res.json();
+			errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+		} catch {
+			errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+		}
+		throw new Error(errorMessage);
+	}
+}
+
+/**
+ * Fetch review statistics for a specific service
+ */
+export async function fetchReviewStats(serviceId: string): Promise<{
+	serviceId: string;
+	totalReviews: number;
+	averageRating: number;
+	recentAverageRating: number;
+	ratingDistribution: Array<{
+		rating: number;
+		count: number;
+		percentage: number;
+	}>;
+	lastReviewDate: string | null;
+}> {
+	const baseUrl = getBaseUrl();
+	const url = `${baseUrl}/api/reviews/${serviceId}/stats`;
+	
+	console.log(`[Client] Fetching review stats for service: ${serviceId}`);
+	
+	const res = await fetch(url, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+		cache: "no-store",
+		credentials: "include",
+	});
+	
+	if (!res.ok) {
+		let errorMessage = "Failed to fetch review statistics";
+		try {
+			const errorData: ReviewApiError = await res.json();
+			errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+		} catch {
+			errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+		}
+		throw new Error(errorMessage);
+	}
+	
+	const data = await res.json();
+	return data;
+}
+
+/**
+ * Server-side function to fetch review statistics directly from database
+ */
+export async function fetchReviewStatsServer(serviceId: string): Promise<{
+	serviceId: string;
+	totalReviews: number;
+	averageRating: number;
+	recentAverageRating: number;
+	ratingDistribution: Array<{
+		rating: number;
+		count: number;
+		percentage: number;
+	}>;
+	lastReviewDate: string | null;
+} | null> {
+	if (typeof window !== 'undefined') {
+		throw new Error('fetchReviewStatsServer should only be called on the server');
+	}
+	
+	console.log(`[Server] Fetching review stats for service: ${serviceId}`);
+	
+	try {
+		// Verify service exists
+		const service = await db.service.findUnique({
+			where: { id: serviceId },
+		});
+		
+		if (!service) {
+			console.log(`[Server] Service not found for ID: ${serviceId}`);
+			return null;
+		}
+		
+		// Get all reviews for this service
+		const reviews = await db.review.findMany({
+			where: {
+				booking: {
+					serviceId: serviceId,
+				},
+			},
+			select: {
+				rating: true,
+				createdAt: true,
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+		});
+		
+		const totalReviews = reviews.length;
+		const averageRating = totalReviews > 0 
+			? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+			: 0;
+		
+		// Calculate rating distribution
+		const ratingDistribution = Array.from({ length: 5 }, (_, i) => {
+			const rating = i + 1;
+			const count = reviews.filter(r => r.rating === rating).length;
+			const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+			return { rating, count, percentage };
+		}).reverse();
+		
+		// Get recent reviews for trend analysis
+		const recentReviews = reviews.slice(0, 10);
+		const recentAverageRating = recentReviews.length > 0
+			? recentReviews.reduce((sum, review) => sum + review.rating, 0) / recentReviews.length
+			: 0;
+		
+		return {
+			serviceId,
+			totalReviews,
+			averageRating: Number(averageRating.toFixed(1)),
+			recentAverageRating: Number(recentAverageRating.toFixed(1)),
+			ratingDistribution,
+			lastReviewDate: reviews.length > 0 ? reviews[0].createdAt.toISOString() : null,
+		};
+		
+	} catch (error) {
+		console.error(`[Server] Database error fetching review stats for ID ${serviceId}:`, error);
 		return null;
 	}
 }

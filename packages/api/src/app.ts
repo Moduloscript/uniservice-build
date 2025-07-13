@@ -21,9 +21,9 @@ import { paymentsRouter } from "./routes/payments/router";
 import { uploadsRouter } from "./routes/uploads";
 import { webhooksRouter } from "./routes/webhooks";
 import { serviceCategoriesRouter } from "./routes/service-categories";
-import { testCategoriesRouter } from "./routes/test-categories";
 import { servicesRouter } from "./routes/services";
 import { bookingsRouter } from "./routes/bookings";
+import { reviewsRouter } from "./routes/reviews";
 
 export const app = new Hono().basePath("/api");
 
@@ -44,10 +44,10 @@ const appRouter = app
 	.route("/", healthRouter)
 	.route("/", onboardingRouter)
 	.route("/", downloadsRouter)
-	.route("/test-api", serviceCategoriesRouter)
 	.route("/", serviceCategoriesRouter)
 	.route("/services", servicesRouter)
-	.route("/bookings", bookingsRouter);
+	.route("/bookings", bookingsRouter)
+	.route("/reviews", reviewsRouter);
 
 app.get(
 	"/app-openapi",

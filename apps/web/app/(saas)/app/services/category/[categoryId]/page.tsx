@@ -1,8 +1,8 @@
-import { ServiceList } from "../../../../../modules/services/service-list";
-import { fetchServices } from "../../../../../modules/services/api";
-import { fetchServiceCategories } from "../../../../../modules/service-categories/api";
-import type { Service } from "../../../../../modules/services/types";
-import type { ServiceCategory } from "../../../../../modules/service-categories/types";
+import { ServiceList } from "../../../../../../modules/services/service-list";
+import { fetchServices } from "../../../../../../modules/services/api";
+import { fetchServiceCategories } from "../../../../../../modules/service-categories/api";
+import type { Service } from "../../../../../../modules/services/types";
+import type { ServiceCategory } from "../../../../../../modules/service-categories/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 

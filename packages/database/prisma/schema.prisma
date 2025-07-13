@@ -81,10 +81,12 @@ model booking {
   student    user            @relation("StudentBookings", fields: [studentId], references: [id])
   provider   user            @relation("ProviderBookings", fields: [providerId], references: [id])
   serviceId  String
+  service    service         @relation(fields: [serviceId], references: [id])
   status     BookingStatus @default(PENDING)
   dateTime   DateTime
   createdAt  DateTime      @default(now())
   updatedAt  DateTime
+  review     review?
 }
 
 model invitation {
@@ -177,6 +179,10 @@ model review {
   targetId  String
   createdAt DateTime @default(now())
   updatedAt DateTime
+  
+  booking   booking  @relation(fields: [bookingId], references: [id])
+  author    user     @relation("AuthoredReviews", fields: [authorId], references: [id])
+  target    user     @relation("ReceivedReviews", fields: [targetId], references: [id])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -193,6 +199,7 @@ model service {
   categoryId  String
   provider    user     @relation("ProvidedServices", fields: [providerId], references: [id])
   category    ServiceCategory @relation(fields: [categoryId], references: [id])
+  bookings    booking[]
 
   @@index([categoryId])
 }
@@ -258,6 +265,8 @@ model user {
   providedBookings   booking[]       @relation("ProviderBookings")
   studentBookings    booking[]       @relation("StudentBookings")
   accounts           account[]       @relation("UserAccounts")
+  authoredReviews    review[]        @relation("AuthoredReviews")
+  receivedReviews    review[]        @relation("ReceivedReviews")
 
   @@index([userType])
 }
