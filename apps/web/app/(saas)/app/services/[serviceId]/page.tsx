@@ -4,6 +4,7 @@ import { BookingDialog } from "../../../../../modules/bookings/components/bookin
 import { ProviderInfo } from "../../../../../modules/services/components/provider-info";
 import { RelatedServices } from "../../../../../modules/services/components/related-services";
 import { ServiceRatingDisplay } from "../../../../../modules/services/components/service-rating-display";
+import { ServiceFeatures } from "../../../../../modules/services/components/service-features";
 import { Badge } from "../../../../../modules/ui/components/badge";
 import { Button } from "../../../../../modules/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../modules/ui/components/card";
@@ -235,43 +236,8 @@ export default async function ServiceDetailPage({
 						</CardContent>
 					</Card>
 
-					{/* What's Included */}
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<CheckCircle className="h-5 w-5 text-green-500" />
-								What's Included
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>1-on-1 tutoring session</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>Study materials provided</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>Practice exercises</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>Progress tracking</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>Follow-up support</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-									<span>Flexible scheduling</span>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+					{/* What's Included - Dynamic Service Features */}
+					<ServiceFeatures serviceId={service.id} />
 
 /* Learning Outcomes */
 					<Card>

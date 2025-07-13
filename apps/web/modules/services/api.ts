@@ -1,5 +1,6 @@
 import type { Service, ServicesResponse, ServiceResponse, ApiErrorResponse } from "./types";
 import type { Review, ReviewsResponse, ReviewResponse, CreateReviewData, UpdateReviewData, ReviewApiError } from "./types/review";
+import type { ServiceFeature, ServiceFeaturesResponse, ServiceFeatureResponse, CreateServiceFeatureData, UpdateServiceFeatureData, ServiceFeatureApiError } from "./types/service-feature";
 import { db } from "@repo/database";
 import { headers } from "next/headers";
 
@@ -157,6 +158,159 @@ export async function fetchServiceByIdServer(id: string): Promise<Service | null
 		console.error(`[Server] Database error for ID ${id}:`, error);
 	return null;
 	}
+}
+
+// SERVICE FEATURES API FUNCTIONS
+
+/**
+ * Fetch all features for a service
+ */
+export async function fetchServiceFeatures(serviceId: string): Promise<ServiceFeature[]> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/features`;
+
+    console.log(`[Client] Fetching features for service: ${serviceId}`);
+
+    const res = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to fetch service features";
+        try {
+            const errorData: ServiceFeatureApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceFeaturesResponse = await res.json();
+    return data.features;
+}
+
+/**
+ * Add a new feature to a service
+ */
+export async function addServiceFeature(serviceId: string, featureData: CreateServiceFeatureData): Promise<ServiceFeature> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/features`;
+
+    console.log(`[Client] Adding feature for service: ${serviceId}`, featureData);
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(featureData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to add service feature";
+        try {
+            const errorData: ServiceFeatureApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceFeatureResponse = await res.json();
+    return data.feature;
+}
+
+/**
+ * Update a feature for a service
+ */
+export async function updateServiceFeature(serviceId: string, featureId: string, featureData: UpdateServiceFeatureData): Promise<ServiceFeature> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/features/${featureId}`;
+
+    console.log(`[Client] Updating feature ${featureId} for service: ${serviceId}`, featureData);
+
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(featureData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to update service feature";
+        try {
+            const errorData: ServiceFeatureApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceFeatureResponse = await res.json();
+    return data.feature;
+}
+
+/**
+ * Delete a feature from a service
+ */
+export async function deleteServiceFeature(serviceId: string, featureId: string): Promise<void> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/features/${featureId}`;
+
+    console.log(`[Client] Deleting feature ${featureId} from service: ${serviceId}`);
+
+    const res = await fetch(url, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to delete service feature";
+        try {
+            const errorData: ServiceFeatureApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+}
+
+/**
+ * Reorder service features
+ */
+export async function reorderServiceFeatures(serviceId: string, featureIds: string[]): Promise<ServiceFeature[]> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/features/reorder`;
+
+    console.log(`[Client] Reordering features for service: ${serviceId}`, featureIds);
+
+    const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ featureIds }),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to reorder service features";
+        try {
+            const errorData: ServiceFeatureApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceFeaturesResponse = await res.json();
+    return data.features;
 }
 
 // REVIEWS API FUNCTIONS
