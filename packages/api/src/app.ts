@@ -25,7 +25,10 @@ import { servicesRouter } from "./routes/services";
 import { serviceFeaturesRouter } from "./routes/service-features";
 import { bookingsRouter } from "./routes/bookings";
 import { reviewsRouter } from "./routes/reviews";
-
+import { providerDashboardRouter } from "./routes/provider/dashboard";
+import { providerServicesRouter } from "./routes/provider/services";
+import { providerBookingsRouter } from "./routes/provider/bookings";
+import { debugUserRouter } from "./routes/debug-user";
 export const app = new Hono().basePath("/api");
 
 app.use(loggerMiddleware);
@@ -49,8 +52,11 @@ const appRouter = app
 	.route("/services", servicesRouter)
 	.route("/services", serviceFeaturesRouter)
 	.route("/bookings", bookingsRouter)
-	.route("/reviews", reviewsRouter);
-
+	.route("/reviews", reviewsRouter)
+	.route("/", providerDashboardRouter)
+	.route("/", providerServicesRouter)
+	.route("/", providerBookingsRouter)
+	.route("/debug", debugUserRouter);
 app.get(
 	"/app-openapi",
 	openAPISpecs(app, {

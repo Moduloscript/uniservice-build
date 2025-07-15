@@ -8,7 +8,7 @@ import { authMiddleware } from "../middleware/auth";
 const createReviewSchema = z.object({
 	rating: z.number().int().min(1).max(5),
 	comment: z.string().min(1).max(500).optional(),
-	bookingId: z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/),
+	bookingId: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/),
 });
 
 // Review update schema
@@ -27,8 +27,8 @@ export const reviewsRouter = new Hono()
 		}
 		
 		
-		// Validate service ID format (alphanumeric, 21 characters)
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(serviceId).success) {
+		// Validate service ID format (alphanumeric with underscores and hyphens)
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(serviceId).success) {
 			return c.json({ error: "Invalid service ID format" }, 400);
 		}
 
@@ -100,8 +100,8 @@ export const reviewsRouter = new Hono()
 		}
 		
 		
-		// Validate service ID format (alphanumeric, 21 characters)
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(serviceId).success) {
+		// Validate service ID format (alphanumeric with underscores and hyphens)
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(serviceId).success) {
 			return c.json({ error: "Invalid service ID format" }, 400);
 		}
 
@@ -245,7 +245,7 @@ export const reviewsRouter = new Hono()
 		const user = c.get("user");
 		const data = c.req.valid("json");
 
-		if (!reviewId || !z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(reviewId).success) {
+		if (!reviewId || !z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(reviewId).success) {
 			return c.json({ error: "Invalid review ID format" }, 400);
 		}
 
@@ -333,7 +333,7 @@ export const reviewsRouter = new Hono()
 		const reviewId = c.req.param("reviewId");
 		const user = c.get("user");
 
-		if (!reviewId || !z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(reviewId).success) {
+		if (!reviewId || !z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(reviewId).success) {
 			return c.json({ error: "Invalid review ID format" }, 400);
 		}
 

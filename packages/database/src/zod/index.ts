@@ -104,6 +104,8 @@ export const ReviewScalarFieldEnumSchema = z.enum(['id','rating','comment','book
 
 export const ServiceScalarFieldEnumSchema = z.enum(['id','name','description','price','duration','providerId','createdAt','updatedAt','isActive','categoryId']);
 
+export const ServiceFeaturesScalarFieldEnumSchema = z.enum(['id','serviceId','title','description','icon','orderIndex','isActive','createdAt','updatedAt']);
+
 export const SessionScalarFieldEnumSchema = z.enum(['id','expiresAt','ipAddress','userAgent','userId','impersonatedBy','activeOrganizationId','token','createdAt','updatedAt']);
 
 export const SlotScalarFieldEnumSchema = z.enum(['id','userId','dayOfWeek','startTime','endTime','isAvailable']);
@@ -395,6 +397,27 @@ export const serviceSchema = z.object({
 })
 
 export type service = z.infer<typeof serviceSchema>
+
+/////////////////////////////////////////
+// SERVICE FEATURES SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Service features - what's included with each service (customizable by providers)
+ */
+export const ServiceFeaturesSchema = z.object({
+  id: z.string(),
+  serviceId: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  icon: z.string(),
+  orderIndex: z.number().int(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type ServiceFeatures = z.infer<typeof ServiceFeaturesSchema>
 
 /////////////////////////////////////////
 // SESSION SCHEMA

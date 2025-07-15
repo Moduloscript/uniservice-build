@@ -200,8 +200,27 @@ model service {
   provider    user     @relation("ProvidedServices", fields: [providerId], references: [id])
   category    ServiceCategory @relation(fields: [categoryId], references: [id])
   bookings    booking[]
+  features    ServiceFeatures[]
 
   @@index([categoryId])
+}
+
+/// Service features - what's included with each service (customizable by providers)
+model ServiceFeatures {
+  id          String   @id
+  serviceId   String
+  title       String
+  description String?
+  icon        String   @default("check-circle")
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  service     service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  @@index([serviceId])
+  @@index([serviceId, orderIndex])
 }
 
 model session {

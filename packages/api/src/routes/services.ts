@@ -114,8 +114,8 @@ export const servicesRouter = new Hono()
 			return c.json({ error: "Service ID is required" }, 400);
 		}
 		
-		// Validate service ID format (alphanumeric, 21 characters)
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
+		// Validate service ID format (alphanumeric with underscores and hyphens)
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
 			console.log(`[Services API] Invalid service ID format for ID: ${id}`);
 			return c.json({ error: "Invalid service ID format" }, 400);
 		}
@@ -187,7 +187,7 @@ export const servicesRouter = new Hono()
 	// Update a service by ID
 	.put(":id", authMiddleware, validator("json", createServiceSchema.partial()), async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");
@@ -219,7 +219,7 @@ export const servicesRouter = new Hono()
 	// Delete a service by ID
 	.delete(":id", authMiddleware, async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9]+$/).safeParse(id).success) {
+		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");

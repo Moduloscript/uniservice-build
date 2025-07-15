@@ -21,6 +21,7 @@ import {
   deleteReview 
 } from "../api";
 import { Review, CreateReviewData, UpdateReviewData } from "../types/review";
+import { formatErrorMessage } from "../utils/error-formatting";
 
 interface ReviewSectionProps {
   serviceId: string;
@@ -95,7 +96,7 @@ export function ReviewSection({
       setShowReviewForm(false);
     } catch (error) {
       console.error("Failed to submit review:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to submit review. Please try again.");
+      toast.error(formatErrorMessage(error, "Failed to submit review. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +114,7 @@ export function ReviewSection({
       toast.success("Review deleted successfully!");
     } catch (error) {
       console.error("Failed to delete review:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete review. Please try again.");
+      toast.error(formatErrorMessage(error, "Failed to delete review. Please try again."));
     }
   };
 

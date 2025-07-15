@@ -87,6 +87,18 @@ export const auth = betterAuth({
 				type: "string",
 				required: false,
 			},
+			userType: {
+				type: "string",
+				required: false,
+			},
+			verificationStatus: {
+				type: "string",
+				required: false,
+			},
+			isVerified: {
+				type: "boolean",
+				required: false,
+			},
 		},
 		deleteUser: {
 			enabled: true,

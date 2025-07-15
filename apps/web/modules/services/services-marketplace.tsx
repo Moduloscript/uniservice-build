@@ -11,6 +11,7 @@ import { fetchServiceCategories } from "../service-categories/api";
 import type { Service } from "./types";
 import type { ServiceCategory } from "../service-categories/types";
 import { Loader2 } from "lucide-react";
+import { formatErrorMessage } from "./utils/error-formatting";
 
 export type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "duration-asc" | "duration-desc";
 
@@ -103,7 +104,7 @@ export function ServicesMarketplace() {
 		return (
 			<div className="text-center py-12">
 				<p className="text-red-600 mb-4">
-					{error instanceof Error ? error.message : "Failed to load services"}
+					{formatErrorMessage(error, "Failed to load services")}
 				</p>
 				<button
 					onClick={() => window.location.reload()}

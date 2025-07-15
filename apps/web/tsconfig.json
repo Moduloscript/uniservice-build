@@ -11,6 +11,7 @@
 			"@i18n/*": ["./modules/i18n/*"],
 			"@shared/*": ["./modules/shared/*"],
 			"@/components/*": ["./modules/ui/components/*"],
+			"@/modules/*": ["./modules/*"],
 			"content-collections": ["./.content-collections/generated"],
 			"@lib/*": ["./modules/admin/verification-docs/lib/*"],
 			"@types": ["./modules/admin/verification-docs/types/index.ts"],
