@@ -334,10 +334,77 @@ TECHNICAL FLOW:
    - [x] **ADD AUTHENTICATION**: Implement proper provider access control ✅ **COMPLETED**
 
 **2. PROVIDER DASHBOARD CRUD FEATURES:**
-   - [ ] **CREATE**: "Add New Service" button (already exists - line 18-23)
+   - [ ] **CREATE**: "Add New Service" button functionality (button exists but not functional)
    - [x] **READ**: Display real services count, bookings, revenue, students ✅ **COMPLETED**
    - [ ] **UPDATE**: Edit service links and management interface
    - [ ] **DELETE**: Remove services capability
+
+**🔥 CRITICAL MISSING FUNCTIONALITY - SERVICE CREATION:**
+
+**Current State**: The "Add New Service" button exists in the provider dashboard UI but links to a non-functional `/app/services/new` route
+**Priority**: **HIGHEST** - Essential for provider self-service and platform growth
+
+**Required Implementation Steps for Service Creation:**
+
+**Step 1: Create Service Creation API Endpoint** ⏱️ 1.5 hours
+- [ ] Create file: `packages/api/src/routes/service-creation.ts`
+- [ ] Implement POST `/api/services` endpoint for service creation
+- [ ] Add comprehensive input validation using Zod schemas:
+  - Service name, description, price, duration, category
+  - Provider authentication and authorization
+  - Service image upload handling
+  - Service slug generation and uniqueness validation
+- [ ] Add proper error handling and status codes
+- [ ] Connect to main API router in `packages/api/src/app.ts`
+- [ ] Test endpoint with sample data
+
+**Step 2: Develop Service Creation UI Page** ⏱️ 2.5 hours
+- [ ] Create file: `apps/web/app/(saas)/app/services/new/page.tsx`
+- [ ] Implement comprehensive service creation form with:
+  - Service basic information (name, description, category)
+  - Pricing and duration configuration
+  - Service image upload component
+  - Professional styling consistent with existing design system
+  - Form validation using React Hook Form + Zod
+- [ ] Add loading states and error handling
+- [ ] Include rich text editor for service description
+- [ ] Add service preview functionality
+
+**Step 3: API Integration and Form Handling** ⏱️ 1 hour
+- [ ] Create service creation API functions in `apps/web/modules/services/api.ts`
+- [ ] Implement form submission with proper error handling
+- [ ] Add success/failure notification system
+- [ ] Create TypeScript types for service creation
+- [ ] Add TanStack Query mutations for service creation
+
+**Step 4: Provider Dashboard Integration** ⏱️ 45 minutes
+- [ ] Ensure "Add New Service" button properly navigates to `/app/services/new`
+- [ ] After successful service creation, redirect to service detail page
+- [ ] Update dashboard statistics to reflect new service
+- [ ] Add optimistic updates to service count
+- [ ] Include success feedback and next steps guidance
+
+**Step 5: Service Update and Delete Functionality** ⏱️ 2 hours
+- [ ] Create service update API endpoint: PUT `/api/services/{serviceId}`
+- [ ] Create service deletion API endpoint: DELETE `/api/services/{serviceId}`
+- [ ] Add service edit page: `/app/services/{serviceId}/edit`
+- [ ] Implement service deletion confirmation modal
+- [ ] Add bulk operations for multiple services
+- [ ] Include soft delete functionality for data integrity
+
+**Step 6: Testing and Validation** ⏱️ 1.5 hours
+- [ ] Test service creation flow end-to-end
+- [ ] Verify form validation and error handling
+- [ ] Test authentication and authorization
+- [ ] Test service update and deletion flows
+- [ ] Validate dashboard statistics updates
+- [ ] Test mobile responsiveness
+
+**Step 7: Documentation and Cleanup** ⏱️ 30 minutes
+- [ ] Document new API endpoints in README
+- [ ] Add inline code comments
+- [ ] Update service-dynamic-plan.md with completion status
+- [ ] Create provider user guide for service management
 
 **3. TECHNICAL IMPLEMENTATION:**
    - [x] **Backend**: Create provider-specific API endpoints ✅ **COMPLETED**
