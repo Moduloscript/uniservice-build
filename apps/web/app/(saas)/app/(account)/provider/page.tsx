@@ -80,7 +80,7 @@ export default function ProviderDashboard() {
                 Live
               </Badge>
               <Button asChild variant="primary">
-                <Link href="/app/services/new">
+                <Link href="/app/provider/services/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Service
                 </Link>
@@ -201,7 +201,7 @@ export default function ProviderDashboard() {
                       }
                     </p>
                     <Button asChild size="sm" variant="primary">
-                      <Link href="/app/services/new">
+                      <Link href="/app/provider/services/new">
                         <Plus className="h-4 w-4 mr-2" />
                         Create Service
                       </Link>

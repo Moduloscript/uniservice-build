@@ -160,6 +160,113 @@ export async function fetchServiceByIdServer(id: string): Promise<Service | null
 	}
 }
 
+/**
+ * Create a new service
+ */
+export async function createService(serviceData: {
+    name: string;
+    description: string;
+    price: number;
+    duration: number;
+    categoryId: string;
+}): Promise<Service> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services`;
+
+    console.log(`[Client] Creating new service:`, serviceData);
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(serviceData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to create service";
+        try {
+            const errorData: ApiErrorResponse = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceResponse = await res.json();
+    if (!data.service) {
+        throw new Error("Service not found in response");
+    }
+    return data.service;
+}
+
+/**
+ * Update an existing service
+ */
+export async function updateService(serviceId: string, serviceData: {
+    name: string;
+    description: string;
+    price: number;
+    duration: number;
+    categoryId: string;
+}): Promise<Service> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}`;
+
+    console.log(`[Client] Updating service ${serviceId}:`, serviceData);
+
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(serviceData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to update service";
+        try {
+            const errorData: ApiErrorResponse = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceResponse = await res.json();
+    if (!data.service) {
+        throw new Error("Service not found in response");
+    }
+    return data.service;
+}
+
+/**
+ * Delete a service
+ */
+export async function deleteService(serviceId: string): Promise<void> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}`;
+
+    console.log(`[Client] Deleting service: ${serviceId}`);
+
+    const res = await fetch(url, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to delete service";
+        try {
+            const errorData: ApiErrorResponse = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+}
+
 // SERVICE FEATURES API FUNCTIONS
 
 /**

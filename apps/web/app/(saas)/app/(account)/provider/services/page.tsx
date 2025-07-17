@@ -1,14 +1,89 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ui/components/card";
 import { Button } from "@ui/components/button";
-import { Plus, Settings, Edit, Eye, MoreHorizontal } from "lucide-react";
+import { Plus, Settings, Edit, Eye, MoreHorizontal, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@ui/components/badge";
+import { fetchServices } from "@/modules/services/api";
+import { useAuth } from "@repo/auth/client";
 
 export default function ProviderServicesManagement() {
-  // Temporarily removing auth check for debugging
+  const { user, isLoading: authLoading } = useAuth();
 
-  // TODO: Fetch user's services from database
-  const services = []; // This would be fetched from the database
+  // Fetch provider's services using TanStack Query
+  const {
+    data: services = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["provider-services", user?.id],
+    queryFn: () => fetchServices({ providerId: user?.id || "" }),
+    enabled: !!user?.id && !authLoading,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Show loading state
+  if (authLoading || isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Services</h1>
+            <p className="text-muted-foreground">
+              Manage your service offerings, features, and settings
+            </p>
+          </div>
+          <Button disabled>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Loading...
+          </Button>
+        </div>
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading your services...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Services</h1>
+            <p className="text-muted-foreground">
+              Manage your service offerings, features, and settings
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/app/provider/services/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Service
+            </Link>
+          </Button>
+        </div>
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Failed to load services</h2>
+            <p className="text-muted-foreground mb-4">
+              {error instanceof Error ? error.message : "An error occurred"}
+            </p>
+            <Button onClick={() => refetch()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -20,7 +95,7 @@ export default function ProviderServicesManagement() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/app/services/new">
+          <Link href="/app/provider/services/new">
             <Plus className="h-4 w-4 mr-2" />
             Add New Service
           </Link>
@@ -42,7 +117,7 @@ export default function ProviderServicesManagement() {
                 you provide to students, complete with features, pricing, and booking options.
               </p>
               <Button asChild className="w-fit">
-                <Link href="/app/services/new">
+                <Link href="/app/provider/services/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Your First Service
                 </Link>
@@ -98,7 +173,7 @@ export default function ProviderServicesManagement() {
                     </Button>
                     
                     <Button asChild size="sm" variant="outline">
-                      <Link href={`/app/services/${service.id}/edit`}>
+                      <Link href={`/app/provider/services/${service.id}/edit`}>
                         <Edit className="h-4 w-4" />
                       </Link>
                     </Button>
