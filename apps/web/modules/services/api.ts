@@ -185,9 +185,19 @@ export async function createService(serviceData: {
     if (!res.ok) {
         let errorMessage = "Failed to create service";
         try {
-            const errorData: ApiErrorResponse = await res.json();
-            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
-        } catch {
+            const errorData: any = await res.json();
+            console.error("[Client] Service creation error response:", errorData);
+            errorMessage = errorData.error || errorData.message || `HTTP ${res.status}: ${res.statusText}`;
+            
+            // If there are validation details, include them
+            if (errorData.details) {
+                const details = Object.entries(errorData.details)
+                    .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                    .join('; ');
+                errorMessage += ` (${details})`;
+            }
+        } catch (parseError) {
+            console.error("[Client] Failed to parse error response:", parseError);
             errorMessage = `HTTP ${res.status}: ${res.statusText}`;
         }
         throw new Error(errorMessage);

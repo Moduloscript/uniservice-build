@@ -10,7 +10,7 @@ const createServiceSchema = z.object({
 	description: z.string().min(5),
 	price: z.number().positive(),
 	duration: z.number().int().positive(),
-	categoryId: z.string().cuid(),
+	categoryId: z.string().min(1), // Changed from cuid() to accept slug format
 });
 
 export const servicesRouter = new Hono()
@@ -27,14 +27,20 @@ export const servicesRouter = new Hono()
 			return c.json({ error: "Invalid categoryId" }, 400);
 		}
 
+		// Generate a unique ID for the service
+		const serviceId = crypto.randomUUID();
+		const now = new Date();
+		
 		const service = await db.service.create({
 			data: {
+				id: serviceId,
 				name: data.name,
 				description: data.description,
 				price: data.price,
 				duration: data.duration,
 				categoryId: data.categoryId,
 				providerId: user.id,
+				updatedAt: now,
 			},
 		});
 		return c.json({ service });
@@ -114,8 +120,8 @@ export const servicesRouter = new Hono()
 			return c.json({ error: "Service ID is required" }, 400);
 		}
 		
-		// Validate service ID format (alphanumeric with underscores and hyphens)
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
+		// Validate service ID format (UUID format)
+		if (!z.string().uuid().safeParse(id).success) {
 			console.log(`[Services API] Invalid service ID format for ID: ${id}`);
 			return c.json({ error: "Invalid service ID format" }, 400);
 		}
@@ -187,7 +193,7 @@ export const servicesRouter = new Hono()
 	// Update a service by ID
 	.put(":id", authMiddleware, validator("json", createServiceSchema.partial()), async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
+		if (!z.string().uuid().safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");
@@ -219,7 +225,7 @@ export const servicesRouter = new Hono()
 	// Delete a service by ID
 	.delete(":id", authMiddleware, async (c) => {
 		const id = c.req.param("id");
-		if (!z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/).safeParse(id).success) {
+		if (!z.string().uuid().safeParse(id).success) {
 			return c.json({ error: "Invalid service ID" }, 400);
 		}
 		const user = c.get("user");
