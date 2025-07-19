@@ -1,5 +1,5 @@
 import { FileTextIcon } from "@radix-ui/react-icons";
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
 	Card,
 	CardContent,
@@ -18,6 +18,47 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 	const userType = doc.userType || doc.userRole || "";
 	const documentUrl = doc.documentUrl || "";
 	const fileName = documentUrl.split("/").pop() || "Document";
+	const [studentIdCardUrl, setStudentIdCardUrl] = useState<string | null>(null);
+	const [isLoadingStudentId, setIsLoadingStudentId] = useState(false);
+
+	const getSecureDownloadUrl = useCallback(async (bucket: string, path: string) => {
+		try {
+			const response = await fetch("/api/downloads/signed-url", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({ bucket, path }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to get secure download URL");
+			}
+
+			const data = await response.json();
+			return data.signedUrl;
+		} catch (error) {
+			console.error("Error getting secure download URL:", error);
+			return null;
+		}
+	}, []);
+
+	const handleStudentIdCardView = useCallback(async () => {
+		if (!doc.studentIdCardUrl || isLoadingStudentId) return;
+		
+		setIsLoadingStudentId(true);
+		try {
+			const secureUrl = await getSecureDownloadUrl("student-id-cards", doc.studentIdCardUrl);
+			if (secureUrl) {
+				setStudentIdCardUrl(secureUrl);
+				// Open in new tab
+				window.open(secureUrl, "_blank", "noopener,noreferrer");
+			}
+		} finally {
+			setIsLoadingStudentId(false);
+		}
+	}, [doc.studentIdCardUrl, getSecureDownloadUrl, isLoadingStudentId]);
 
 	return (
 		<Card className="w-full max-w-2xl mx-auto border bg-white/90 shadow-sm">
@@ -104,14 +145,14 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 										<span className="font-medium">
 											Student ID Card:
 										</span>{" "}
-										<a
-											href={doc.studentIdCardUrl}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-blue-600 underline"
+										<button
+											type="button"
+											onClick={handleStudentIdCardView}
+											disabled={isLoadingStudentId}
+											className="text-blue-600 underline hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
 										>
-											View
-										</a>
+											{isLoadingStudentId ? "Loading..." : "View"}
+										</button>
 									</div>
 								)}
 							</React.Fragment>

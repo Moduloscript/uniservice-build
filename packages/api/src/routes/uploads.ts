@@ -1,3 +1,4 @@
+import { config } from "@repo/config";
 import { getSignedUploadUrl } from "@repo/storage";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
@@ -37,25 +38,25 @@ export const uploadsRouter = new Hono().basePath("/uploads").post(
 	async (c) => {
 		const { bucket, path } = c.req.valid("query");
 		const user = c.get("user");
-		const allowedBuckets = [
-			"avatars",
-			"verification-docs",
-			"student-id-cards",
-		];
+		
+		// Get allowed buckets from config
+		const allowedBuckets = Object.values(config.storage.bucketNames);
 		if (!allowedBuckets.includes(bucket)) {
 			throw new HTTPException(403, { message: "Invalid bucket" });
 		}
+		
+		// Check bucket-specific permissions
 		if (
-			bucket === "verification-docs" &&
-			!path.startsWith(`verification-docs/${user?.id || ""}-`)
+			bucket === config.storage.bucketNames.verificationDocs &&
+			!path.startsWith(`${user?.id || ""}-`)
 		) {
 			throw new HTTPException(403, {
 				message: "Invalid file path for verification docs",
 			});
 		}
 		if (
-			bucket === "student-id-cards" &&
-			!path.startsWith(`student-id-cards/${user?.id || ""}-`)
+			bucket === config.storage.bucketNames.studentIdCards &&
+			!path.startsWith(`${user?.id || ""}-`)
 		) {
 			throw new HTTPException(403, {
 				message: "Invalid file path for student ID cards",

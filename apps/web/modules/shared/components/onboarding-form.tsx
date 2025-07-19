@@ -80,7 +80,7 @@ export function OnboardingForm({ className }: { className?: string }) {
 
 	const studentIdUpload = useFileUpload({
 		userId: user?.id,
-		prefix: "verification-docs",
+		prefix: "student-id-cards",
 	});
 	const providerDocUpload = useFileUpload({
 		userId: user?.id,
@@ -266,10 +266,10 @@ export function OnboardingForm({ className }: { className?: string }) {
 												if (!file) {
 													return;
 												}
-												const path =
+const path =
 													await studentIdUpload.uploadFile(
 														file,
-														`verification-docs/${user?.id}-student-id-card-${uuid()}.${file.name.split(".").pop() || "jpg"}`,
+														`${user?.id}-student-id-card-${uuid()}.${file.name.split(".").pop() || "jpg"}`,
 													);
 												if (path) {
 													field.onChange(path);

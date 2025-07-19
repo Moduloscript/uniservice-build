@@ -1,7 +1,7 @@
 import { config } from "@repo/config";
 import { getSession } from "@saas/auth/lib/server";
 import { AuthWrapper } from "@saas/shared/components/AuthWrapper";
-import { OnboardingForm } from "@shared/components/onboarding-form";
+import { OptimizedOnboardingForm } from "@shared/components/optimized-onboarding-form";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
@@ -29,7 +29,7 @@ export default async function OnboardingPage() {
 
 	return (
 		<AuthWrapper>
-			<OnboardingForm />
+			<OptimizedOnboardingForm />
 		</AuthWrapper>
 	);
 }

@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import type { ListObjectsV2CommandOutput, _Object } from "@aws-sdk/client-s3";
 import { getSignedUrl as getS3SignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createClient } from "@supabase/supabase-js";
 import { logger } from "@repo/logs";
 import type {
 	GetSignedUploadUrlHandler,
@@ -61,7 +62,6 @@ export const getSignedUploadUrl: GetSignedUploadUrlHandler = async (
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: path,
-				ContentType: "image/jpeg",
 			}),
 			{
 				expiresIn: 60,

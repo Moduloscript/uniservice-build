@@ -36,9 +36,10 @@ export function useFileUpload({
 		setIsUploading(true);
 		try {
 			const ext = file.name.split(".").pop() || "jpg";
-			const path =
+const path =
 				customPath ||
-				`${prefix}/${userId ? `${userId}-` : ""}${uuid()}.${ext}`;
+				`${userId ? `${userId}-` : ""}${uuid()}.${ext}`;
+			
 			const res = await fetch(
 				`/api/uploads/signed-upload-url?bucket=${prefix}&path=${encodeURIComponent(path)}`,
 				{
@@ -46,17 +47,21 @@ export function useFileUpload({
 					credentials: "include",
 				},
 			);
+			
 			if (!res.ok) {
-				throw new Error("Failed to get upload URL");
+				throw new Error(`Failed to get upload URL: ${res.status}`);
 			}
+			
 			const { signedUrl } = await res.json();
+			
 			const uploadRes = await fetch(signedUrl, {
 				method: "PUT",
 				body: file,
 				headers: { "Content-Type": file.type },
 			});
+			
 			if (!uploadRes.ok) {
-				throw new Error("Failed to upload file");
+				throw new Error(`Failed to upload file: ${uploadRes.status}`);
 			}
 			if (onUploaded) {
 				onUploaded(path);
