@@ -1,6 +1,7 @@
 import { getSession } from "@repo/auth/lib/server";
 import { Prisma, db } from "@repo/database";
 import { sendEmail } from "@repo/mail";
+import { getBaseUrl } from "@repo/utils";
 import { Hono } from "hono";
 import { validator } from "hono-openapi/zod";
 import { z } from "zod";
@@ -27,23 +28,6 @@ async function adminOnly(c: any, next: any) {
 	await next();
 }
 
-// Function to generate email HTML content
-function getVerificationStatusEmailHtml({
-	name,
-	status,
-	notes,
-}: {
-	name: string;
-	status: string;
-	notes?: string;
-}) {
-	if (status === "APPROVED") {
-		return `<p>Hi ${name},</p><p>Your verification has been <b>approved</b>. You can now access all features.</p>`;
-	}
-	return `<p>Hi ${name},</p><p>Your verification was <b>rejected</b>. Reason: ${
-		notes ? notes : "No reason provided."
-	}</p>`;
-}
 
 export const verificationDocsAdminRouter = new Hono()
 	.use(authMiddleware)
@@ -53,10 +37,7 @@ export const verificationDocsAdminRouter = new Hono()
 		const users = await db.user.findMany({
 			where: {
 				verificationStatus: "PENDING",
-				OR: [
-					{ verificationDoc: { not: null } },
-					{ providerVerificationDocs: { not: Prisma.JsonNull } },
-				],
+				// Show all pending users, even without uploaded documents
 			},
 			select: {
 				id: true,
@@ -90,19 +71,21 @@ export const verificationDocsAdminRouter = new Hono()
 				where: { id: userId },
 				data: {
 					verificationStatus: "APPROVED",
+					isVerified: true, // Set isVerified for middleware check
+					verified: true, // Also set the verified field
 					verificationReviewedBy: admin.id,
 					verificationReviewedAt: new Date(),
 					verificationNotes: null,
 				},
 			});
-			// Send approval email (plain HTML)
+			// Send approval email using proper template
 			await sendEmail({
 				to: user.email,
-				subject: "Your verification has been approved",
-				html: getVerificationStatusEmailHtml({
+				templateId: "verificationApproved",
+				context: {
 					name: user.name,
-					status: "APPROVED",
-				}),
+					loginUrl: `${getBaseUrl()}/app`,
+				},
 			});
 			return c.json({ user });
 		},
@@ -119,19 +102,22 @@ export const verificationDocsAdminRouter = new Hono()
 				where: { id: userId },
 				data: {
 					verificationStatus: "REJECTED",
+					isVerified: false, // Ensure isVerified is false
+					verified: false, // Also set the verified field
 					verificationReviewedBy: admin.id,
 					verificationReviewedAt: new Date(),
+					verificationNotes: notes || "No specific feedback provided.",
 				},
 			});
-			// Send rejection email (plain HTML)
+			// Send rejection email using proper template
 			await sendEmail({
 				to: user.email,
-				subject: "Your verification has been rejected",
-				html: getVerificationStatusEmailHtml({
+				templateId: "verificationRejected",
+				context: {
 					name: user.name,
-					status: "REJECTED",
-					notes,
-				}),
+					notes: notes || "No specific feedback provided.",
+					resubmitUrl: `${getBaseUrl()}/app/onboarding`,
+				},
 			});
 			return c.json({ user });
 		},

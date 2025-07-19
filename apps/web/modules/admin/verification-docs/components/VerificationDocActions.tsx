@@ -1,5 +1,11 @@
 import React, { useState } from "react";
 import type { VerificationDoc } from "./VerificationDocsList";
+import { Button } from "@ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@ui/components/card";
+import { Label } from "@ui/components/label";
+import { Separator } from "@ui/components/separator";
+import { CheckCircle, XCircle, Clock, MessageSquare, Loader2 } from "lucide-react";
+import { cn } from "@ui/lib";
 
 interface VerificationDocActionsProps {
 	doc: VerificationDoc;
@@ -17,36 +23,85 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 	const [notes, setNotes] = useState("");
 
 	return (
-		<div className="space-y-2">
-			<textarea
-				className="w-full border rounded p-2 text-sm"
-				placeholder="Add notes (optional)"
-				value={notes}
-				onChange={(e) => setNotes(e.target.value)}
-				rows={2}
-			/>
-			<div className="flex gap-2">
-				<button
-					type="button"
-					className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-					onClick={() => onApprove(doc.id, notes)}
-					disabled={loading}
-					data-testid="approve-button"
-				>
-					{loading && <span className="spinner">⏳</span>}
-					Approve
-				</button>
-				<button
-					type="button"
-					className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-					onClick={() => onReject(doc.id, notes)}
-					disabled={loading}
-					data-testid="reject-button"
-				>
-					{loading && <span className="spinner">⏳</span>}
-					Reject
-				</button>
-			</div>
-		</div>
+		<Card>
+			<CardHeader>
+				<CardTitle className="flex items-center gap-2">
+					<MessageSquare className="h-5 w-5" />
+					Review Actions
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="space-y-2">
+					<Label htmlFor="notes" className="text-sm font-medium">
+						Review Notes (Optional)
+					</Label>
+					<textarea
+						id="notes"
+						className="flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+						placeholder="Add notes or feedback for the user..."
+						value={notes}
+						onChange={(e) => setNotes(e.target.value)}
+						rows={3}
+					/>
+				</div>
+				
+				<Separator />
+				
+				<div className="flex flex-col sm:flex-row gap-3">
+					<Button
+						variant="primary"
+						size="lg"
+						onClick={() => onApprove(doc.id, notes)}
+						disabled={loading}
+						className="flex-1 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+						data-testid="approve-button"
+					>
+						{loading ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<CheckCircle className="h-4 w-4" />
+						)}
+						Approve Document
+					</Button>
+					
+					<Button
+						variant="error"
+						size="lg"
+						onClick={() => onReject(doc.id, notes)}
+						disabled={loading}
+						className="flex-1"
+						data-testid="reject-button"
+					>
+						{loading ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<XCircle className="h-4 w-4" />
+						)}
+						Reject Document
+					</Button>
+					
+					<Button
+						variant="outline"
+						size="lg"
+						onClick={() => {
+							// For now, just close the selection - could be enhanced to save as "for later review"
+							window.location.reload();
+						}}
+						disabled={loading}
+						className="flex-1"
+					>
+						<Clock className="h-4 w-4" />
+						Review Later
+					</Button>
+				</div>
+				
+				<div className="bg-muted/50 p-3 rounded-lg">
+					<p className="text-xs text-muted-foreground flex items-start gap-2">
+						<MessageSquare className="h-3 w-3 mt-0.5 flex-shrink-0" />
+						<span>Add specific feedback to help users understand any issues with their documents. Notes will be sent to the user upon approval or rejection.</span>
+					</p>
+				</div>
+			</CardContent>
+		</Card>
 	);
 };

@@ -51,6 +51,18 @@ export default async function middleware(req: NextRequest) {
 			);
 		}
 
+		// NEW: Admin verification check - CRITICAL SECURITY FIX
+		// Users must be verified by admin after completing onboarding
+		if (
+			session.user.onboardingComplete &&
+			!session.user.isVerified &&
+			pathname !== "/app/verification-pending"
+		) {
+			return NextResponse.redirect(
+				new URL("/app/verification-pending", origin)
+			);
+		}
+
 		if (
 			!locale ||
 			(session.user.locale && locale !== session.user.locale)
@@ -101,6 +113,7 @@ export default async function middleware(req: NextRequest) {
 				"/app/choose-plan",
 				"/app/onboarding",
 				"/app/new-organization",
+				"/app/verification-pending",
 			];
 			if (!activePlan && !validPathsWithoutPlan.includes(pathname)) {
 				return NextResponse.redirect(

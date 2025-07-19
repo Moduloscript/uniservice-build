@@ -6,6 +6,15 @@ import { VerificationDocActions } from "../../../../../../modules/admin/verifica
 import { VerificationDocPreview } from "../../../../../../modules/admin/verification-docs/components/VerificationDocPreview";
 import type { VerificationDoc } from "../../../../../../modules/admin/verification-docs/components/VerificationDocsList";
 import { VerificationDocsList } from "../../../../../../modules/admin/verification-docs/components/VerificationDocsList";
+import { Button } from "@ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ui/components/card";
+import { Input } from "@ui/components/input";
+import { Label } from "@ui/components/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ui/components/select";
+import { Badge } from "@ui/components/badge";
+import { Separator } from "@ui/components/separator";
+import { Search, Users, GraduationCap, Building2, Calendar, SortAsc, RefreshCw, FileCheck2, AlertCircle, ClipboardList, Filter, X, BarChart3 } from "lucide-react";
+import { cn } from "@ui/lib";
 
 const fetchPendingDocs = async (): Promise<VerificationDoc[]> => {
 	const res = await fetch("/api/admin/verification-docs/pending");
@@ -13,7 +22,24 @@ const fetchPendingDocs = async (): Promise<VerificationDoc[]> => {
 		throw new Error("Failed to fetch pending docs");
 	}
 	const data = await res.json();
-	return data.users ?? [];
+	// Transform API response to match VerificationDoc interface
+	return (data.users ?? []).map((user: any) => ({
+		id: user.id,
+		userId: user.id,
+		userName: user.name || 'Unknown User',
+		userRole: user.userType || 'Unknown',
+		documentUrl: user.verificationDoc || user.studentIdCardUrl || '',
+		submittedAt: user.createdAt || new Date().toISOString(),
+		status: user.verificationStatus || 'PENDING',
+		notes: user.verificationNotes,
+		userType: user.userType,
+		matricNumber: user.matricNumber,
+		department: user.department,
+		level: user.level,
+		providerCategory: user.providerCategory,
+		providerVerificationDocs: user.providerVerificationDocs,
+		studentIdCardUrl: user.studentIdCardUrl,
+	}));
 };
 
 const approveDoc = async ({
@@ -74,6 +100,9 @@ const AdminVerificationDocsPage: React.FC = () => {
 	const queryClient = useQueryClient();
 	const [selected, setSelected] = useState<VerificationDoc | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [filterType, setFilterType] = useState<"all" | "student" | "provider">("all");
+	const [sortBy, setSortBy] = useState<"date" | "name" | "type">("date");
 
 	const {
 		data: docs = [],
@@ -116,6 +145,32 @@ const AdminVerificationDocsPage: React.FC = () => {
 		await rejectMutation.mutateAsync({ docId, notes });
 	};
 
+	// Filter documents based on search and filter type
+	const filteredDocs = docs.filter(doc => {
+		const matchesSearch = searchTerm === "" || 
+			doc.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			(doc.matricNumber && doc.matricNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+			(doc.department && doc.department.toLowerCase().includes(searchTerm.toLowerCase()));
+		
+		const matchesFilter = filterType === "all" ||
+			(filterType === "student" && doc.userType === "STUDENT") ||
+			(filterType === "provider" && doc.userType === "PROVIDER");
+		
+		return matchesSearch && matchesFilter;
+	});
+	
+	// Apply sorting to filtered documents
+	const sortedDocs = [...filteredDocs].sort((a, b) => {
+		if (sortBy === "date") {
+			return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+		} else if (sortBy === "name") {
+			return a.userName.localeCompare(b.userName);
+		} else if (sortBy === "type") {
+			return (a.userType || "").localeCompare(b.userType || "");
+		}
+		return 0;
+	});
+
 	return (
 		<div className="max-w-6xl mx-auto py-8 px-2 md:px-4 relative">
 			<h1 className="text-2xl font-bold mb-6">
@@ -137,18 +192,141 @@ const AdminVerificationDocsPage: React.FC = () => {
 					</div>
 				</div>
 			)}
+			<div className="mb-6 space-y-4">
+				{/* Header Stats */}
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-4">
+						<div className="flex items-center gap-2">
+							<ClipboardList className="h-6 w-6 text-primary" />
+							<h2 className="text-xl font-semibold text-foreground">Document Queue</h2>
+						</div>
+						<div className="flex items-center gap-3">
+							<Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
+								<BarChart3 className="h-3 w-3 mr-1" />
+								{filteredDocs.length} showing
+							</Badge>
+							{docs.length !== filteredDocs.length && (
+								<span className="text-xs text-muted-foreground">of {docs.length} total</span>
+							)}
+						</div>
+					</div>
+				</div>
+				
+				{/* Filters and Search */}
+				<Card className="p-4">
+					<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+						<div className="flex flex-wrap items-center gap-3">
+							<div className="flex items-center gap-2">
+								<Filter className="h-4 w-4 text-muted-foreground" />
+								<span className="text-sm font-medium text-foreground">Filter:</span>
+							</div>
+							
+							<Select value={filterType} onValueChange={(value: "all" | "student" | "provider") => setFilterType(value)}>
+								<SelectTrigger className="w-40">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">
+										<div className="flex items-center gap-2">
+											<Users className="h-4 w-4" />
+											All Users
+										</div>
+									</SelectItem>
+									<SelectItem value="student">
+										<div className="flex items-center gap-2">
+											<GraduationCap className="h-4 w-4" />
+											Students Only
+										</div>
+									</SelectItem>
+									<SelectItem value="provider">
+										<div className="flex items-center gap-2">
+											<Building2 className="h-4 w-4" />
+											Providers Only
+										</div>
+									</SelectItem>
+								</SelectContent>
+							</Select>
+							
+							<Select value={sortBy} onValueChange={(value: "date" | "name" | "type") => setSortBy(value)}>
+								<SelectTrigger className="w-40">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="date">
+										<div className="flex items-center gap-2">
+											<Calendar className="h-4 w-4" />
+											Sort by Date
+										</div>
+									</SelectItem>
+									<SelectItem value="name">
+										<div className="flex items-center gap-2">
+											<SortAsc className="h-4 w-4" />
+											Sort by Name
+										</div>
+									</SelectItem>
+									<SelectItem value="type">
+										<div className="flex items-center gap-2">
+											<Users className="h-4 w-4" />
+											Sort by Type
+										</div>
+									</SelectItem>
+								</SelectContent>
+							</Select>
+							
+							{/* Quick Reset Button */}
+							{(filterType !== "all" || searchTerm !== "") && (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => { setFilterType("all"); setSearchTerm(""); }}
+									className="text-xs"
+								>
+									<RefreshCw className="h-3 w-3 mr-1" />
+									Reset
+								</Button>
+							)}
+						</div>
+						
+						<div className="flex gap-2">
+							<div className="relative">
+								<Input
+									type="text"
+									placeholder="Search names, IDs..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className="pl-9 w-64"
+								/>
+								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+									<Search className="h-4 w-4 text-muted-foreground" />
+								</div>
+							</div>
+							{searchTerm && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => setSearchTerm("")}
+									className="px-2"
+								>
+									<X className="h-4 w-4" />
+								</Button>
+							)}
+						</div>
+					</div>
+				</Card>
+			</div>
+			
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-h-[500px]">
 				<div className="md:col-span-1 relative">
 					<div className="sticky top-24">
 						{isFetching ? (
 							<LoadingOverlay />
-						) : docs.length === 0 ? (
+						) : filteredDocs.length === 0 ? (
 							<EmptyState />
 						) : (
-							<VerificationDocsList
-								docs={docs}
-								onSelect={setSelected}
-							/>
+									<VerificationDocsList
+										docs={sortedDocs}
+										onSelect={setSelected}
+									/>
 						)}
 					</div>
 				</div>
