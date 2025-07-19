@@ -172,8 +172,8 @@ const AdminVerificationDocsPage: React.FC = () => {
 	});
 
 	return (
-		<div className="max-w-6xl mx-auto py-8 px-2 md:px-4 relative">
-			<h1 className="text-2xl font-bold mb-6">
+		<div className="max-w-6xl mx-auto py-12 px-4 md:px-8 lg:px-12 relative">
+			<h1 className="text-2xl font-bold mb-8">
 				Verification Document Review
 			</h1>
 			{(error || approveMutation.error || rejectMutation.error) && (
@@ -192,39 +192,43 @@ const AdminVerificationDocsPage: React.FC = () => {
 					</div>
 				</div>
 			)}
-			<div className="mb-6 space-y-4">
+			<div className="mb-8 space-y-6">
 				{/* Header Stats */}
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<div className="flex items-center gap-2">
-							<ClipboardList className="h-6 w-6 text-primary" />
-							<h2 className="text-xl font-semibold text-foreground">Document Queue</h2>
-						</div>
-						<div className="flex items-center gap-3">
-							<Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
-								<BarChart3 className="h-3 w-3 mr-1" />
-								{filteredDocs.length} showing
-							</Badge>
-							{docs.length !== filteredDocs.length && (
-								<span className="text-xs text-muted-foreground">of {docs.length} total</span>
-							)}
+				<Card className="py-6 px-6">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<div className="flex items-center gap-3">
+								<ClipboardList className="h-6 w-6 text-primary" />
+								<h2 className="text-xl font-semibold text-foreground">Document Queue</h2>
+							</div>
+							<div className="flex items-center gap-4">
+								<Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium">
+									<BarChart3 className="h-3 w-3 mr-2" />
+									{filteredDocs.length} showing
+								</Badge>
+								{docs.length !== filteredDocs.length && (
+									<span className="text-xs text-muted-foreground">of {docs.length} total</span>
+								)}
+							</div>
 						</div>
 					</div>
-				</div>
+				</Card>
 				
 				{/* Filters and Search */}
-				<Card className="p-4">
-					<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-						<div className="flex flex-wrap items-center gap-3">
-							<div className="flex items-center gap-2">
-								<Filter className="h-4 w-4 text-muted-foreground" />
-								<span className="text-sm font-medium text-foreground">Filter:</span>
-							</div>
-							
-							<Select value={filterType} onValueChange={(value: "all" | "student" | "provider") => setFilterType(value)}>
-								<SelectTrigger className="w-40">
-									<SelectValue />
-								</SelectTrigger>
+				<Card className="py-6 px-6">
+					<div className="space-y-4">
+						{/* Filter Section */}
+						<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+							<div className="flex flex-wrap items-center gap-4">
+								<div className="flex items-center gap-2">
+									<Filter className="h-4 w-4 text-muted-foreground" />
+									<span className="text-sm font-medium text-foreground">Filters:</span>
+								</div>
+								
+								<Select value={filterType} onValueChange={(value: "all" | "student" | "provider") => setFilterType(value)}>
+									<SelectTrigger className="w-44">
+										<SelectValue />
+									</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="all">
 										<div className="flex items-center gap-2">
@@ -285,37 +289,45 @@ const AdminVerificationDocsPage: React.FC = () => {
 									Reset
 								</Button>
 							)}
+							</div>
 						</div>
 						
-						<div className="flex gap-2">
-							<div className="relative">
-								<Input
-									type="text"
-									placeholder="Search names, IDs..."
-									value={searchTerm}
-									onChange={(e) => setSearchTerm(e.target.value)}
-									className="pl-9 w-64"
-								/>
-								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									<Search className="h-4 w-4 text-muted-foreground" />
-								</div>
+						{/* Search Section */}
+						<div className="flex items-center gap-3">
+							<div className="flex items-center gap-2">
+								<Search className="h-4 w-4 text-muted-foreground" />
+								<span className="text-sm font-medium text-foreground">Search:</span>
 							</div>
-							{searchTerm && (
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setSearchTerm("")}
-									className="px-2"
-								>
-									<X className="h-4 w-4" />
-								</Button>
-							)}
+							<div className="flex gap-2">
+								<div className="relative">
+									<Input
+										type="text"
+										placeholder="Search names, matric numbers, departments..."
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+										className="pl-9 w-72"
+									/>
+									<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+										<Search className="h-4 w-4 text-muted-foreground" />
+									</div>
+								</div>
+								{searchTerm && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setSearchTerm("")}
+										className="px-2"
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								)}
+							</div>
 						</div>
 					</div>
 				</Card>
 			</div>
 			
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-h-[500px]">
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 min-h-[500px]">
 				<div className="md:col-span-1 relative">
 					<div className="sticky top-24">
 						{isFetching ? (
@@ -335,7 +347,7 @@ const AdminVerificationDocsPage: React.FC = () => {
 						{(approveMutation.isPending ||
 							rejectMutation.isPending) && <LoadingOverlay />}
 						{selected ? (
-							<div className="bg-white rounded-lg shadow p-6 space-y-4 border">
+							<div className="space-y-6">
 								<VerificationDocPreview doc={selected} />
 								<VerificationDocActions
 									doc={selected}

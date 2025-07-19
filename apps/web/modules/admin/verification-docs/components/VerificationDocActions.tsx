@@ -24,42 +24,42 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 
 	return (
 		<Card>
-			<CardHeader>
+			<CardHeader className="pb-4">
 				<CardTitle className="flex items-center gap-2">
 					<MessageSquare className="h-5 w-5" />
 					Review Actions
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-4">
-				<div className="space-y-2">
+			<CardContent className="space-y-6">
+				<div className="space-y-3">
 					<Label htmlFor="notes" className="text-sm font-medium">
 						Review Notes (Optional)
 					</Label>
 					<textarea
 						id="notes"
-						className="flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+						className="flex min-h-[100px] w-full rounded-md border border-input bg-card px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
 						placeholder="Add notes or feedback for the user..."
 						value={notes}
 						onChange={(e) => setNotes(e.target.value)}
-						rows={3}
+						rows={4}
 					/>
 				</div>
 				
 				<Separator />
 				
-				<div className="flex flex-col sm:flex-row gap-3">
+				<div className="flex flex-col sm:flex-row gap-4">
 					<Button
 						variant="primary"
 						size="lg"
 						onClick={() => onApprove(doc.id, notes)}
 						disabled={loading}
-						className="flex-1 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+						className="flex-1 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700 h-12"
 						data-testid="approve-button"
 					>
 						{loading ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
+							<Loader2 className="h-4 w-4 animate-spin mr-2" />
 						) : (
-							<CheckCircle className="h-4 w-4" />
+							<CheckCircle className="h-4 w-4 mr-2" />
 						)}
 						Approve Document
 					</Button>
@@ -69,13 +69,13 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 						size="lg"
 						onClick={() => onReject(doc.id, notes)}
 						disabled={loading}
-						className="flex-1"
+						className="flex-1 h-12"
 						data-testid="reject-button"
 					>
 						{loading ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
+							<Loader2 className="h-4 w-4 animate-spin mr-2" />
 						) : (
-							<XCircle className="h-4 w-4" />
+							<XCircle className="h-4 w-4 mr-2" />
 						)}
 						Reject Document
 					</Button>
@@ -88,14 +88,14 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 							window.location.reload();
 						}}
 						disabled={loading}
-						className="flex-1"
+						className="flex-1 h-12"
 					>
-						<Clock className="h-4 w-4" />
+						<Clock className="h-4 w-4 mr-2" />
 						Review Later
 					</Button>
 				</div>
 				
-				<div className="bg-muted/50 p-3 rounded-lg">
+				<div className="bg-muted/50 p-4 rounded-lg">
 					<p className="text-xs text-muted-foreground flex items-start gap-2">
 						<MessageSquare className="h-3 w-3 mt-0.5 flex-shrink-0" />
 						<span>Add specific feedback to help users understand any issues with their documents. Notes will be sent to the user upon approval or rejection.</span>

@@ -89,17 +89,17 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 	onSelect,
 }) => {
 	return (
-		<div className="space-y-3">
+		<div className="space-y-4">
 			{docs.length === 0 ? (
 				<Card className="border-dashed">
-					<CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+					<CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
 						<FileCheck2 className="h-12 w-12 mb-4 text-gray-400" />
 						<p className="font-medium text-lg mb-1">No pending verifications</p>
 						<p className="text-sm">All documents have been reviewed</p>
 					</CardContent>
 				</Card>
 			) : (
-				<div className="space-y-2">
+				<div className="space-y-4">
 					{docs.map((doc) => {
 						const docCount = getDocumentCount(doc);
 						const timeAgo = formatTimeAgo(doc.submittedAt);
@@ -107,7 +107,7 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 						const UserTypeIcon = getUserTypeIcon(doc.userType);
 						return (
 							<Card key={doc.id} className="border hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => onSelect(doc)}>
-								<CardContent className="p-4">
+								<CardContent className="p-6">
 									<div className="flex items-start justify-between">
 										{/* Left side - User info */}
 										<div className="flex-1 min-w-0">
