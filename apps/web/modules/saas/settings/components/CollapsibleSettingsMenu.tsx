@@ -33,12 +33,32 @@ type CollapsibleSettingsMenuProps = {
 
 export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuProps) {
   const pathname = usePathname()
-  const { open } = useSidebar()
+  const { open, isMobile, openMobile, setOpenMobile } = useSidebar()
   
   const isActiveMenuItem = (href: string) => pathname.includes(href)
 
   return (
-    <Sidebar collapsible="icon">
+    <>
+      {/* Mobile backdrop overlay */}
+      {openMobile && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden"
+          onClick={() => setOpenMobile(false)}
+          aria-hidden="true"
+        />
+      )}
+    <Sidebar 
+      collapsible="icon"
+      className={cn(
+        /* Base styles for all screens */
+        "transition-all duration-300 ease-in-out",
+        /* Mobile: Fixed position overlay */
+        "fixed inset-y-0 left-0 z-50 w-64 transform",
+        "md:relative md:z-auto md:translate-x-0",
+        /* Show/hide based on mobile state */
+        openMobile ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
       <SidebarHeader className={cn(
         "border-b border-sidebar-border transition-all duration-200",
         open ? "p-4" : "p-2 justify-center"
@@ -63,14 +83,21 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
       
       <SidebarContent className={cn(
         "transition-all duration-200",
-        open ? "p-2" : "p-1"
+        /* Mobile: Always show full labels when open */
+        "sm:p-2",
+        /* Desktop: Responsive padding based on open state */
+        open ? "md:p-2" : "md:p-1"
       )}>
         {menuItems.map((item, i) => (
           <SidebarGroup key={i} className={cn(
             "transition-all duration-200",
             open ? "mb-4" : "mb-2"
           )}>
-            {open && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
+            {/* Mobile: Always show labels, Desktop: Only when open */}
+            <SidebarGroupLabel className={cn(
+              "sm:block", /* Always visible on mobile */
+              open ? "md:block" : "md:hidden" /* Conditional on desktop */
+            )}>Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {item.items.map((subitem, k) => (
@@ -80,7 +107,10 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
                       isActive={isActiveMenuItem(subitem.href)}
                       className={cn(
                         "transition-all duration-200",
-                        open ? "justify-start px-2" : "justify-center px-1 size-8"
+                        /* Mobile: Always full width with labels */
+                        "sm:justify-start sm:px-3 sm:py-3 sm:min-h-[44px]", /* 44px touch target */
+                        /* Desktop: Responsive based on open state */
+                        open ? "md:justify-start md:px-2" : "md:justify-center md:px-1 md:size-8"
                       )}
                     >
                       <Link 
@@ -105,6 +135,7 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
         ))}
       </SidebarContent>
     </Sidebar>
+    </>
   )
 }
 

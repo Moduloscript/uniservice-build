@@ -34,7 +34,9 @@ const SidebarProvider = React.forwardRef<
     onOpenChange?: (open: boolean) => void
   }
 >(({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
-  const isMobile = React.useMemo(() => false, []) // Simplified for server-side rendering
+  // Pure CSS approach - no JavaScript state needed
+  // We'll use CSS media queries to handle mobile detection
+  const isMobile = false // Let CSS handle responsive behavior
   const [openMobile, setOpenMobile] = React.useState(false)
 
   // This is the internal state of the sidebar.
@@ -184,7 +186,21 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, setOpenMobile, openMobile, isMobile } = useSidebar()
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    onClick?.(event)
+    
+    // Check if we're in mobile view using window width
+    // This is more reliable than the isMobile state for current screen size
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      // Mobile: Toggle mobile overlay
+      setOpenMobile(!openMobile)
+    } else {
+      // Desktop: Toggle sidebar collapse
+      toggleSidebar()
+    }
+  }
 
   return (
     <Button
@@ -192,10 +208,7 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
+      onClick={handleClick}
       {...props}
     >
       <PanelLeftIcon className="size-4" />
