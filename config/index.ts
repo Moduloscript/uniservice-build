@@ -87,6 +87,9 @@ export const config = {
 			enabled: true,
 			// whether the sidebar layout should be used
 			useSidebarLayout: true,
+			// MIGRATION FLAG: whether to use the enhanced sidebar system (AppWrapperEnhanced)
+			// Set to false during migration for safety, true when ready to deploy
+			enableEnhancedSidebar: false,
 		},
 		// the marketing part of the application
 		marketing: {
