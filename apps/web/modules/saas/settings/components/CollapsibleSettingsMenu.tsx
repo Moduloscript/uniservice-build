@@ -55,7 +55,7 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
             {open && (
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{item.title}</span>
-                <span className="truncate text-xs text-sidebar-muted-foreground">Administration</span>
+                <span className="truncate text-xs text-sidebar-muted-foreground">Panel</span>
               </div>
             )}
           </div>
@@ -71,7 +71,7 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
             "transition-all duration-200",
             open ? "mb-4" : "mb-2"
           )}>
-            {open && <SidebarGroupLabel>{item.title}</SidebarGroupLabel>}
+            {open && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {item.items.map((subitem, k) => (

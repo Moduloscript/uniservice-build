@@ -71,12 +71,16 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 				]}
 			/>
 			<SidebarInset>
-				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-					<SidebarTrigger className="-ml-1" />
-					<Separator orientation="vertical" className="mr-2 h-4" />
-					<div className="flex flex-col">
-						<h1 className="text-lg font-semibold">{t("admin.title")}</h1>
-						<p className="text-sm text-muted-foreground">{t("admin.description")}</p>
+				<header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+					<div className="flex items-center gap-2">
+						<SidebarTrigger className="" />
+						<Separator orientation="vertical" className="h-4" />
+					</div>
+					<div className="flex min-w-0 flex-1 items-center gap-3">
+						<div className="flex min-w-0 flex-col">
+							<h1 className="truncate text-lg font-semibold">{t("admin.title")}</h1>
+							<p className="truncate text-sm text-muted-foreground">{t("admin.description")}</p>
+						</div>
 					</div>
 				</header>
 				<div className="flex flex-1 flex-col gap-4 p-4">
