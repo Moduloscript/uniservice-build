@@ -39,7 +39,7 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
   const isActiveMenuItem = (href: string) => pathname.includes(href)
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar collapsible="icon">
       <SidebarHeader className={cn(
         "border-b border-sidebar-border transition-all duration-200",
         open ? "p-4" : "p-2 justify-center"
