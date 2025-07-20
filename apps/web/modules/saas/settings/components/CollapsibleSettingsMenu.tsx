@@ -34,37 +34,68 @@ type CollapsibleSettingsMenuProps = {
 
 export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuProps) {
   const pathname = usePathname()
+  const { open } = useSidebar()
   
   const isActiveMenuItem = (href: string) => pathname.includes(href)
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className={cn(
+        "border-b border-sidebar-border transition-all duration-200",
+        open ? "p-4" : "p-2 justify-center"
+      )}>
         {menuItems.map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+          <div key={i} className={cn(
+            "flex items-center transition-all duration-200",
+            open ? "gap-2" : "justify-center"
+          )}>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0">
               {item.avatar}
             </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">{item.title}</span>
-              <span className="truncate text-xs text-sidebar-muted-foreground">Administration</span>
-            </div>
+            {open && (
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{item.title}</span>
+                <span className="truncate text-xs text-sidebar-muted-foreground">Administration</span>
+              </div>
+            )}
           </div>
         ))}
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className={cn(
+        "transition-all duration-200",
+        open ? "p-2" : "p-1"
+      )}>
         {menuItems.map((item, i) => (
-          <SidebarGroup key={i}>
-            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+          <SidebarGroup key={i} className={cn(
+            "transition-all duration-200",
+            open ? "mb-4" : "mb-2"
+          )}>
+            {open && <SidebarGroupLabel>{item.title}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {item.items.map((subitem, k) => (
                   <SidebarMenuItem key={k}>
-                    <SidebarMenuButton asChild isActive={isActiveMenuItem(subitem.href)}>
-                      <Link href={subitem.href}>
-                        {subitem.icon}
-                        <span>{subitem.title}</span>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActiveMenuItem(subitem.href)}
+                      className={cn(
+                        "transition-all duration-200",
+                        open ? "justify-start px-2" : "justify-center px-1 size-8"
+                      )}
+                    >
+                      <Link 
+                        href={subitem.href}
+                        className={cn(
+                          "flex items-center transition-all duration-200",
+                          open ? "gap-2" : "justify-center"
+                        )}
+                        title={!open ? subitem.title : undefined}
+                      >
+                        <span className="shrink-0">
+                          {subitem.icon}
+                        </span>
+                        {open && <span>{subitem.title}</span>}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

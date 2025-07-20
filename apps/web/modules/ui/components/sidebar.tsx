@@ -96,6 +96,8 @@ const SidebarProvider = React.forwardRef<
           "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]/sidebar-wrapper:bg-sidebar",
           className
         )}
+        data-state={state}
+        data-collapsible={state === "collapsed" ? "icon" : ""}
         ref={ref}
         {...props}
       >
@@ -112,13 +114,13 @@ const Sidebar = React.forwardRef<
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
   }
->(({ variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+>(({ variant = "sidebar", collapsible = "icon", className, children, ...props }, ref) => {
+  const { isMobile, state, open, openMobile, setOpenMobile } = useSidebar()
 
   if (collapsible === "none") {
     return (
       <div
-        className={cn("flex h-full w-sidebar flex-col bg-sidebar text-sidebar-foreground", className)}
+        className={cn("flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground", className)}
         ref={ref}
         {...props}
       >
@@ -135,7 +137,7 @@ const Sidebar = React.forwardRef<
       >
         <div
           className={cn(
-            "fixed inset-y-0 left-0 z-50 h-auto w-sidebar bg-sidebar p-0 text-sidebar-foreground shadow-lg transition-transform duration-200 ease-in-out",
+            "fixed inset-y-0 left-0 z-50 h-auto w-64 bg-sidebar p-0 text-sidebar-foreground shadow-lg transition-transform duration-200 ease-in-out",
             className
           )}
           onClick={(e) => e.stopPropagation()}
@@ -148,23 +150,28 @@ const Sidebar = React.forwardRef<
     )
   }
 
+  const sidebarWidth = open ? "w-64" : "w-12"
+
   return (
     <div
       ref={ref}
-      className="group peer hidden transition-all duration-200 ease-in-out md:block"
+      className={cn(
+        "group peer hidden transition-all duration-200 ease-in-out md:block relative",
+        sidebarWidth,
+        "shrink-0"
+      )}
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       {...props}
     >
       <div
         className={cn(
-          "duration-200 relative h-svh w-sidebar shrink-0 overflow-hidden border-r bg-transparent transition-[width] ease-linear",
-          "group-data-[collapsible=offcanvas]/sidebar-wrapper:w-0",
-          "group-data-[collapsible=icon]/sidebar-wrapper:w-sidebar-icon",
+          "relative h-screen border-r bg-sidebar text-sidebar-foreground transition-all duration-200 ease-in-out overflow-hidden",
+          open ? "w-64" : "w-12",
           className
         )}
       >
-        <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
+        <div className="flex h-full w-full flex-col">
           {children}
         </div>
       </div>
@@ -206,8 +213,7 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background",
-        "peer-data-[variant=inset]/sidebar-wrapper:min-h-[calc(100svh-4rem)] md:peer-data-[variant=inset]/sidebar-wrapper:m-2 md:peer-data-[state=collapsed]/sidebar-wrapper:ml-2 md:peer-data-[variant=inset]/sidebar-wrapper:ml-0 md:peer-data-[variant=inset]/sidebar-wrapper:rounded-xl md:peer-data-[variant=inset]/sidebar-wrapper:shadow",
+        "relative flex min-h-screen flex-1 flex-col bg-background transition-all duration-200 ease-in-out",
         className
       )}
       {...props}
