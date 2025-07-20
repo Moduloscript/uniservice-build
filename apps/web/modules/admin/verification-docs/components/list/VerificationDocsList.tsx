@@ -4,8 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { STATUS_COLORS, type VerificationDoc } from "@types";
 import { Badge } from "@ui/components/badge";
 import { Button } from "@ui/components/button";
-import { Card, CardContent } from "@ui/components/card";
+import { Card, CardContent, CardHeader } from "@ui/components/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@ui/components/dropdown-menu";
 import { cn } from "@ui/lib";
+import { CalendarIcon, EyeIcon, MoreVerticalIcon, UserIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { ErrorBoundary } from "../shared/ErrorBoundary";
 import { VerificationDocListEmpty } from "./VerificationDocListEmpty";
@@ -63,28 +70,52 @@ function StatusBadge({ status, className }: Omit<StatusBadgeProps, "variant">) {
 
 function VerificationDocItem({ doc }: { doc: VerificationDoc }) {
 	return (
-		<Card>
-			<CardContent className="p-4">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
+		<Card className="hover:shadow-md transition-shadow duration-200">
+			<CardContent className="p-6">
+				<div className="flex items-start justify-between">
+					<div className="flex items-start gap-4 flex-1">
 						<StatusBadge status={doc.status.state} />
 
-						<div>
-							<h3 className="font-medium">{doc.userName}</h3>
-							<p className="text-sm text-muted-foreground">
-								{doc.userType} • Submitted{" "}
-								{new Date(doc.submittedAt).toLocaleDateString()}
-							</p>
+						<div className="flex-1 min-w-0">
+							<div className="flex items-center gap-2 mb-2">
+								<UserIcon className="size-4 text-muted-foreground" />
+								<h3 className="font-semibold text-lg truncate">{doc.userName}</h3>
+							</div>
+							<div className="flex items-center gap-4 text-sm text-muted-foreground">
+								<span className="flex items-center gap-1">
+									<UserIcon className="size-3" />
+									{doc.userType}
+								</span>
+								<span className="flex items-center gap-1">
+									<CalendarIcon className="size-3" />
+									Submitted {new Date(doc.submittedAt).toLocaleDateString()}
+								</span>
+							</div>
 						</div>
 					</div>
 
 					<div className="flex items-center gap-2">
-						<Button variant="outline" size="sm">
+						<Button variant="outline" size="sm" className="flex items-center gap-2">
+							<EyeIcon className="size-4" />
 							View Details
 						</Button>
-						<Button variant="outline" size="sm" className="w-9 p-0">
-							⋮
-						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline" size="sm" className="w-9 p-0">
+									<MoreVerticalIcon className="size-4" />
+									<span className="sr-only">Open menu</span>
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem>
+									<EyeIcon className="mr-2 size-4" />
+									View Details
+								</DropdownMenuItem>
+								<DropdownMenuItem>
+									Edit
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
 			</CardContent>

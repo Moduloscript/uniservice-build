@@ -85,7 +85,7 @@ interface VerificationDocsListProps {
 }
 
 export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
-	docs,
+	docs = [],
 	onSelect,
 }) => {
 	return (

@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   useSidebar 
 } from "@ui/components/sidebar"
 
@@ -105,7 +104,6 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   )
 }

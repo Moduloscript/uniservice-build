@@ -17,29 +17,39 @@ import { Search, Users, GraduationCap, Building2, Calendar, SortAsc, RefreshCw, 
 import { cn } from "@ui/lib";
 
 const fetchPendingDocs = async (): Promise<VerificationDoc[]> => {
-	const res = await fetch("/api/admin/verification-docs/pending");
-	if (!res.ok) {
-		throw new Error("Failed to fetch pending docs");
+	try {
+		const res = await fetch("/api/admin/verification-docs/pending");
+		if (!res.ok) {
+			throw new Error(`Failed to fetch pending docs: ${res.status} ${res.statusText}`);
+		}
+		const data = await res.json();
+		// Ensure data and data.users exist and are arrays
+		if (!data || !Array.isArray(data.users)) {
+			console.warn('API returned invalid data structure:', data);
+			return [];
+		}
+		// Transform API response to match VerificationDoc interface
+		return data.users.map((user: any) => ({
+			id: user?.id || Math.random().toString(36),
+			userId: user?.id || '',
+			userName: user?.name || 'Unknown User',
+			userRole: user?.userType || 'Unknown',
+			documentUrl: user?.verificationDoc || user?.studentIdCardUrl || '',
+			submittedAt: user?.createdAt || new Date().toISOString(),
+			status: user?.verificationStatus || 'PENDING',
+			notes: user?.verificationNotes,
+			userType: user?.userType,
+			matricNumber: user?.matricNumber,
+			department: user?.department,
+			level: user?.level,
+			providerCategory: user?.providerCategory,
+			providerVerificationDocs: user?.providerVerificationDocs,
+			studentIdCardUrl: user?.studentIdCardUrl,
+		}));
+	} catch (error) {
+		console.error('Error fetching pending docs:', error);
+		return [];
 	}
-	const data = await res.json();
-	// Transform API response to match VerificationDoc interface
-	return (data.users ?? []).map((user: any) => ({
-		id: user.id,
-		userId: user.id,
-		userName: user.name || 'Unknown User',
-		userRole: user.userType || 'Unknown',
-		documentUrl: user.verificationDoc || user.studentIdCardUrl || '',
-		submittedAt: user.createdAt || new Date().toISOString(),
-		status: user.verificationStatus || 'PENDING',
-		notes: user.verificationNotes,
-		userType: user.userType,
-		matricNumber: user.matricNumber,
-		department: user.department,
-		level: user.level,
-		providerCategory: user.providerCategory,
-		providerVerificationDocs: user.providerVerificationDocs,
-		studentIdCardUrl: user.studentIdCardUrl,
-	}));
 };
 
 const approveDoc = async ({
@@ -79,7 +89,7 @@ const rejectDoc = async ({
 function EmptyState() {
 	return (
 		<div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
-			<span className="text-4xl mb-2">📄</span>
+			<FileCheck2 className="h-12 w-12 mb-4 text-muted-foreground" />
 			<p className="text-lg font-medium">No pending verifications</p>
 			<p className="text-sm">
 				All onboarding requests have been reviewed.
@@ -335,10 +345,7 @@ const AdminVerificationDocsPage: React.FC = () => {
 						) : filteredDocs.length === 0 ? (
 							<EmptyState />
 						) : (
-									<VerificationDocsList
-										docs={sortedDocs}
-										onSelect={setSelected}
-									/>
+							<VerificationDocsList docs={sortedDocs} onSelect={setSelected} />
 						)}
 					</div>
 				</div>
@@ -361,7 +368,7 @@ const AdminVerificationDocsPage: React.FC = () => {
 							</div>
 						) : (
 							<div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
-								<span className="text-3xl mb-2">👈</span>
+								<AlertCircle className="h-12 w-12 mb-4 text-muted-foreground" />
 								<p className="text-lg font-medium">
 									Select a document to review
 								</p>
