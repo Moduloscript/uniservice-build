@@ -38,45 +38,35 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
   const isActiveMenuItem = (href: string) => pathname.includes(href)
 
   return (
-    <>
-      {/* Mobile backdrop overlay */}
-      {openMobile && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden"
-          onClick={() => setOpenMobile(false)}
-          aria-hidden="true"
-        />
-      )}
     <Sidebar 
       collapsible="icon"
-      className={cn(
-        /* Base styles for all screens */
-        "transition-all duration-300 ease-in-out",
-        /* Mobile: Fixed position overlay */
-        "fixed inset-y-0 left-0 z-50 w-64 transform",
-        "md:relative md:z-auto md:translate-x-0",
-        /* Show/hide based on mobile state */
-        openMobile ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}
     >
       <SidebarHeader className={cn(
         "border-b border-sidebar-border transition-all duration-200",
-        open ? "p-4" : "p-2 justify-center"
+        /* Mobile: Always full padding and normal flex */
+        "p-4 sm:p-4 flex-row items-center",
+        /* Desktop: Responsive padding and justification */
+        open ? "md:p-4" : "md:p-2 md:justify-center"
       )}>
         {menuItems.map((item, i) => (
           <div key={i} className={cn(
             "flex items-center transition-all duration-200",
-            open ? "gap-2" : "justify-center"
+            /* Mobile: Always show with gap, Desktop: responsive */
+            "gap-2 sm:gap-2",
+            open ? "md:gap-2" : "md:justify-center md:gap-0"
           )}>
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0">
               {item.avatar}
             </div>
-            {open && (
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{item.title}</span>
-                <span className="truncate text-xs text-sidebar-muted-foreground">Panel</span>
-              </div>
-            )}
+            {/* Mobile: Always show labels, Desktop: Only when open */}
+            <div className={cn(
+              "grid flex-1 text-left text-sm leading-tight",
+              "block sm:block", /* Always visible on mobile */
+              open ? "md:grid" : "md:hidden" /* Conditional on desktop */
+            )}>
+              <span className="truncate font-semibold">{item.title}</span>
+              <span className="truncate text-xs text-sidebar-muted-foreground">Panel</span>
+            </div>
           </div>
         ))}
       </SidebarHeader>
@@ -117,14 +107,25 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
                         href={subitem.href}
                         className={cn(
                           "flex items-center transition-all duration-200",
-                          open ? "gap-2" : "justify-center"
+                          /* Mobile: Always with gap, Desktop: responsive */
+                          "gap-2 sm:gap-2",
+                          open ? "md:gap-2" : "md:justify-center md:gap-0"
                         )}
-                        title={!open ? subitem.title : undefined}
+                        title={!open && typeof window !== "undefined" && window.innerWidth >= 768 ? subitem.title : undefined}
                       >
-                        <span className="shrink-0">
+                        <span className={cn(
+                          "shrink-0 flex items-center justify-center",
+                          /* Force icons to be fully visible on all screens, overriding any opacity classes */
+                          "[&>svg]:!opacity-100 [&>*]:!opacity-100",
+                          "[&>svg]:size-4 [&>*]:size-4"
+                        )}>
                           {subitem.icon}
                         </span>
-                        {open && <span>{subitem.title}</span>}
+                        {/* Mobile: Always show labels, Desktop: Only when open */}
+                        <span className={cn(
+                          "block sm:block", /* Always visible on mobile */
+                          open ? "md:block" : "md:hidden" /* Conditional on desktop */
+                        )}>{subitem.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -135,7 +136,6 @@ export function CollapsibleSettingsMenu({ menuItems }: CollapsibleSettingsMenuPr
         ))}
       </SidebarContent>
     </Sidebar>
-    </>
   )
 }
 

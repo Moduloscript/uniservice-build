@@ -21,8 +21,11 @@ import {
 import { cn } from "@ui/lib";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import * as React from "react";
+import React from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { useAtom } from 'jotai';
+import { stepAtom, providerCategoryAtom, isLoadingAtom, serverErrorAtom, combinedSubmitDisabledAtom, formValidityAtom } from '../state/onboardingAtoms';
+import { submitOnboardingAtom, resetSubmissionStateAtom } from '../state/onboardingSubmission';
 import { v4 as uuid } from "uuid";
 import { registerOnboarding } from "../api/onboarding";
 import { useFileUpload } from "../hooks/use-file-upload";
@@ -45,7 +48,14 @@ export function OnboardingForm({ className }: { className?: string }) {
 	const { user } = useSession();
 	const router = useRouter();
 
-	const [step, setStep] = React.useState(0); // 0: Role select, 1: Details, 2: Upload, 3: Review
+	// Use Jotai atoms instead of React state
+	const [step, setStep] = useAtom(stepAtom);
+	const [providerCategory, setProviderCategory] = useAtom(providerCategoryAtom);
+	const [isLoading] = useAtom(isLoadingAtom);
+	const [serverError] = useAtom(serverErrorAtom);
+	const [, submitOnboarding] = useAtom(submitOnboardingAtom);
+	const [isSubmitDisabled] = useAtom(combinedSubmitDisabledAtom);
+	const [, setFormValidity] = useAtom(formValidityAtom);
 	const form = useForm<OnboardingFormValues>({
 		resolver: zodResolver(onboardingSchema),
 		defaultValues: {
@@ -72,11 +82,6 @@ export function OnboardingForm({ className }: { className?: string }) {
 				: []),
 	];
 
-	const [isLoading, setIsLoading] = React.useState(false);
-	const [serverError, setServerError] = React.useState<string | null>(null);
-	const [providerCategory, setProviderCategory] = React.useState<
-		ProviderCategory | undefined
-	>(undefined);
 
 	const studentIdUpload = useFileUpload({
 		userId: user?.id,
@@ -90,36 +95,11 @@ export function OnboardingForm({ className }: { className?: string }) {
 	const onSubmit: SubmitHandler<OnboardingFormValues> = async (
 		data: OnboardingFormValues,
 	) => {
-		if (!form.formState.isValid) {
-			return;
-		}
-		setIsLoading(true);
-		setServerError(null);
-		try {
-			const result = await registerOnboarding(data);
-			if (!result.ok) {
-				if (result.status === 409) {
-					setServerError(
-						"This matriculation number is already registered",
-					);
-				} else if (result.status === 401) {
-					router.push("/auth/login");
-				} else {
-					setServerError(
-						result.error ||
-							"Registration failed. Please try again later.",
-					);
-				}
-				return;
-			}
-			router.push("/app");
-		} catch (e) {
-			setServerError("Network error");
-		} finally {
-			setIsLoading(false);
-		}
+		// Use Jotai action atom for submission
+		submitOnboarding({ data, router });
 	};
 
+	// Use Jotai atoms instead of useEffect for provider category logic
 	React.useEffect(() => {
 		if (userType === "PROVIDER") {
 			// Select the first available provider category if only one exists
@@ -135,7 +115,12 @@ export function OnboardingForm({ className }: { className?: string }) {
 				);
 			}
 		}
-	}, [userType, form]);
+	}, [userType, form, setProviderCategory]);
+
+	// Sync form validity with Jotai atom
+	React.useEffect(() => {
+		setFormValidity(form.formState.isValid);
+	}, [form.formState.isValid, setFormValidity]);
 
 	const categoryRequirements =
 		providerCategory &&
@@ -381,7 +366,7 @@ const path =
 									!!form.formState.errors.level
 								: false
 					}
-					isSubmitDisabled={isLoading || !form.formState.isValid}
+					isSubmitDisabled={isSubmitDisabled}
 					onBack={() => setStep((s) => Math.max(s - 1, 0))}
 					onNext={() =>
 						setStep((s) => Math.min(s + 1, steps.length - 1))

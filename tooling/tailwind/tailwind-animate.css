@@ -134,6 +134,24 @@
         rotate(var(--tw-exit-rotate, 0));
     }
   }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
 }
 
 /*
@@ -272,4 +290,16 @@
 @utility slide-out-to-right-* {
   --tw-exit-translate-x: calc(--value(integer) * var(--spacing));
   --tw-exit-translate-x: --value(--translate-*, [percentage], ratio, [length]);
+}
+
+@utility animate-collapsible-down {
+  animation-name: collapsible-down;
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
+}
+
+@utility animate-collapsible-up {
+  animation-name: collapsible-up;
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
 }
