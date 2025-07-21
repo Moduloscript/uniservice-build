@@ -261,6 +261,16 @@
 			"headline": "Join the organization {organizationName}",
 			"join": "Join the organization",
 			"subject": "You have been invited to join an organization"
+		},
+		"verificationApproved": {
+			"body": "Congratulations! Your verification has been approved. You can now access all features of the platform.",
+			"login": "Login to your account",
+			"subject": "Verification Approved"
+		},
+		"verificationRejected": {
+			"body": "Your verification has been rejected. Please review the feedback below and resubmit your documents.",
+			"resubmit": "Resubmit verification",
+			"subject": "Verification Rejected"
 		}
 	},
 	"newsletter": {

@@ -274,11 +274,11 @@ const AdminVerificationDocsPage: React.FC = () => {
                                 {(filterType !== "all" || searchTerm !== "") && (
                                     <Button
                                         variant="outline"
-                                        size="sm"
+                                        size="mobile"
                                         onClick={() => { setFilterType("all"); setSearchTerm(""); }}
-                                        className="text-xs"
+                                        className="text-sm font-medium min-w-[80px] sm:min-w-[60px]"
                                     >
-                                        <RefreshCw className="h-3 w-3 mr-1" />
+                                        <RefreshCw className="h-4 w-4 mr-1" />
                                         Reset
                                     </Button>
                                 )}
@@ -301,9 +301,10 @@ const AdminVerificationDocsPage: React.FC = () => {
                                 {searchTerm && (
                                     <Button
                                         variant="ghost"
-                                        size="sm"
+                                        size="mobile"
                                         onClick={() => setSearchTerm("")}
-                                        className="px-2"
+                                        className="px-3 min-w-[44px] hover:bg-gray-100"
+                                        aria-label="Clear search"
                                     >
                                         <X className="h-4 w-4" />
                                     </Button>

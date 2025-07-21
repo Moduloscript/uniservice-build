@@ -11,8 +11,14 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        primary:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        error:
+          "bg-red-600 text-white shadow-xs hover:bg-red-700 focus-visible:ring-red-200 dark:focus-visible:ring-red-400 border-red-600 hover:border-red-700",
+        success:
+          "bg-green-600 text-white shadow-xs hover:bg-green-700 focus-visible:ring-green-200 dark:focus-visible:ring-green-400 border-green-600 hover:border-green-700",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary:
@@ -24,7 +30,9 @@ const buttonVariants = cva(
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        lg: "h-12 rounded-md px-6 has-[>svg]:px-4 min-h-[48px] touch-manipulation",
+        xl: "h-14 rounded-md px-8 has-[>svg]:px-6 min-h-[56px] touch-manipulation text-base",
+        mobile: "h-12 rounded-md px-4 has-[>svg]:px-3 min-h-[48px] touch-manipulation sm:h-10",
         icon: "size-9",
       },
     },

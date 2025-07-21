@@ -258,6 +258,16 @@
 			"headline": "Einladung zur Organisation {organizationName}",
 			"join": "Tritt der Organisation bei",
 			"subject": "Du wurdest eingeladen, einer Organisation beizutreten"
+		},
+		"verificationApproved": {
+			"body": "Herzlichen Glückwunsch! Ihre Verifizierung wurde genehmigt. Sie können jetzt alle Funktionen der Plattform nutzen.",
+			"login": "Melden Sie sich bei Ihrem Konto an",
+			"subject": "Verifizierung genehmigt"
+		},
+		"verificationRejected": {
+			"body": "Ihre Verifizierung wurde abgelehnt. Bitte überprüfen Sie das Feedback unten und reichen Sie Ihre Dokumente erneut ein.",
+			"resubmit": "Verifikation erneut einreichen",
+			"subject": "Verifizierung abgelehnt"
 		}
 	},
 	"newsletter": {

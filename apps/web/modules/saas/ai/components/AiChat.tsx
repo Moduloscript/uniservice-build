@@ -90,10 +90,14 @@ export function AiChat({ organizationId }: { organizationId?: string }) {
 						variant="outline"
 						size="sm"
 						className="mb-4 flex w-full items-center gap-2"
-						loading={createChatMutation.isPending}
+						disabled={createChatMutation.isPending}
 						onClick={createNewChat}
 					>
-						<PlusIcon className="size-4" />
+						{createChatMutation.isPending ? (
+							<EllipsisIcon className="size-4 animate-pulse" />
+						) : (
+							<PlusIcon className="size-4" />
+						)}
 						New chat
 					</Button>
 

@@ -47,50 +47,54 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 				
 				<Separator />
 				
-				<div className="flex flex-col sm:flex-row gap-4">
-					<Button
-						variant="primary"
-						size="lg"
-						onClick={() => onApprove(doc.id, notes)}
-						disabled={loading}
-						className="flex-1 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700 h-12"
-						data-testid="approve-button"
-					>
-						{loading ? (
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-						) : (
-							<CheckCircle className="h-4 w-4 mr-2" />
-						)}
-						Approve Document
-					</Button>
+				<div className="flex flex-col gap-3 sm:gap-4">
+					{/* Primary Action Buttons */}
+					<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+						<Button
+							variant="success"
+							size="mobile"
+							onClick={() => onApprove(doc.id, notes)}
+							disabled={loading}
+							className="flex-1 font-semibold text-white shadow-lg active:scale-[0.98] transition-transform"
+							data-testid="approve-button"
+						>
+							{loading ? (
+								<Loader2 className="h-5 w-5 animate-spin mr-2" />
+							) : (
+								<CheckCircle className="h-5 w-5 mr-2" />
+							)}
+							Approve Document
+						</Button>
+						
+						<Button
+							variant="error"
+							size="mobile"
+							onClick={() => onReject(doc.id, notes)}
+							disabled={loading}
+							className="flex-1 font-semibold text-white shadow-lg active:scale-[0.98] transition-transform"
+							data-testid="reject-button"
+						>
+							{loading ? (
+								<Loader2 className="h-5 w-5 animate-spin mr-2" />
+							) : (
+								<XCircle className="h-5 w-5 mr-2" />
+							)}
+							Reject Document
+						</Button>
+					</div>
 					
-					<Button
-						variant="error"
-						size="lg"
-						onClick={() => onReject(doc.id, notes)}
-						disabled={loading}
-						className="flex-1 h-12"
-						data-testid="reject-button"
-					>
-						{loading ? (
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-						) : (
-							<XCircle className="h-4 w-4 mr-2" />
-						)}
-						Reject Document
-					</Button>
-					
+					{/* Secondary Action */}
 					<Button
 						variant="outline"
-						size="lg"
+						size="mobile"
 						onClick={() => {
 							// For now, just close the selection - could be enhanced to save as "for later review"
 							window.location.reload();
 						}}
 						disabled={loading}
-						className="flex-1 h-12"
+						className="w-full font-medium shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
 					>
-						<Clock className="h-4 w-4 mr-2" />
+						<Clock className="h-5 w-5 mr-2" />
 						Review Later
 					</Button>
 				</div>
