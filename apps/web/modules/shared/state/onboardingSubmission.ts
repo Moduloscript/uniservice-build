@@ -8,6 +8,10 @@ import {
   serverErrorAtom 
 } from './onboardingAtoms';
 
+// Global submission tracker to prevent duplicate requests
+let currentSubmissionPromise: Promise<any> | null = null;
+let lastSubmissionData: string | null = null;
+
 // Action atom for form submission
 export const submitOnboardingAtom = atom(
   null,
@@ -15,18 +19,25 @@ export const submitOnboardingAtom = atom(
     const hasSubmitted = get(hasSubmittedAtom);
     const isLoading = get(isLoadingAtom);
     
-    // Prevent double submission
-    if (hasSubmitted || isLoading) {
+    // Create a unique identifier for this submission
+    const submissionId = JSON.stringify(data);
+    
+    // Prevent double submission with multiple checks
+    if (hasSubmitted || isLoading || currentSubmissionPromise || lastSubmissionData === submissionId) {
+      console.log('Duplicate submission prevented:', { hasSubmitted, isLoading, hasPending: !!currentSubmissionPromise });
       return;
     }
 
-    // Set loading state
+    // Set loading state and track submission
     set(isLoadingAtom, true);
     set(hasSubmittedAtom, true);
     set(serverErrorAtom, null);
+    lastSubmissionData = submissionId;
 
     try {
-      const result = await registerOnboarding(data);
+      // Create and store the submission promise
+      currentSubmissionPromise = registerOnboarding(data);
+      const result = await currentSubmissionPromise;
       
       if (!result.ok) {
         // Reset submission state on error to allow retry
@@ -48,8 +59,10 @@ export const submitOnboardingAtom = atom(
       // Reset submission state on error to allow retry
       set(hasSubmittedAtom, false);
       set(serverErrorAtom, "Network error");
+      lastSubmissionData = null; // Clear to allow retry
     } finally {
       set(isLoadingAtom, false);
+      currentSubmissionPromise = null; // Clear the promise
     }
   }
 );

@@ -156,6 +156,47 @@ export default async function middleware(req: NextRequest) {
 		return NextResponse.next();
 	}
 
+	// Provider route protection - Only providers can access provider dashboard
+	if (pathname.startsWith("/app/provider")) {
+		const session = await getSession(req);
+		if (!session) {
+			return NextResponse.redirect(
+				new URL(
+					withQuery("/auth/login", { redirectTo: pathname }),
+					origin,
+				),
+			);
+		}
+		
+		// Check if user has PROVIDER userType
+		if (session.user.userType !== "PROVIDER") {
+			// Redirect students to main app
+			if (session.user.userType === "STUDENT") {
+				return NextResponse.redirect(new URL("/app", origin));
+			}
+			
+			// Redirect admins to admin dashboard  
+			if (session.user.role === "admin") {
+				return NextResponse.redirect(new URL("/app/admin", origin));
+			}
+			
+			// Redirect others to main app
+			return NextResponse.redirect(new URL("/app", origin));
+		}
+		
+		// Check if provider has completed onboarding
+		if (!session.user.onboardingComplete) {
+			return NextResponse.redirect(new URL("/app/onboarding", origin));
+		}
+		
+		// Check if provider is verified (if verification is required)
+		if (!session.user.isVerified) {
+			return NextResponse.redirect(new URL("/app/verification-pending", origin));
+		}
+		
+		return NextResponse.next();
+	}
+
 	if (!appConfig.ui.marketing.enabled) {
 		return NextResponse.redirect(new URL("/app", origin));
 	}

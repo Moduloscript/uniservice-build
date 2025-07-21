@@ -84,12 +84,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: CalendarIcon,
           isActive: pathname.startsWith("/app/bookings"),
         },
-        {
-          title: "Provider Dashboard",
-          url: "/app/provider",
-          icon: UserCogIcon,
-          isActive: pathname.startsWith("/app/provider"),
-        },
+        ...(user?.userType === "PROVIDER"
+          ? [
+              {
+                title: "Provider Dashboard",
+                url: "/app/provider",
+                icon: UserCogIcon,
+                isActive: pathname.startsWith("/app/provider"),
+              },
+            ]
+          : []),
       ],
     },
     {

@@ -59,14 +59,17 @@ export function NavBar() {
 			icon: CalendarIcon,
 			isActive: pathname.startsWith("/app/bookings"),
 		},
-		// Add provider-specific navigation
-		// Show to all users for now (will be properly restricted later)
-		{
-			label: "Provider Dashboard",
-			href: "/app/provider",
-			icon: UserCogIcon,
-			isActive: pathname.startsWith("/app/provider"),
-		},
+		// Provider-specific navigation - only show to providers
+		...(user?.userType === "PROVIDER"
+			? [
+					{
+						label: "Provider Dashboard",
+						href: "/app/provider",
+						icon: UserCogIcon,
+						isActive: pathname.startsWith("/app/provider"),
+					},
+				]
+			: []),
 		...(activeOrganization
 			? [
 					{

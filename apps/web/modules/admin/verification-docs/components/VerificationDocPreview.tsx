@@ -8,8 +8,7 @@ import {
 import { Badge } from "@ui/components/badge";
 import { Button } from "@ui/components/button";
 import { Separator } from "@ui/components/separator";
-import { FileText, Download, ExternalLink, User, GraduationCap, Building2, Hash, Calendar, Eye, Loader2 } from "lucide-react";
-import { cn } from "@ui/lib";
+import { FileText, Download, GraduationCap, Building2, Calendar } from "lucide-react";
 import type { VerificationDoc } from "./VerificationDocsList";
 
 interface VerificationDocPreviewProps {
@@ -22,7 +21,6 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 	const userType = doc.userType || doc.userRole || "";
 	const documentUrl = doc.documentUrl || "";
 	const fileName = documentUrl.split("/").pop() || "Document";
-	const [studentIdCardUrl, setStudentIdCardUrl] = useState<string | null>(null);
 	const [isLoadingStudentId, setIsLoadingStudentId] = useState(false);
 
 	const getSecureDownloadUrl = useCallback(async (bucket: string, path: string) => {
@@ -53,10 +51,11 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 
 		setIsLoadingStudentId(true);
 		try {
-			const secureUrl = await getSecureDownloadUrl("student-id-cards", doc.studentIdCardUrl);
+			const secureUrl = await getSecureDownloadUrl(
+				"student-id-cards",
+				doc.studentIdCardUrl
+			);
 			if (secureUrl) {
-				setStudentIdCardUrl(secureUrl);
-				// Open in new tab
 				window.open(secureUrl, "_blank", "noopener,noreferrer");
 			}
 		} finally {
@@ -64,119 +63,107 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 		}
 	}, [doc.studentIdCardUrl, getSecureDownloadUrl, isLoadingStudentId]);
 
-	return React.createElement(
-		'div',
-		{ className: "space-y-6" },
-		React.createElement(
-			Card,
-			{ className: "border-primary/20" },
-			React.createElement(
-				CardHeader,
-				null,
-				React.createElement(
-					'div',
-					{ className: "flex items-start justify-between" },
-					React.createElement(
-						'div',
-						{ className: "flex-1" },
-						React.createElement(
-							'div',
-							{ className: "flex items-center gap-3 mb-3" },
-							React.createElement(
-								'div',
-								{ className: "w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center" },
-								userType === "STUDENT" 
-									? React.createElement(GraduationCap, { className: "h-6 w-6 text-primary" })
-									: React.createElement(Building2, { className: "h-6 w-6 text-primary" })
-							),
-							React.createElement(
-								'div',
-								null,
-								React.createElement(CardTitle, { className: "text-xl" }, doc.userName),
-								React.createElement(
-									Badge,
-									{ variant: "outline", className: "mt-1" },
-									userType === "STUDENT" ? "Student" : "Service Provider"
-								)
-							)
-						),
-						React.createElement(Separator, { className: "my-4" }),
-						React.createElement(
-							'div',
-							{ className: "grid grid-cols-1 md:grid-cols-2 gap-3" },
-							React.createElement(
-								'div',
-								{ className: "flex items-center gap-2" },
-								React.createElement(Calendar, { className: "h-4 w-4 text-muted-foreground" }),
-								React.createElement('span', { className: "text-sm font-medium text-muted-foreground" }, "Submitted:"),
-								React.createElement(
-									'span',
-									{ className: "text-sm" },
-									doc.submittedAt && !Number.isNaN(Date.parse(doc.submittedAt))
-										? new Date(doc.submittedAt).toLocaleDateString('en-US', {
-											year: 'numeric',
-											month: 'short',
-											day: 'numeric',
-											hour: '2-digit',
-											minute: '2-digit'
-										})
-										: "-"
-								)
-							)
-						)
-					)
-				)
-			)
-		),
-		React.createElement(
-			Card,
-			null,
-			React.createElement(
-				CardHeader,
-				null,
-				React.createElement(
-					CardTitle,
-					{ className: "flex items-center gap-2" },
-					React.createElement(FileText, { className: "h-5 w-5" }),
-					"Submitted Documents"
-				)
-			),
-			React.createElement(
-				CardContent,
-				{ className: "space-y-4" },
-				React.createElement(
-					'div',
-					{ className: "rounded border bg-muted p-3 flex items-center justify-center min-h-[180px]" },
-					documentUrl ? React.createElement(
-						'div',
-						{ className: "flex flex-col items-center gap-3" },
-						React.createElement(FileText, { className: "h-12 w-12 text-muted-foreground" }),
-						React.createElement(
-							'div',
-							{ className: "text-center" },
-							React.createElement('p', { className: "font-medium text-sm mb-1" }, fileName),
-							React.createElement(
-								Button,
-								{ variant: "outline", size: "sm", asChild: true },
-								React.createElement(
-									'a',
-									{
-										href: documentUrl,
-										target: "_blank",
-										rel: "noopener noreferrer"
-									},
-									React.createElement(Download, { className: "h-4 w-4 mr-2" }),
-									"Download"
-								)
-							)
-						)
-					) : React.createElement(
-						'div',
-						{ className: "text-muted-foreground text-center w-full" },
-						"No document available"
-					)
-				)
-			)
-		)
+	return (
+		<div className="space-y-6">
+			<Card className="border-primary/20">
+				<CardHeader>
+					<div className="flex items-start justify-between">
+						<div className="flex-1">
+							<div className="flex items-center gap-3 mb-3">
+								<div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+									{userType === "STUDENT" ? (
+										<GraduationCap className="h-6 w-6 text-primary" />
+									) : (
+										<Building2 className="h-6 w-6 text-primary" />
+									)}
+								</div>
+								<div>
+									<CardTitle className="text-xl">{doc.userName}</CardTitle>
+									<Badge variant="outline" className="mt-1">
+										{userType === "STUDENT" ? "Student" : "Service Provider"}
+									</Badge>
+								</div>
+							</div>
+							<Separator className="my-4" />
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+								<div className="flex items-center gap-2">
+									<Calendar className="h-4 w-4 text-muted-foreground" />
+									<span className="text-sm font-medium text-muted-foreground">
+										Submitted:
+									</span>
+									<span className="text-sm">
+										{doc.submittedAt &&
+										!Number.isNaN(Date.parse(doc.submittedAt))
+											? new Date(doc.submittedAt).toLocaleDateString("en-US", {
+													year: "numeric",
+													month: "short",
+													day: "numeric",
+													hour: "2-digit",
+													minute: "2-digit",
+												})
+											: "-"}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</CardHeader>
+			</Card>
+			<Card>
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2">
+						<FileText className="h-5 w-5" />
+						Submitted Documents
+					</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="rounded border bg-muted p-3 min-h-[180px]">
+						{documentUrl ? (
+							<div className="flex flex-col items-center gap-3 w-full">
+								<FileText className="h-12 w-12 text-muted-foreground" />
+								<div className="text-center w-full">
+									<p className="font-medium text-sm mb-3">{fileName}</p>
+									{documentUrl.match(/\.(pdf|jpg|png)$/) ? (
+										<div className="mb-4 w-full">
+											{documentUrl.endsWith(".pdf") ? (
+												<iframe
+													src={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
+													width="100%"
+													height="400px"
+													className="border rounded"
+													title="Document Preview"
+												/>
+											) : (
+												<img
+													src={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
+													alt="Document Preview"
+													className="max-w-full h-auto border rounded mx-auto"
+												/>
+											)}
+										</div>
+									) : (
+										<p className="text-muted-foreground mb-4">Preview not available for this file type</p>
+									)}
+									<Button variant="outline" size="sm" asChild>
+										<a
+											href={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											<Download className="h-4 w-4 mr-2" />
+											Download
+										</a>
+									</Button>
+								</div>
+							</div>
+						) : (
+							<div className="text-muted-foreground text-center w-full flex items-center justify-center h-full">
+								No document available
+							</div>
+						)}
+					</div>
+				</CardContent>
+			</Card>
+		</div>
 	);
 };

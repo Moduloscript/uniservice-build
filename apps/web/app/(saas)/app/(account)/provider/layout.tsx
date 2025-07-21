@@ -1,31 +1,28 @@
+import { getSession } from "@saas/auth/lib/server";
+import { redirect } from "next/navigation";
 import { ProviderNavigation } from "./components/ProviderNavigation";
-import { ProviderGuard } from "./components/ProviderGuard";
-import { requireProviderRole } from "./middleware";
+import type { PropsWithChildren } from "react";
 
-export default async function ProviderLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Server-side authentication check
-  try {
-    await requireProviderRole();
-  } catch (error) {
-    // Let the ProviderGuard handle the redirect on client side
-    console.log("Provider auth check failed:", error);
-  }
+export default async function ProviderLayout({ children }: PropsWithChildren) {
+	const session = await getSession();
 
-  return (
-    <ProviderGuard>
-      <div className="min-h-screen bg-background">
-        {/* Provider Navigation */}
-        <ProviderNavigation />
-        
-        {/* Main Content */}
-        <div className="flex-1">
-          {children}
-        </div>
-      </div>
-    </ProviderGuard>
-  );
+	if (!session) {
+		return redirect("/auth/login");
+	}
+
+	if (session.user?.userType !== "PROVIDER") {
+		redirect("/app");
+	}
+
+	return (
+		<div className="min-h-screen bg-background">
+			{/* Provider Navigation */}
+			<ProviderNavigation />
+			
+			{/* Main Content */}
+			<div className="flex-1">
+				{children}
+			</div>
+		</div>
+	);
 }
