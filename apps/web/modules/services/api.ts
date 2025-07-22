@@ -1,6 +1,7 @@
 import type { Service, ServicesResponse, ServiceResponse, ApiErrorResponse } from "./types";
 import type { Review, ReviewsResponse, ReviewResponse, CreateReviewData, UpdateReviewData, ReviewApiError } from "./types/review";
 import type { ServiceFeature, ServiceFeaturesResponse, ServiceFeatureResponse, CreateServiceFeatureData, UpdateServiceFeatureData, ServiceFeatureApiError } from "./types/service-feature";
+import type { ServiceOutcome, ServiceOutcomesResponse, ServiceOutcomeResponse, CreateServiceOutcomeData, UpdateServiceOutcomeData, ServiceOutcomeApiError } from "./types/service-outcome";
 import { db } from "@repo/database";
 import { headers } from "next/headers";
 
@@ -683,4 +684,157 @@ export async function fetchReviewStatsServer(serviceId: string): Promise<{
 		console.error(`[Server] Database error fetching review stats for ID ${serviceId}:`, error);
 		return null;
 	}
+}
+
+// SERVICE OUTCOMES API FUNCTIONS
+
+/**
+ * Fetch all outcomes for a service
+ */
+export async function fetchServiceOutcomes(serviceId: string): Promise<ServiceOutcome[]> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/outcomes`;
+
+    console.log(`[Client] Fetching outcomes for service: ${serviceId}`);
+
+    const res = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to fetch service outcomes";
+        try {
+            const errorData: ServiceOutcomeApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceOutcomesResponse = await res.json();
+    return data.outcomes;
+}
+
+/**
+ * Add a new outcome to a service
+ */
+export async function addServiceOutcome(serviceId: string, outcomeData: CreateServiceOutcomeData): Promise<ServiceOutcome> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/outcomes`;
+
+    console.log(`[Client] Adding outcome for service: ${serviceId}`, outcomeData);
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(outcomeData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to add service outcome";
+        try {
+            const errorData: ServiceOutcomeApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceOutcomeResponse = await res.json();
+    return data.outcome;
+}
+
+/**
+ * Update an outcome for a service
+ */
+export async function updateServiceOutcome(serviceId: string, outcomeId: string, outcomeData: UpdateServiceOutcomeData): Promise<ServiceOutcome> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/outcomes/${outcomeId}`;
+
+    console.log(`[Client] Updating outcome ${outcomeId} for service: ${serviceId}`, outcomeData);
+
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(outcomeData),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to update service outcome";
+        try {
+            const errorData: ServiceOutcomeApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceOutcomeResponse = await res.json();
+    return data.outcome;
+}
+
+/**
+ * Delete an outcome from a service
+ */
+export async function deleteServiceOutcome(serviceId: string, outcomeId: string): Promise<void> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/outcomes/${outcomeId}`;
+
+    console.log(`[Client] Deleting outcome ${outcomeId} from service: ${serviceId}`);
+
+    const res = await fetch(url, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to delete service outcome";
+        try {
+            const errorData: ServiceOutcomeApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+}
+
+/**
+ * Reorder service outcomes
+ */
+export async function reorderServiceOutcomes(serviceId: string, outcomeIds: string[]): Promise<ServiceOutcome[]> {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/services/${serviceId}/outcomes/reorder`;
+
+    console.log(`[Client] Reordering outcomes for service: ${serviceId}`, outcomeIds);
+
+    const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcomeIds }),
+        credentials: "include",
+    });
+
+    if (!res.ok) {
+        let errorMessage = "Failed to reorder service outcomes";
+        try {
+            const errorData: ServiceOutcomeApiError = await res.json();
+            errorMessage = errorData.error || `HTTP ${res.status}: ${res.statusText}`;
+        } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data: ServiceOutcomesResponse = await res.json();
+    return data.outcomes;
 }

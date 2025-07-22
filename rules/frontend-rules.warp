@@ -1,0 +1,114 @@
+FRONTEND DEVELOPMENT RULES - SupaStarter NextJS Application
+
+COMPONENT ARCHITECTURE & ORGANIZATION:
+- Structure: Follow modular architecture apps/web/modules/{domain}/{feature}/components/
+- Naming: Use PascalCase for components, kebab-case for files
+- Pattern: Each component self-contained with co-located tests, styles, types
+- Example: modules/admin/verification-docs/components/VerificationDocActions.tsx
+
+Component Composition Patterns:
+✅ GOOD:
+interface ComponentProps {
+  data: VerificationDoc;
+  onAction: (id: string, notes?: string) => Promise<void>;
+  loading?: boolean;
+}
+export const Component: React.FC<ComponentProps> = ({ data, onAction, loading }) => {
+  // Implementation
+}
+
+❌ BAD:
+export const Component = (props) => { ... }
+
+Layout Patterns:
+- Marketing: Use (marketing)/[locale]/layout.tsx for i18n support
+- SaaS: Use (saas)/app/(account)/layout.tsx for authenticated areas  
+- Admin: Use role-based layouts with guards: admin/layout.tsx
+
+STATE MANAGEMENT:
+- Server State: Use @tanstack/react-query for API data
+- Client State: Use jotai for global state management
+- Form State: Use react-hook-form with @hookform/resolvers
+- URL State: Use nuqs for URL-synchronized state
+
+React Query Patterns:
+✅ GOOD:
+const { data: verificationDocs, isLoading } = useQuery({
+  queryKey: ['verification-docs', { status: 'pending' }],
+  queryFn: () => api.getVerificationDocs({ status: 'pending' }),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+})
+
+❌ BAD:
+const data = fetch('/api/verification-docs')
+
+Form State Management:
+✅ GOOD:
+const form = useForm<CreateServiceInput>({
+  resolver: zodResolver(createServiceSchema),
+  defaultValues: { name: '', description: '', price: 0 },
+});
+
+ROUTING & NAVIGATION:
+- App Router: Use Next.js 15 App Router exclusively
+- Route Groups: Use parentheses for organization: (marketing), (saas)
+- Dynamic Routes: Use brackets: [locale], [serviceId]
+- Catch-all: Use [[...path]] for optional catch-all routes
+
+Internationalization Routing:
+✅ GOOD:
+export function generateStaticParams() {
+  return Object.keys(config.i18n.locales).map((locale) => ({ locale }))
+}
+
+UI/UX STANDARDS:
+- Components: Use Shadcn UI components from @ui/components/
+- Styling: Use Tailwind CSS with consistent design tokens
+- Icons: Use lucide-react for consistency
+- Themes: Support both light/dark themes via next-themes
+
+Responsive Design:
+✅ GOOD:
+<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+  <Button size="mobile" className="flex-1 active:scale-[0.98] transition-transform">
+    Action
+  </Button>
+</div>
+
+❌ BAD:
+<div className="flex gap-4">
+  <Button className="w-32">Action</Button>
+</div>
+
+PERFORMANCE OPTIMIZATION:
+- Code Splitting: Use lazy loading for heavy components
+- Memoization: Use memo, useMemo, useCallback appropriately
+- Image Optimization: Use Next.js Image component with proper props
+
+Loading States & Error Handling:
+✅ GOOD:
+if (isLoading) return <Skeleton />;
+if (error) return <ErrorState action={<Button onClick={refetch}>Try Again</Button>} />;
+if (!data?.length) return <EmptyState />;
+
+TESTING STANDARDS:
+- Component Testing: Test user interactions and state changes
+- Mock Props: Always provide proper mock data
+- Test IDs: Use data-testid for reliable element selection
+- User Events: Use @testing-library/user-event for interactions
+
+CODE QUALITY:
+- TypeScript: Use strict typing with interfaces
+- Error Boundaries: Implement for component error handling
+- Documentation: Document complex components with JSDoc
+- Accessibility: Include ARIA labels and semantic HTML
+
+MANDATORY PATTERNS:
+1. Always define TypeScript interfaces for props
+2. Use React Query for server state management
+3. Implement proper loading and error states
+4. Follow mobile-first responsive design
+5. Use Shadcn UI components consistently
+6. Implement proper form validation with Zod
+7. Use Next.js App Router patterns
+8. Support internationalization where needed

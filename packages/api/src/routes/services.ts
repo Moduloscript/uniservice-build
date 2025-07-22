@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@repo/database";
 import { validator } from "hono-openapi/zod";
 import { authMiddleware } from "../middleware/auth";
+import { serviceDeduplicationMiddleware } from "../middleware/deduplication";
 
 // Service creation schema (categoryId is required)
 const createServiceSchema = z.object({
@@ -14,6 +15,8 @@ const createServiceSchema = z.object({
 });
 
 export const servicesRouter = new Hono()
+	// Apply deduplication middleware to prevent double submissions
+	.use(serviceDeduplicationMiddleware)
 	// Create a new service
 	.post("/", authMiddleware, validator("json", createServiceSchema), async (c) => {
 		const user = c.get("user");

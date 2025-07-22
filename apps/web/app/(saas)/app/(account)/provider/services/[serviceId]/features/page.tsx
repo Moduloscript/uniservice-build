@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { FeatureManagementForm } from "../../../../../../../modules/services/components/feature-management-form";
-import { useServiceFeaturesManagement } from "../../../../../../../modules/services/hooks/use-service-features-management";
+import { FeatureManagementForm } from "@/modules/services/components/feature-management-form";
+import { useServiceFeaturesManagement } from "@/modules/services/hooks/use-service-features-management";
 import { Button } from "@ui/components/button";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { SortableItem } from "@ui/components/sortable-item";
+import { SortableItem } from "@/modules/ui/components/sortable-item";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/components/card";
 import { AlertCircle, CheckCircle, Trash2 } from "lucide-react";
-import { ServiceFeature } from "../../../../../../../modules/services/types/service-feature";
+import { ServiceFeature } from "@/modules/services/types/service-feature";
 
 export default function ProviderFeaturesManagementPage({ params }: { params: { serviceId: string } }) {
   const {

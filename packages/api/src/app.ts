@@ -23,6 +23,7 @@ import { webhooksRouter } from "./routes/webhooks";
 import { serviceCategoriesRouter } from "./routes/service-categories";
 import { servicesRouter } from "./routes/services";
 import { serviceFeaturesRouter } from "./routes/service-features";
+import { serviceOutcomesRouter } from "./routes/service-outcomes";
 import { bookingsRouter } from "./routes/bookings";
 import { reviewsRouter } from "./routes/reviews";
 import { providerDashboardRouter } from "./routes/provider/dashboard";
@@ -52,6 +53,7 @@ const appRouter = app
 	.route("/", serviceCategoriesRouter)
 	.route("/services", servicesRouter)
 	.route("/services", serviceFeaturesRouter)
+	.route("/services", serviceOutcomesRouter)
 	.route("/bookings", bookingsRouter)
 	.route("/reviews", reviewsRouter)
 	.route("/", providerDashboardRouter)

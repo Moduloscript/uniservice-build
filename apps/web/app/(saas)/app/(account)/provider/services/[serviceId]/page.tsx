@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ui/components/card";
 import { Button } from "@ui/components/button";
-import { Settings, Edit, Eye, ArrowLeft, Users, Calendar, Star } from "lucide-react";
+import { Settings, Edit, Eye, ArrowLeft, Users, Calendar, Star, Target } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@ui/components/badge";
 
@@ -110,6 +110,13 @@ export default function ProviderServiceDetail({ params }: ProviderServiceDetailP
                 <Link href={`/app/provider/services/${service.id}/features`}>
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Features
+                </Link>
+              </Button>
+              
+              <Button asChild size="sm" variant="outline" className="w-full justify-start">
+                <Link href={`/app/provider/services/${service.id}/outcomes`}>
+                  <Target className="h-4 w-4 mr-2" />
+                  Manage Learning Outcomes
                 </Link>
               </Button>
               

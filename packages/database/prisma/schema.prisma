@@ -201,6 +201,7 @@ model service {
   category    ServiceCategory @relation(fields: [categoryId], references: [id])
   bookings    booking[]
   features    ServiceFeatures[]
+  outcomes    ServiceOutcomes[]
 
   @@index([categoryId])
 }
@@ -212,6 +213,24 @@ model ServiceFeatures {
   title       String
   description String?
   icon        String   @default("check-circle")
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  service     service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  @@index([serviceId])
+  @@index([serviceId, orderIndex])
+}
+
+/// Service learning outcomes - what students will achieve/learn (customizable by providers)
+model ServiceOutcomes {
+  id          String   @id
+  serviceId   String
+  title       String
+  description String?
+  icon        String   @default("target")
   orderIndex  Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())

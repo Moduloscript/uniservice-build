@@ -1,0 +1,101 @@
+DATABASE RULES - SupaStarter NextJS Application
+
+PRISMA SCHEMA ORGANIZATION:
+- Structure: Define models, fields, and relations clearly
+- Naming: PascalCase for models, camelCase for fields
+- Relations: Set up clear bi-directional relationships with cascading
+- Indexes: Add appropriate indexes for performance
+
+Schema Design Patterns:
+✅ GOOD:
+model User {
+  id String @id
+  name String
+  email String @unique
+  role UserRole 
+  bookings Booking[] @relation("UserBookings")
+  createdAt DateTime @default(now())
+}
+
+RELATIONAL MODELING:
+- Reference Integrity: Use foreign keys and referential actions
+- Enums: Define enums for static fields
+- Relations: Use @relation for clarity
+- Embedded Documents: Use Json fields sparingly
+
+RELATIONAL PATTERN:
+✅ GOOD:
+model Booking {
+  id String @id
+  userId String
+  status BookingStatus @default(PENDING)
+  service Service @relation(fields: [serviceId], references: [id])
+}
+
+MIGRATION STRATEGIES:
+- Descriptive Naming: Use descriptive migration names
+- Atomic Migrations: Ensure all migrations are atomic
+- Backwards Compatible: Provide up/down migrations if needed
+- Test Migrations: Run migrations on a test database first
+
+Migration Strategy:
+✅ GOOD:
+Create migration named `add_email_to_user`
+
+QUERY OPTIMIZATION:
+- Efficient Queries: Use includes, selects, and filters properly
+- Batching: Batch database requests where needed
+- Pagination: Implement efficient pagination strategies
+- Transaction Management: Use transactions for multi-step operations
+
+Query Optimization:
+✅ GOOD:
+const userBookings = await prisma.booking.findMany({
+  where: { userId: 1 },
+  orderBy: { createdAt: 'desc' },
+  take: 10,
+  skip: 20
+})
+
+TYPE SAFETY:
+- Generated Types: Use Prisma-generated types as source of truth
+- API Types: Generate TS types from API schemas
+- Validation Synchronicity: Keep schema validation and database schema synced
+
+Type Safety Standards:
+✅ GOOD:
+interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+}
+
+MANAGEMENT STRATEGIES:
+- Maintenance: Regularly optimize and clean up the database
+- Monitoring: Set up monitoring for SQL queries
+- Backup: Regularly back up the database
+- Documentation: Document schema changes and migrations
+
+DATABASE SECURITY:
+- Access Control: Ensure appropriate access levels
+- Encryption: Use encryption for sensitive data
+- Auditing: Log critical database operations
+- Minimizing Privileges: Use least privilege access
+
+Security Practices:
+✅ GOOD:
+Grant read-only access to analytics users
+Ensure only admins can run write operations on production DB
+
+MANDATORY DATABASE PATTERNS:
+1. Use Prisma for schema management and type safety
+2. Ensure clear and appropriate schema and relationship definitions
+3. Respect relational integrity with proper indexing and cascading
+4. Perform efficient queries with cautious use of includes and selects
+5. Validate data at the API level with schema enforcement
+6. Regularly back up and monitor the database for health
+7. Follow a strict and descriptive migration strategy
+8. Protect the database with proper access control and encryption
+9. Maintain documentation and versioning of database design
+10. Implement the least privilege model for all database interactions.
+

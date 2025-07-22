@@ -106,6 +106,8 @@ export const ServiceScalarFieldEnumSchema = z.enum(['id','name','description','p
 
 export const ServiceFeaturesScalarFieldEnumSchema = z.enum(['id','serviceId','title','description','icon','orderIndex','isActive','createdAt','updatedAt']);
 
+export const ServiceOutcomesScalarFieldEnumSchema = z.enum(['id','serviceId','title','description','icon','orderIndex','isActive','createdAt','updatedAt']);
+
 export const SessionScalarFieldEnumSchema = z.enum(['id','expiresAt','ipAddress','userAgent','userId','impersonatedBy','activeOrganizationId','token','createdAt','updatedAt']);
 
 export const SlotScalarFieldEnumSchema = z.enum(['id','userId','dayOfWeek','startTime','endTime','isAvailable']);
@@ -418,6 +420,27 @@ export const ServiceFeaturesSchema = z.object({
 })
 
 export type ServiceFeatures = z.infer<typeof ServiceFeaturesSchema>
+
+/////////////////////////////////////////
+// SERVICE OUTCOMES SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Service learning outcomes - what students will achieve/learn (customizable by providers)
+ */
+export const ServiceOutcomesSchema = z.object({
+  id: z.string(),
+  serviceId: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  icon: z.string(),
+  orderIndex: z.number().int(),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type ServiceOutcomes = z.infer<typeof ServiceOutcomesSchema>
 
 /////////////////////////////////////////
 // SESSION SCHEMA

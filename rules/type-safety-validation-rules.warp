@@ -1,0 +1,346 @@
+TYPE SAFETY & VALIDATION RULES - SupaStarter NextJS Application
+
+TYPESCRIPT STANDARDS:
+- Strict Mode: Always use strict TypeScript configuration
+- Generated Types: Use Prisma-generated types as source of truth
+- Interface Definitions: Define interfaces for all data structures
+- Type Guards: Implement type guards for runtime type checking
+
+TypeScript Configuration:
+✅ GOOD:
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true
+  }
+}
+
+Interface Definitions:
+✅ GOOD:
+interface CreateServiceInput {
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  categoryId: string;
+  features?: ServiceFeature[];
+}
+
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  errors?: string[];
+  meta?: {
+    pagination?: PaginationMeta;
+    filters?: FilterMeta;
+  };
+}
+
+❌ BAD:
+// Using any type
+const handleData = (data: any) => {
+  return data.someProperty;
+};
+
+ZOD SCHEMA PATTERNS:
+- Input Validation: Use Zod for all API input validation
+- Type Generation: Generate TypeScript types from Zod schemas
+- Nested Schemas: Compose complex schemas from simpler ones
+- Transform & Refine: Use transforms and refinements for advanced validation
+
+Zod Schema Implementation:
+✅ GOOD:
+export const createServiceSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters").max(100),
+  description: z.string().min(10).max(1000),
+  price: z.number().positive("Price must be positive"),
+  duration: z.number().int().positive().max(480), // Max 8 hours
+  categoryId: z.string().uuid("Invalid category ID"),
+  features: z.array(serviceFeatureSchema).optional().default([])
+});
+
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
+
+const serviceFeatureSchema = z.object({
+  title: z.string().min(1).max(100),
+  description: z.string().optional(),
+  icon: z.string().default("check-circle"),
+  orderIndex: z.number().int().min(0).default(0)
+});
+
+❌ BAD:
+// No validation schema
+const createService = (data: any) => {
+  // Direct database insertion without validation
+  return db.service.create({ data });
+};
+
+VALIDATION MIDDLEWARE:
+- Schema Validation: Validate all inputs at API boundary
+- Error Formatting: Format validation errors consistently
+- Type Coercion: Handle type coercion appropriately
+- Custom Validators: Implement custom validators for business rules
+
+Validation Middleware:
+✅ GOOD:
+export const validateSchema = <T>(schema: z.ZodSchema<T>) => {
+  return async (c: Context, next: () => Promise<void>) => {
+    try {
+      const body = await c.req.json();
+      const validatedData = schema.parse(body);
+      c.set('validatedData', validatedData);
+      await next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return c.json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid input data',
+            details: error.errors.reduce((acc, err) => {
+              const path = err.path.join('.');
+              if (!acc[path]) acc[path] = [];
+              acc[path].push(err.message);
+              return acc;
+            }, {} as Record<string, string[]>)
+          }
+        }, 400);
+      }
+      throw error;
+    }
+  };
+};
+
+RUNTIME TYPE CHECKING:
+- Type Guards: Implement type guards for runtime validation
+- Assert Functions: Use assert functions for type narrowing
+- Branded Types: Use branded types for domain-specific values
+- Discriminated Unions: Use discriminated unions for complex types
+
+Type Guards:
+✅ GOOD:
+function isUser(obj: unknown): obj is User {
+  return typeof obj === 'object' && 
+         obj !== null && 
+         typeof (obj as User).id === 'string' &&
+         typeof (obj as User).email === 'string';
+}
+
+function assertIsUser(obj: unknown): asserts obj is User {
+  if (!isUser(obj)) {
+    throw new Error('Object is not a valid User');
+  }
+}
+
+// Branded types
+type UserId = string & { __brand: 'UserId' };
+type ServiceId = string & { __brand: 'ServiceId' };
+
+function createUserId(id: string): UserId {
+  if (!z.string().uuid().safeParse(id).success) {
+    throw new Error('Invalid user ID format');
+  }
+  return id as UserId;
+}
+
+❌ BAD:
+// No type checking
+const processUser = (user: any) => {
+  return user.email.toLowerCase(); // Could throw if email is undefined
+};
+
+FORM VALIDATION:
+- React Hook Form: Use react-hook-form with Zod resolver
+- Field Validation: Validate individual fields
+- Cross-field Validation: Implement cross-field validation rules
+- Error Display: Display validation errors appropriately
+
+Form Validation:
+✅ GOOD:
+const form = useForm<CreateServiceInput>({
+  resolver: zodResolver(createServiceSchema),
+  defaultValues: {
+    name: '',
+    description: '',
+    price: 0,
+    duration: 60,
+    categoryId: '',
+    features: []
+  },
+  mode: 'onChange' // Validate on change for better UX
+});
+
+const onSubmit = async (data: CreateServiceInput) => {
+  try {
+    const result = await createServiceMutation.mutateAsync(data);
+    toast.success('Service created successfully');
+    router.push(`/services/${result.id}`);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      // Handle validation errors
+      Object.entries(error.fieldErrors).forEach(([field, errors]) => {
+        form.setError(field as keyof CreateServiceInput, {
+          message: errors.join(', ')
+        });
+      });
+    }
+  }
+};
+
+API RESPONSE VALIDATION:
+- Response Schemas: Validate API responses
+- Client-side Validation: Validate data received from APIs
+- Type Assertion: Use type assertion carefully
+- Error Boundaries: Handle validation errors gracefully
+
+API Response Validation:
+✅ GOOD:
+const getUserResponse = z.object({
+  data: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+    role: z.enum(['user', 'admin', 'provider'])
+  }),
+  meta: z.object({
+    lastLogin: z.string().datetime()
+  }).optional()
+});
+
+const fetchUser = async (id: string): Promise<User> => {
+  const response = await fetch(`/api/users/${id}`);
+  const rawData = await response.json();
+  
+  const validatedData = getUserResponse.parse(rawData);
+  return validatedData.data;
+};
+
+DATABASE TYPE SAFETY:
+- Prisma Types: Use Prisma-generated types
+- Query Types: Type database queries properly
+- Select Types: Use Prisma's select and include types
+- Custom Types: Extend Prisma types when needed
+
+Database Type Safety:
+✅ GOOD:
+// Use Prisma-generated types
+import type { User, Service, Prisma } from '@prisma/client';
+
+// Type-safe query with includes
+type UserWithServices = Prisma.UserGetPayload<{
+  include: { services: true }
+}>;
+
+const getUserWithServices = async (userId: string): Promise<UserWithServices | null> => {
+  return await db.user.findUnique({
+    where: { id: userId },
+    include: { services: true }
+  });
+};
+
+// Type-safe partial updates
+const updateUserProfile = async (userId: string, data: Prisma.UserUpdateInput) => {
+  return await db.user.update({
+    where: { id: userId },
+    data
+  });
+};
+
+ERROR HANDLING TYPES:
+- Error Types: Define specific error types
+- Result Types: Use Result pattern for error handling
+- Error Boundaries: Type error boundaries properly
+- Async Error Handling: Handle async errors with proper types
+
+Error Type Definitions:
+✅ GOOD:
+abstract class AppError extends Error {
+  abstract readonly code: string;
+  abstract readonly statusCode: number;
+}
+
+class ValidationError extends AppError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly statusCode = 400;
+  
+  constructor(
+    public readonly fieldErrors: Record<string, string[]>,
+    message = 'Validation failed'
+  ) {
+    super(message);
+  }
+}
+
+class NotFoundError extends AppError {
+  readonly code = 'NOT_FOUND';
+  readonly statusCode = 404;
+  
+  constructor(resource: string, id: string) {
+    super(`${resource} with ID ${id} not found`);
+  }
+}
+
+// Result pattern
+type Result<T, E = Error> = 
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+const safeCreateService = async (data: CreateServiceInput): Promise<Result<Service, ValidationError>> => {
+  try {
+    const service = await createService(data);
+    return { success: true, data: service };
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return { success: false, error };
+    }
+    throw error; // Re-throw unexpected errors
+  }
+};
+
+TESTING TYPE SAFETY:
+- Mock Types: Properly type mocks and stubs
+- Test Data: Create typed test data factories
+- Assertion Types: Use typed assertions
+- Test Utilities: Create typed test utilities
+
+Testing Types:
+✅ GOOD:
+// Typed test data factory
+const createMockUser = (overrides?: Partial<User>): User => ({
+  id: 'test-user-1',
+  name: 'Test User',
+  email: 'test@example.com',
+  role: 'user',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides
+});
+
+// Typed mock function
+const mockCreateService = jest.fn<Promise<Service>, [CreateServiceInput]>();
+
+// Type-safe test assertions
+expect(result).toEqual<ApiResponse<Service[]>>({
+  data: expect.arrayContaining([
+    expect.objectContaining({
+      id: expect.any(String),
+      name: expect.any(String)
+    })
+  ])
+});
+
+MANDATORY TYPE SAFETY PATTERNS:
+1. Always use strict TypeScript configuration
+2. Define interfaces for all data structures
+3. Use Zod schemas for all input validation
+4. Generate TypeScript types from schemas when possible
+5. Implement proper type guards and assertions
+6. Use Prisma-generated types for database operations
+7. Validate API responses on the client side
+8. Define specific error types for different scenarios
+9. Use the Result pattern for error-prone operations
+10. Properly type all mocks and test data
+11. Never use 'any' type except in very specific migration scenarios
+12. Always handle validation errors gracefully with user-friendly messages

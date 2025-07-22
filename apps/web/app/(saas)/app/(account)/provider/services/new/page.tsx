@@ -85,13 +85,15 @@ export default function NewServicePage() {
   });
 
   // Handle form submission
-  const onSubmit = async (data: CreateServiceFormData) => {
-    try {
-      await createServiceMutation.mutateAsync(data);
-    } catch (error) {
-      // Error handling is done in the mutation's onError
-      console.error("Form submission error:", error);
+  const onSubmit = (data: CreateServiceFormData) => {
+    // Prevent double submission by checking if already submitting
+    if (createServiceMutation.isPending) {
+      console.warn("Service creation already in progress");
+      return;
     }
+    
+    // Use mutate instead of mutateAsync to let React Query handle the promise
+    createServiceMutation.mutate(data);
   };
 
   // Show loading state for categories
@@ -264,8 +266,11 @@ export default function NewServicePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || createServiceMutation.isPending}
+              >
+                {(isSubmitting || createServiceMutation.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Creating Service...

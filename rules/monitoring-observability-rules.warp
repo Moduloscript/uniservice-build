@@ -1,0 +1,91 @@
+MONITORING  OBSERVABILITY RULES - SupaStarter NextJS Application
+
+LOGGING STANDARDS:
+- Structure: Use structured logging formats
+- Context: Include contextual information in logs
+- Levels: Use appropriate log levels (info, warn, error)
+
+Logging Patterns:
+✅ GOOD:
+logger.info('User logged in', {
+  userId: user.id,
+  role: user.role,
+  requestId: c.req.id
+});
+
+ERROR TRACKING PATTERNS:
+- Services: Implement error tracking for all services
+- Notification: Set up notifications for critical errors
+- Visibility: Ensure errors are visible to dev teams
+
+ERROR BOUNDARIES:
+- React: Use error boundaries to catch render errors
+
+Error Boundaries:
+✅ GOOD:
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    logErrorToService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
+    }
+    return this.props.children;
+  }
+}
+
+PERFORMANCE MONITORING:
+- API Timing: Monitor API endpoints for response times
+- Frontend Load: Measure frontend load times and user timings
+
+Performance Middleware:
+✅ GOOD:
+app.use(async (c, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+  logger.info(`${c.req.method} ${c.req.url}`, { duration: ms });
+});
+
+HEALTH CHECKS:
+- Endpoints: Provide health check endpoints to gauge service health
+- Automate: Automate checking and alerts for downtime
+
+Health Check Example:
+✅ GOOD:
+app.get('/health', async (c) => {
+  // Simple health check
+  c.status(200);
+  c.json({
+    status: 'OK',
+    timestamp: Date.now()
+  });
+});
+
+AUDIT LOGGING:
+- Actions: Log critical user actions for audit purposes
+
+Audit Logging:
+✅ GOOD:
+function auditAction(userId, action) {
+  logger.info('User action', { userId, action, timestamp: new Date().toISOString() });
+}
+
+MANDATORY MONITORING PATTERNS:
+1. Ensure structured logging with contextual details
+2. Implement error tracking across all services
+3. Use error boundaries in React applications
+4. Monitor API and frontend performance metrics
+5. Provide health check endpoints for service availability
+6. Maintain audit logs for critical actions

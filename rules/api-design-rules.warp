@@ -1,0 +1,299 @@
+API DESIGN RULES - SupaStarter NextJS Application
+
+RESTFUL API PATTERNS:
+- Resource Naming: Use plural nouns for resources: /api/users, /api/services
+- HTTP Verbs: Use appropriate verbs: GET, POST, PUT, PATCH, DELETE
+- URL Structure: Keep URLs simple and predictable
+- Nesting: Limit nesting to one level: /api/users/:id/bookings
+
+Resource Naming Conventions:
+✅ GOOD:
+GET /api/services - Get all services
+GET /api/services/:id - Get specific service
+POST /api/services - Create new service
+PATCH /api/services/:id - Update service
+DELETE /api/services/:id - Delete service
+GET /api/users/:id/bookings - Get user's bookings
+
+❌ BAD:
+GET /api/getServices
+POST /api/createService
+GET /api/users/:id/bookings/:bookingId/reviews/:reviewId
+
+RESPONSE FORMAT STANDARDS:
+- Consistent Structure: Use standardized response format
+- Data Wrapping: Wrap responses in consistent structure
+- Metadata: Include pagination and filter metadata where applicable
+- Error Format: Use consistent error response structure
+
+Response Format:
+✅ GOOD:
+{
+  "data": [
+    { "id": "1", "name": "Service 1" },
+    { "id": "2", "name": "Service 2" }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "totalPages": 3
+    },
+    "filters": {
+      "status": "active",
+      "category": "education"
+    }
+  }
+}
+
+❌ BAD:
+{
+  "services": [...],
+  "count": 45,
+  "success": true,
+  "currentPage": 1
+}
+
+ERROR HANDLING STANDARDS:
+- HTTP Status Codes: Use appropriate status codes
+- Error Structure: Consistent error response format
+- Error Details: Include helpful error details
+- Error Codes: Use application-specific error codes
+
+Error Response Standards:
+✅ GOOD:
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "name": ["Name is required"],
+      "price": ["Price must be a positive number"]
+    },
+    "timestamp": "2024-01-15T10:30:00Z",
+    "path": "/api/services"
+  }
+}
+
+❌ BAD:
+{
+  "error": "Bad request",
+  "status": 400
+}
+
+HTTP Status Code Usage:
+✅ GOOD:
+200 - Success with data
+201 - Resource created
+204 - Success without data
+400 - Bad request (client error)
+401 - Unauthorized
+403 - Forbidden
+404 - Not found
+409 - Conflict
+422 - Unprocessable entity
+500 - Internal server error
+
+PAGINATION STANDARDS:
+- Cursor-based: Use cursor-based pagination for large datasets
+- Page-based: Use page-based pagination for smaller datasets
+- Metadata: Include pagination metadata in responses
+- Limits: Set reasonable default and maximum limits
+
+Pagination Implementation:
+✅ GOOD:
+GET /api/services?cursor=eyJpZCI6IjEyMyJ9&limit=20
+
+Response:
+{
+  "data": [...],
+  "meta": {
+    "pagination": {
+      "hasNextPage": true,
+      "hasPrevPage": false,
+      "nextCursor": "eyJpZCI6IjE0MyJ9",
+      "limit": 20
+    }
+  }
+}
+
+❌ BAD:
+GET /api/services?page=1&size=100000
+
+FILTERING AND SORTING:
+- Query Parameters: Use query parameters for filtering
+- Consistent Naming: Use consistent parameter names
+- Multiple Filters: Support multiple filter combinations
+- Sorting: Implement flexible sorting options
+
+Filtering Examples:
+✅ GOOD:
+GET /api/services?status=active&category=education&sort=-createdAt,name
+GET /api/users?role=provider&verified=true&createdAfter=2024-01-01
+
+Filter Parameters:
+- status: Filter by status
+- category: Filter by category
+- search: Text search across multiple fields
+- createdAfter/createdBefore: Date range filters
+- sort: Sorting (- for descending, + or nothing for ascending)
+
+❌ BAD:
+GET /api/services?filter={"status":"active","category":"education"}
+
+VERSIONING STRATEGY:
+- URL Versioning: Use URL path versioning: /api/v1/services
+- Header Versioning: Alternative header-based versioning
+- Backwards Compatibility: Maintain backwards compatibility
+- Deprecation: Proper deprecation notices
+
+Versioning Implementation:
+✅ GOOD:
+GET /api/v1/services
+GET /api/v2/services
+
+Or with headers:
+GET /api/services
+Accept: application/vnd.api+json;version=2
+
+AUTHENTICATION & AUTHORIZATION:
+- Token-based: Use session cookies or JWT tokens
+- Role-based: Implement role-based access control
+- Resource-level: Implement resource-level permissions
+- Rate Limiting: Implement rate limiting per user/IP
+
+Authentication Headers:
+✅ GOOD:
+Authorization: Bearer <session-token>
+X-API-Key: <api-key>
+
+Permission Checks:
+✅ GOOD:
+// Check if user can access resource
+if (user.role !== 'admin' && resource.userId !== user.id) {
+  return unauthorized();
+}
+
+// Check specific permissions
+if (!hasPermission(user, 'services:read')) {
+  return forbidden();
+}
+
+VALIDATION STANDARDS:
+- Input Validation: Validate all inputs using schemas
+- Type Safety: Ensure type safety with TypeScript
+- Sanitization: Sanitize inputs to prevent injection
+- Error Messages: Provide clear validation error messages
+
+Validation Implementation:
+✅ GOOD:
+const createServiceSchema = z.object({
+  name: z.string().min(3).max(100),
+  description: z.string().min(10).max(1000),
+  price: z.number().positive(),
+  categoryId: z.string().uuid(),
+  features: z.array(z.object({
+    title: z.string().min(1).max(100),
+    description: z.string().optional()
+  })).optional()
+});
+
+❌ BAD:
+// No validation
+const service = await db.service.create({
+  data: req.body
+});
+
+CONTENT NEGOTIATION:
+- Content Types: Support appropriate content types
+- Accept Headers: Handle Accept headers properly
+- Encoding: Support appropriate encoding
+- Compression: Use compression for large responses
+
+Content Type Handling:
+✅ GOOD:
+app.post('/api/services', async (c) => {
+  const contentType = c.req.header('content-type');
+  
+  if (contentType?.includes('application/json')) {
+    const body = await c.req.json();
+    // Handle JSON
+  } else if (contentType?.includes('multipart/form-data')) {
+    const formData = await c.req.formData();
+    // Handle form data
+  }
+});
+
+CACHING STRATEGIES:
+- ETags: Use ETags for cache validation
+- Cache Headers: Set appropriate cache headers
+- Cache Keys: Use consistent cache key patterns
+- Cache Invalidation: Implement proper cache invalidation
+
+Caching Headers:
+✅ GOOD:
+return c.json(data, {
+  headers: {
+    'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+    'ETag': generateETag(data),
+    'Last-Modified': lastModified.toUTCString()
+  }
+});
+
+API DOCUMENTATION:
+- OpenAPI: Use OpenAPI specification
+- Auto-generation: Auto-generate docs from code
+- Examples: Provide comprehensive examples
+- Interactive Docs: Provide interactive documentation
+
+OpenAPI Schema Example:
+✅ GOOD:
+paths:
+  /api/services:
+    get:
+      summary: Get services
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+
+RATE LIMITING:
+- Per-user Limits: Implement per-user rate limits
+- Per-IP Limits: Implement per-IP rate limits
+- Different Limits: Different limits for different endpoints
+- Headers: Include rate limit headers in responses
+
+Rate Limit Headers:
+✅ GOOD:
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1640995200
+
+MANDATORY API PATTERNS:
+1. Use RESTful URL conventions with plural nouns
+2. Implement consistent response format with data/meta structure
+3. Use appropriate HTTP status codes for all responses
+4. Implement proper error handling with structured error responses
+5. Use query parameters for filtering, sorting, and pagination
+6. Implement proper authentication and authorization
+7. Validate all inputs using Zod schemas
+8. Support proper content negotiation
+9. Implement caching with appropriate headers
+10. Generate and maintain OpenAPI documentation
+11. Implement rate limiting for API protection
+12. Use consistent naming conventions across all endpoints

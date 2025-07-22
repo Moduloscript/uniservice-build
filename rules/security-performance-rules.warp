@@ -1,0 +1,431 @@
+SECURITY & PERFORMANCE RULES - SupaStarter NextJS Application
+
+AUTHENTICATION SECURITY:
+- Session Management: Use secure session cookies with proper settings
+- Password Security: Hash passwords with bcrypt or similar
+- Multi-factor Authentication: Support MFA where appropriate
+- Session Expiry: Implement proper session expiration and refresh
+
+Session Security:
+✅ GOOD:
+const session = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: config.auth.sessionCookieMaxAge,
+  path: '/'
+};
+
+❌ BAD:
+// Insecure session settings
+const session = {
+  httpOnly: false,
+  secure: false
+};
+
+AUTHORIZATION PATTERNS:
+- Role-Based Access: Implement proper RBAC
+- Resource-Level Permissions: Check resource ownership
+- API Route Protection: Protect all sensitive API routes
+- Frontend Route Guards: Implement client-side route protection
+
+Authorization Implementation:
+✅ GOOD:
+export const requireAuth = async (c: Context, next: () => Promise<void>) => {
+  const session = await getSession(c);
+  
+  if (!session?.user) {
+    return c.json({ error: 'Authentication required' }, 401);
+  }
+  
+  c.set('user', session.user);
+  await next();
+};
+
+export const requireRole = (role: string) => {
+  return async (c: Context, next: () => Promise<void>) => {
+    const user = c.get('user');
+    
+    if (!user || user.role !== role) {
+      return c.json({ error: 'Insufficient permissions' }, 403);
+    }
+    
+    await next();
+  };
+};
+
+INPUT VALIDATION SECURITY:
+- SQL Injection Prevention: Use parameterized queries (Prisma)
+- XSS Prevention: Sanitize all user inputs
+- File Upload Security: Validate file types and sizes
+- Rate Limiting: Implement rate limiting on sensitive endpoints
+
+Input Sanitization:
+✅ GOOD:
+import DOMPurify from 'isomorphic-dompurify';
+
+const sanitizeHtml = (input: string): string => {
+  return DOMPurify.sanitize(input, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
+    ALLOWED_ATTR: []
+  });
+};
+
+const createServiceHandler = async (c: Context) => {
+  const body = await c.req.json();
+  const validatedData = createServiceSchema.parse(body);
+  
+  // Sanitize description if it contains HTML
+  if (validatedData.description) {
+    validatedData.description = sanitizeHtml(validatedData.description);
+  }
+  
+  const service = await db.service.create({
+    data: validatedData
+  });
+  
+  return c.json({ data: service });
+};
+
+FILE UPLOAD SECURITY:
+- File Type Validation: Whitelist allowed file types
+- File Size Limits: Enforce maximum file sizes
+- Virus Scanning: Implement virus scanning for uploads
+- Secure Storage: Store files in secure locations
+
+File Upload Security:
+✅ GOOD:
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const uploadFile = async (c: Context) => {
+  const formData = await c.req.formData();
+  const file = formData.get('file') as File;
+  
+  if (!file) {
+    return c.json({ error: 'No file provided' }, 400);
+  }
+  
+  // Validate file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    return c.json({ 
+      error: `File type ${file.type} not allowed. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}` 
+    }, 400);
+  }
+  
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    return c.json({ 
+      error: `File size ${file.size} exceeds maximum allowed size of ${MAX_FILE_SIZE} bytes` 
+    }, 400);
+  }
+  
+  // Generate secure filename
+  const fileExtension = path.extname(file.name);
+  const secureFilename = `${crypto.randomUUID()}${fileExtension}`;
+  
+  const uploadResult = await uploadToStorage({
+    file,
+    filename: secureFilename,
+    bucket: config.storage.bucketNames.verificationDocs
+  });
+  
+  return c.json({ data: uploadResult });
+};
+
+RATE LIMITING:
+- Per-User Limits: Implement per-user rate limits
+- Per-IP Limits: Implement per-IP rate limits
+- Endpoint-Specific Limits: Different limits for different endpoints
+- Graceful Degradation: Handle rate limit exceeded gracefully
+
+Rate Limiting Implementation:
+✅ GOOD:
+const rateLimiter = new Map<string, { count: number; resetTime: number }>();
+
+export const rateLimit = (maxRequests: number, windowMs: number) => {
+  return async (c: Context, next: () => Promise<void>) => {
+    const key = `${c.req.header('x-forwarded-for') || 'unknown'}-${c.req.path}`;
+    const now = Date.now();
+    
+    const record = rateLimiter.get(key);
+    
+    if (!record || now > record.resetTime) {
+      rateLimiter.set(key, { count: 1, resetTime: now + windowMs });
+    } else if (record.count >= maxRequests) {
+      return c.json({
+        error: 'Rate limit exceeded',
+        retryAfter: Math.ceil((record.resetTime - now) / 1000)
+      }, 429);
+    } else {
+      record.count++;
+    }
+    
+    await next();
+  };
+};
+
+DATABASE SECURITY:
+- Connection Security: Use secure database connections
+- Query Parameterization: Always use parameterized queries
+- Least Privilege: Use database users with minimal required permissions
+- Backup Security: Secure database backups
+
+Database Security:
+✅ GOOD:
+// Use environment variables for database credentials
+const DATABASE_URL = process.env.DATABASE_URL;
+const DIRECT_URL = process.env.DIRECT_URL;
+
+if (!DATABASE_URL || !DIRECT_URL) {
+  throw new Error('Database configuration missing');
+}
+
+// Row Level Security (RLS) policies in PostgreSQL
+-- Enable RLS on sensitive tables
+ALTER TABLE user ENABLE ROW LEVEL SECURITY;
+
+-- Users can only access their own data
+CREATE POLICY user_isolation ON user
+  FOR ALL
+  TO authenticated_users
+  USING (id = current_user_id());
+
+PERFORMANCE OPTIMIZATION:
+- Database Query Optimization: Use efficient queries with proper indexes
+- Caching Strategies: Implement multi-level caching
+- Asset Optimization: Optimize images, fonts, and static assets
+- Code Splitting: Implement proper code splitting
+
+Database Performance:
+✅ GOOD:
+// Efficient pagination with cursor-based approach
+const getServices = async (cursor?: string, limit: number = 20) => {
+  return await db.service.findMany({
+    take: limit,
+    ...(cursor && { 
+      cursor: { id: cursor },
+      skip: 1 // Skip the cursor item
+    }),
+    orderBy: { createdAt: 'desc' },
+    include: {
+      category: {
+        select: { name: true }
+      },
+      _count: {
+        select: { bookings: true }
+      }
+    }
+  });
+};
+
+❌ BAD:
+// Inefficient offset-based pagination
+const getServices = async (page: number = 1, limit: number = 20) => {
+  return await db.service.findMany({
+    skip: (page - 1) * limit,
+    take: limit,
+    include: {
+      category: true, // Over-fetching
+      bookings: true, // Over-fetching
+      reviews: true   // Over-fetching
+    }
+  });
+};
+
+CACHING STRATEGIES:
+- Redis Cache: Use Redis for session and data caching
+- React Query Cache: Configure appropriate cache times
+- CDN Caching: Use CDN for static assets
+- Database Query Caching: Cache expensive database queries
+
+Caching Implementation:
+✅ GOOD:
+// React Query caching configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// API response caching
+export const getCachedServices = async (c: Context) => {
+  const cacheKey = 'services:active';
+  
+  // Try to get from cache first
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return c.json(JSON.parse(cached), {
+      headers: {
+        'Cache-Control': 'public, max-age=300',
+        'X-Cache': 'HIT'
+      }
+    });
+  }
+  
+  // Fetch from database
+  const services = await getActiveServices();
+  
+  // Cache the result
+  await redis.setex(cacheKey, 300, JSON.stringify(services)); // 5 minutes
+  
+  return c.json(services, {
+    headers: {
+      'Cache-Control': 'public, max-age=300',
+      'X-Cache': 'MISS'
+    }
+  });
+};
+
+FRONTEND PERFORMANCE:
+- Image Optimization: Use Next.js Image component
+- Bundle Optimization: Analyze and optimize bundle size
+- Lazy Loading: Implement lazy loading for heavy components
+- Prefetching: Prefetch critical resources
+
+Frontend Optimization:
+✅ GOOD:
+// Lazy loading with Suspense
+const AdminDashboard = lazy(() => 
+  import('./AdminDashboard').then(module => ({
+    default: module.AdminDashboard
+  }))
+);
+
+// Optimized image loading
+<Image
+  src={user.avatar}
+  alt={`${user.name}'s avatar`}
+  width={40}
+  height={40}
+  className="rounded-full"
+  priority={false}
+  placeholder="blur"
+  blurDataURL="data:image/jpeg;base64,..."
+  sizes="(max-width: 768px) 40px, 40px"
+/>
+
+// Prefetch critical data
+const PrefetchProvider = ({ children }: { children: React.ReactNode }) => {
+  useEffect(() => {
+    // Prefetch user data
+    queryClient.prefetchQuery({
+      queryKey: ['current-user'],
+      queryFn: getCurrentUser
+    });
+  }, []);
+  
+  return <>{children}</>;
+};
+
+MONITORING & OBSERVABILITY:
+- Error Tracking: Implement comprehensive error tracking
+- Performance Monitoring: Monitor API response times
+- Security Monitoring: Monitor for security incidents
+- Health Checks: Implement health check endpoints
+
+Monitoring Implementation:
+✅ GOOD:
+// Performance monitoring middleware
+export const performanceMiddleware = async (c: Context, next: () => Promise<void>) => {
+  const start = Date.now();
+  
+  await next();
+  
+  const duration = Date.now() - start;
+  
+  // Log slow queries
+  if (duration > 1000) {
+    logger.warn('Slow API response', {
+      path: c.req.path,
+      method: c.req.method,
+      duration,
+      userId: c.get('user')?.id
+    });
+  }
+  
+  // Add performance headers
+  c.res.headers.set('X-Response-Time', `${duration}ms`);
+};
+
+// Health check endpoint
+export const healthCheck = async (c: Context) => {
+  try {
+    // Check database connection
+    await db.$queryRaw`SELECT 1`;
+    
+    // Check Redis connection
+    await redis.ping();
+    
+    return c.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: 'healthy',
+        cache: 'healthy'
+      }
+    });
+  } catch (error) {
+    logger.error('Health check failed', { error });
+    
+    return c.json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    }, 503);
+  }
+};
+
+CONTENT SECURITY POLICY:
+- CSP Headers: Implement Content Security Policy
+- XSS Protection: Enable XSS protection headers
+- Frame Options: Prevent clickjacking attacks
+- HTTPS Enforcement: Enforce HTTPS in production
+
+Security Headers:
+✅ GOOD:
+export const securityHeaders = async (c: Context, next: () => Promise<void>) => {
+  await next();
+  
+  // Content Security Policy
+  c.res.headers.set('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self' https://fonts.gstatic.com"
+  );
+  
+  // XSS Protection
+  c.res.headers.set('X-XSS-Protection', '1; mode=block');
+  
+  // Frame Options
+  c.res.headers.set('X-Frame-Options', 'DENY');
+  
+  // Content Type Options
+  c.res.headers.set('X-Content-Type-Options', 'nosniff');
+  
+  // HTTPS Enforcement
+  if (process.env.NODE_ENV === 'production') {
+    c.res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+};
+
+MANDATORY SECURITY & PERFORMANCE PATTERNS:
+1. Implement secure authentication with proper session management
+2. Use role-based authorization for all protected resources
+3. Validate and sanitize all user inputs
+4. Implement rate limiting on sensitive endpoints
+5. Use secure file upload practices with type and size validation
+6. Implement multi-level caching for performance optimization
+7. Use efficient database queries with proper indexes
+8. Implement lazy loading and code splitting for frontend performance
+9. Use security headers to prevent common attacks
+10. Monitor performance and security metrics continuously
+11. Implement proper error handling without exposing sensitive information
+12. Use HTTPS in production with proper certificate management

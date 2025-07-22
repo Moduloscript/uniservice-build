@@ -1,0 +1,262 @@
+BACKEND DEVELOPMENT RULES - SupaStarter NextJS Application
+
+API ARCHITECTURE WITH HONO:
+- Router Organization: Separate routers by domain in routes/{domain}/router.ts
+- Middleware Order: logger → cors → auth → domain-specific
+- Error Handling: Implement consistent error responses across all routes
+- Base Path: Use /api as base path for all API routes
+
+Router Implementation Pattern:
+✅ GOOD:
+export const domainRouter = new Hono()
+  .basePath('/api/domain')
+  .use('*', authMiddleware)
+  .get('/', getDomainItems)
+  .post('/', createDomainItem)
+  .patch('/:id', updateDomainItem)
+  .delete('/:id', deleteDomainItem)
+
+❌ BAD:
+const router = new Hono()
+router.get('/domain', handler)
+
+Middleware Chain Order:
+✅ GOOD:
+app.use(loggerMiddleware)    // 1. Logging first
+app.use(corsMiddleware)      // 2. CORS second  
+app.use(authMiddleware)      // 3. Auth third
+app.use(localeMiddleware)    // 4. Locale fourth
+app.use(adminMiddleware)     // 5. Role-based last
+
+AUTHENTICATION & AUTHORIZATION:
+- Framework: Use Better-auth with Prisma adapter
+- Session Management: Cookie-based sessions with configurable expiry
+- Multi-Provider: Support email/password, OAuth, magic links, passkeys
+- Role-Based Access: Implement proper role checking middleware
+
+Authorization Middleware:
+✅ GOOD:
+export const adminMiddleware = createMiddleware(async (c, next) => {
+  const session = await getSession(c)
+  
+  if (!session?.user || session.user.role !== 'admin') {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+  
+  c.set('user', session.user)
+  await next()
+})
+
+❌ BAD:
+export const middleware = async (c, next) => {
+  // No proper session validation
+  await next()
+}
+
+OPENAPI DOCUMENTATION:
+- Schema Generation: Auto-generate OpenAPI specs using hono-openapi
+- Merge Strategy: Combine auth and app schemas using custom merge logic
+- Documentation: Provide interactive docs via Scalar API reference
+
+OpenAPI Implementation:
+✅ GOOD:
+app.get('/openapi', async (c) => {
+  const authSchema = await auth.api.generateOpenAPISchema();
+  const appSchema = await app.request('/api/app-openapi').then(res => res.json());
+  
+  const mergedSchema = mergeOpenApiSchemas({ appSchema, authSchema });
+  return c.json(mergedSchema);
+});
+
+ERROR HANDLING PATTERNS:
+- Consistent Responses: Use standardized error response format
+- Status Codes: Use appropriate HTTP status codes
+- Error Context: Include relevant error context and details
+- Logging: Log errors with proper context for debugging
+
+Error Response Standards:
+✅ GOOD:
+return c.json({
+  error: {
+    code: 'VALIDATION_ERROR',
+    message: 'Invalid input data',
+    details: validationErrors
+  }
+}, 400)
+
+❌ BAD:
+return c.json({ error: 'Bad request' }, 400)
+
+INPUT VALIDATION & SECURITY:
+- Schema Validation: Use Zod schemas for all API inputs
+- Type Safety: Generate TypeScript types from Prisma/Zod schemas
+- Sanitization: Sanitize inputs before database operations
+- Rate Limiting: Implement rate limiting for API endpoints
+
+Validation Pattern:
+✅ GOOD:
+const createServiceHandler = async (c) => {
+  const body = await c.req.json();
+  const validatedData = createServiceSchema.parse(body);
+  
+  const service = await db.service.create({
+    data: {
+      ...validatedData,
+      providerId: c.get('user').id
+    }
+  });
+  
+  return c.json({ data: service });
+};
+
+❌ BAD:
+const handler = async (c) => {
+  const body = await c.req.json();
+  // No validation
+  const service = await db.service.create({ data: body });
+  return c.json(service);
+};
+
+DATABASE INTEGRATION:
+- ORM Usage: Use Prisma for database operations
+- Connection Management: Use singleton pattern for database client
+- Transaction Handling: Use Prisma transactions for multi-step operations
+- Error Handling: Proper error handling for database operations
+
+Database Client Pattern:
+✅ GOOD:
+import { db } from '@repo/database';
+
+const createServiceWithFeatures = async (serviceData, features) => {
+  return await db.$transaction(async (tx) => {
+    const service = await tx.service.create({
+      data: serviceData
+    });
+    
+    if (features.length > 0) {
+      await tx.serviceFeatures.createMany({
+        data: features.map(feature => ({
+          ...feature,
+          serviceId: service.id
+        }))
+      });
+    }
+    
+    return service;
+  });
+};
+
+LOGGING & MONITORING:
+- Structured Logging: Use structured logging with context
+- Error Tracking: Log errors with relevant context
+- Performance Monitoring: Track API response times
+- Audit Logging: Log important user actions
+
+Logging Pattern:
+✅ GOOD:
+logger.info('User verification completed', {
+  userId: user.id,
+  verificationType: 'student_id',
+  adminId: admin.id,
+  timestamp: new Date().toISOString()
+})
+
+❌ BAD:
+console.log('User verified')
+
+FILE UPLOAD HANDLING:
+- Security: Validate file types and sizes
+- Storage: Use configured storage providers (Supabase/S3)
+- Processing: Handle file processing asynchronously
+- Cleanup: Clean up temporary files
+
+File Upload Pattern:
+✅ GOOD:
+const uploadVerificationDoc = async (c) => {
+  const formData = await c.req.formData();
+  const file = formData.get('file') as File;
+  
+  // Validate file
+  if (!file || file.size > 10 * 1024 * 1024) {
+    return c.json({ error: 'Invalid file or too large' }, 400);
+  }
+  
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  if (!allowedTypes.includes(file.type)) {
+    return c.json({ error: 'Invalid file type' }, 400);
+  }
+  
+  // Upload to storage
+  const uploadResult = await uploadFile({
+    file,
+    bucket: config.storage.bucketNames.verificationDocs,
+    userId: c.get('user').id
+  });
+  
+  return c.json({ data: uploadResult });
+};
+
+ENVIRONMENT CONFIGURATION:
+- Environment Variables: Use proper environment variable validation
+- Configuration: Centralize configuration in config package
+- Secrets: Never expose secrets in client-side code
+- Development: Use different configs for different environments
+
+Environment Handling:
+✅ GOOD:
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'DIRECT_URL',
+  'BETTER_AUTH_SECRET'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    throw new Error(`Missing required environment variable: ${envVar}`);
+  }
+}
+
+WEBHOOK HANDLING:
+- Signature Verification: Always verify webhook signatures
+- Idempotency: Handle duplicate webhooks properly
+- Error Handling: Implement proper error responses
+- Retry Logic: Handle webhook retries appropriately
+
+Webhook Pattern:
+✅ GOOD:
+export const paystackWebhook = async (c) => {
+  const signature = c.req.header('x-paystack-signature');
+  const body = await c.req.text();
+  
+  if (!verifyWebhookSignature(body, signature)) {
+    return c.json({ error: 'Invalid signature' }, 401);
+  }
+  
+  const event = JSON.parse(body);
+  
+  // Handle idempotency
+  const existingEvent = await db.webhookEvent.findUnique({
+    where: { externalId: event.id }
+  });
+  
+  if (existingEvent) {
+    return c.json({ message: 'Event already processed' });
+  }
+  
+  // Process webhook
+  await processPaystackEvent(event);
+  
+  return c.json({ message: 'Webhook processed' });
+};
+
+MANDATORY PATTERNS:
+1. Always use Hono for API routing with proper middleware chain
+2. Implement proper authentication and authorization
+3. Use Zod schemas for input validation
+4. Follow RESTful API conventions
+5. Implement structured error handling
+6. Use Prisma for database operations with proper error handling
+7. Generate and maintain OpenAPI documentation
+8. Implement proper logging and monitoring
+9. Handle file uploads securely
+10. Validate webhook signatures and handle idempotency
