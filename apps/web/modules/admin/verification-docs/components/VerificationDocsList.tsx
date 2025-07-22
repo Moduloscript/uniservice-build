@@ -11,6 +11,7 @@ export interface VerificationDoc {
 	userName: string;
 	userRole: string;
 	documentUrl: string;
+	verificationDoc?: string; // Added for better compatibility
 	submittedAt: string;
 	status: "PENDING" | "APPROVED" | "REJECTED";
 	notes?: string;

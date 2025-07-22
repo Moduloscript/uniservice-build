@@ -83,11 +83,18 @@ export function OnboardingForm({ className }: { className?: string }) {
 	];
 
 
-	const studentIdUpload = useFileUpload({
+const studentIdUpload = useFileUpload({
 		userId: user?.id,
 		prefix: "student-id-cards",
 	});
-	const providerDocUpload = useFileUpload({
+	
+	// Create individual upload hooks for provider documents
+	const validIdUpload = useFileUpload({
+		userId: user?.id,
+		prefix: "verification-docs",
+	});
+	
+	const portfolioUpload = useFileUpload({
 		userId: user?.id,
 		prefix: "verification-docs",
 	});
@@ -151,10 +158,10 @@ export function OnboardingForm({ className }: { className?: string }) {
 				<StepProgress steps={steps} currentStep={step} />
 
 				{/* Step Content with Transition */}
-				<div className="relative min-h-[200px]">
+				<div className="relative min-h-[400px] bg-gray-50/50 rounded-lg p-6">
 					<div
 						key={step}
-						className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-4 transition-all duration-300"
+						className="absolute inset-6 animate-in fade-in-0 slide-in-from-bottom-4 transition-all duration-300"
 					>
 						{/* Step 0: Role Selection */}
 						{step === 0 && (
@@ -276,55 +283,64 @@ const path =
 						{step === 2 &&
 							userType === "PROVIDER" &&
 							providerCategory && (
-								<div className="space-y-4">
+								<div className="space-y-6">
+									<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+										<h3 className="text-sm font-medium text-blue-900 mb-2">
+											Upload Required Documents
+										</h3>
+										<p className="text-xs text-blue-700">
+											Please upload all required documents to complete your provider registration.
+										</p>
+									</div>
 									{CATEGORY_VERIFICATION_REQUIREMENTS[
 										providerCategory
-									]?.requiredDocuments.map((doc) => (
-										<FormField
-											key={doc.key}
-											control={form.control}
-											name={
-												`providerDocs.${doc.key}` as any
-											}
-											render={({ field }) => (
-												<FormItem className="space-y-1">
-													<FileUploadField
-														label={doc.label}
-														description={
-															doc.description
-														}
-														value={field.value}
-														onFileChange={async (
-															file,
-														) => {
-															if (!file) {
-																return;
-															}
-															const path =
-																await providerDocUpload.uploadFile(
+									]?.requiredDocuments.map((doc, index) => {
+										// Use the appropriate upload hook based on document type
+										const currentUpload = doc.key === 'validId' ? validIdUpload : portfolioUpload;
+										return (
+											<FormField
+												key={doc.key}
+												control={form.control}
+												name={
+													`providerDocs.${doc.key}` as any
+												}
+												render={({ field }) => (
+													<FormItem className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+														<div className="flex items-center gap-3 mb-3">
+															<div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
+																{index + 1}
+															</div>
+															<h4 className="font-semibold text-gray-900 text-sm">{doc.label}</h4>
+														</div>
+														<FileUploadField
+															label={""}
+															description={doc.description}
+															value={field.value || ""}
+															onFileChange={async (file) => {
+																if (!file) {
+																	return;
+																}
+																
+																const path = await currentUpload.uploadFile(
 																	file,
+																	`${user?.id}-${doc.key}-${uuid()}.${file.name.split(".").pop() || "pdf"}`
 																);
-															if (path) {
-																field.onChange(
-																	path,
-																);
-															}
-														}}
-														isLoading={
-															providerDocUpload.isUploading
-														}
-														error={
-															providerDocUpload.error
-														}
-														accept="image/jpeg,image/png,application/pdf"
-														helpText="Upload a valid document (max 5MB)"
-														disabled={isLoading}
-													/>
-													<FormMessage className="text-xs" />
-												</FormItem>
-											)}
-										/>
-									))}
+																if (path) {
+																	field.onChange(path);
+																}
+															}}
+															isLoading={currentUpload.isUploading}
+															error={currentUpload.error}
+															accept="image/jpeg,image/png,application/pdf"
+															helpText="Upload a clear photo or scan of your document (image or PDF, max 5MB)"
+															disabled={isLoading}
+														/>
+														<FormMessage className="text-xs mt-2" />
+													</FormItem>
+												)}
+											/>
+										);
+									})}
 								</div>
 							)}
 

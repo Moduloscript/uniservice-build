@@ -87,19 +87,93 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
     }
   });
 
-  const providerDocUpload = useOptimizedFileUpload({
+  // Create separate upload hooks for each possible provider document type
+  // We need to create all possible hooks upfront to follow Rules of Hooks
+  const idCardUpload = useOptimizedFileUpload({
     userId: user?.id,
     prefix: "verification-docs",
-    onProgress: (progress) => {
-      // Progress is automatically handled by the enhanced component
-    },
     onSuccess: (path) => {
-      // This will be handled individually for each provider document
+      form.setValue("providerDocs.id_card" as any, path, { shouldValidate: true });
     },
     onError: (error) => {
-      console.error("Provider document upload error:", error);
+      console.error("ID card upload error:", error);
     }
   });
+
+  const portfolioUpload = useOptimizedFileUpload({
+    userId: user?.id,
+    prefix: "verification-docs",
+    onSuccess: (path) => {
+      form.setValue("providerDocs.portfolio" as any, path, { shouldValidate: true });
+    },
+    onError: (error) => {
+      console.error("Portfolio upload error:", error);
+    }
+  });
+
+  const certificateUpload = useOptimizedFileUpload({
+    userId: user?.id,
+    prefix: "verification-docs",
+    onSuccess: (path) => {
+      form.setValue("providerDocs.certificate" as any, path, { shouldValidate: true });
+    },
+    onError: (error) => {
+      console.error("Certificate upload error:", error);
+    }
+  });
+
+  const licenseUpload = useOptimizedFileUpload({
+    userId: user?.id,
+    prefix: "verification-docs",
+    onSuccess: (path) => {
+      form.setValue("providerDocs.license" as any, path, { shouldValidate: true });
+    },
+    onError: (error) => {
+      console.error("License upload error:", error);
+    }
+  });
+
+  const foodPermitUpload = useOptimizedFileUpload({
+    userId: user?.id,
+    prefix: "verification-docs",
+    onSuccess: (path) => {
+      form.setValue("providerDocs.food_permit" as any, path, { shouldValidate: true });
+    },
+    onError: (error) => {
+      console.error("Food permit upload error:", error);
+    }
+  });
+
+  const businessRegUpload = useOptimizedFileUpload({
+    userId: user?.id,
+    prefix: "verification-docs",
+    onSuccess: (path) => {
+      form.setValue("providerDocs.business_reg" as any, path, { shouldValidate: true });
+    },
+    onError: (error) => {
+      console.error("Business registration upload error:", error);
+    }
+  });
+
+  // Helper function to get upload hook for a specific document
+  const getUploadHook = useCallback((docKey: string) => {
+    switch (docKey) {
+      case 'id_card':
+        return idCardUpload;
+      case 'portfolio':
+        return portfolioUpload;
+      case 'certificate':
+        return certificateUpload;
+      case 'license':
+        return licenseUpload;
+      case 'food_permit':
+        return foodPermitUpload;
+      case 'business_reg':
+        return businessRegUpload;
+      default:
+        return null;
+    }
+  }, [idCardUpload, portfolioUpload, certificateUpload, licenseUpload, foodPermitUpload, businessRegUpload]);
 
   // Auto-update provider category when it changes in form
   React.useEffect(() => {
@@ -149,7 +223,7 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
             doc => providerDocs?.[doc.key]
           )
         : false,
-      canSubmit: form.formState.isValid && !isSubmitting,
+      canSubmit: form.formState.isValid && !isSubmitting && !isSubmissionInProgress,
     };
   }, [
     form.formState.errors,
@@ -162,7 +236,8 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
     providerCategoryField,
     providerDocs,
     providerCategory,
-    isSubmitting
+    isSubmitting,
+    isSubmissionInProgress
   ]);
 
   // Enhanced navigation functions
@@ -174,13 +249,38 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
     setStep(s => Math.max(s - 1, 0));
   }, []);
 
-  // Enhanced form submission
+  // Enhanced form submission with double-submission prevention
+  const [isSubmissionInProgress, setIsSubmissionInProgress] = React.useState(false);
+  
   const handleSubmit = useCallback(
-    async (data: OnboardingFormValues) => {
-      if (!validationState.canSubmit) return;
-      submitOnboarding(data);
+    async (data: OnboardingFormValues, event?: React.FormEvent) => {
+      // Prevent browser default form submission
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      // Comprehensive submission guards
+      if (!validationState.canSubmit || isSubmitting || isSubmissionInProgress) {
+        console.log('Submission blocked:', {
+          canSubmit: validationState.canSubmit,
+          isSubmitting,
+          isSubmissionInProgress
+        });
+        return;
+      }
+      
+      try {
+        setIsSubmissionInProgress(true);
+        console.log('Starting onboarding submission...', data);
+        await submitOnboarding(data);
+      } catch (error) {
+        console.error('Submission failed:', error);
+      } finally {
+        setIsSubmissionInProgress(false);
+      }
     },
-    [submitOnboarding, validationState.canSubmit]
+    [submitOnboarding, validationState.canSubmit, isSubmitting, isSubmissionInProgress]
   );
 
   // Handle role change with form reset
@@ -209,12 +309,15 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
   // Enhanced file upload handlers
   const handleStudentIdUpload = useCallback(
     async (file: File | null) => {
-      if (!file) return;
+      if (!file) {
+        form.setValue("studentIdCard", "", { shouldValidate: true });
+        return;
+      }
 
       try {
         const ext = file.name.split(".").pop() || "jpg";
         const customPath = `${user?.id}-student-id-card-${uuid()}.${ext}`;
-        
+
         const uploadedPath = await studentIdUpload.uploadFile({ file, customPath });
         if (uploadedPath) {
           form.setValue("studentIdCard", uploadedPath, { shouldValidate: true });
@@ -228,13 +331,23 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
 
   const handleProviderDocUpload = useCallback(
     (docKey: string) => async (file: File | null) => {
-      if (!file) return;
+      if (!file) {
+        form.setValue(`providerDocs.${docKey}` as any, "", { shouldValidate: true });
+        return;
+      }
 
       try {
         const ext = file.name.split(".").pop() || "pdf";
         const customPath = `${user?.id}-${docKey}-${uuid()}.${ext}`;
-        
-        const uploadedPath = await providerDocUpload.uploadFile({ file, customPath });
+
+        // Get the appropriate upload hook for this document type
+        const uploadHook = getUploadHook(docKey);
+        if (!uploadHook) {
+          console.error(`No upload hook found for document type: ${docKey}`);
+          return;
+        }
+
+        const uploadedPath = await uploadHook.uploadFile({ file, customPath });
         if (uploadedPath) {
           form.setValue(`providerDocs.${docKey}` as any, uploadedPath, { 
             shouldValidate: true 
@@ -244,7 +357,7 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
         console.error(`Failed to upload ${docKey}:`, error);
       }
     },
-    [providerDocUpload, form, user?.id]
+    [getUploadHook, form, user?.id]
   );
 
   return (
@@ -286,10 +399,10 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
         <StepProgress steps={steps} currentStep={step} />
 
         {/* Step Content with Enhanced Transitions */}
-        <div className="relative min-h-[300px]">
+        <div className="space-y-6 py-4">
           <div
             key={step}
-            className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-4 duration-300"
+            className="animate-in fade-in-0 slide-in-from-bottom-4 duration-300"
           >
             {/* Step 0: Role Selection */}
             {step === 0 && (
@@ -385,10 +498,10 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
                           description={doc.description}
                           value={field.value || ""}
                           onFileChange={handleProviderDocUpload(doc.key)}
-                          isLoading={providerDocUpload.isUploading}
-                          progress={providerDocUpload.progress}
-                          error={providerDocUpload.error}
-                          onRetry={providerDocUpload.reset}
+                          isLoading={getUploadHook(doc.key)?.isUploading || false}
+                          progress={getUploadHook(doc.key)?.progress || 0}
+                          error={getUploadHook(doc.key)?.error || null}
+                          onRetry={() => getUploadHook(doc.key)?.reset()}
                           accept="image/jpeg,image/png,application/pdf"
                           helpText="Upload a valid document (JPG, PNG, or PDF, max 5MB)"
                           disabled={isSubmitting}
@@ -423,7 +536,7 @@ export function OptimizedOnboardingForm({ className }: OptimizedOnboardingFormPr
         <NavigationButtons
           step={step}
           stepsCount={steps.length}
-          isLoading={isSubmitting}
+          isLoading={isSubmitting || isSubmissionInProgress}
           isNextDisabled={
             step === 0
               ? !validationState.canProceedFromStep0

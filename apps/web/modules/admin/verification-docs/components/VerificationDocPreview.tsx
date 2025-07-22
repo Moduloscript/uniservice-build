@@ -8,7 +8,7 @@ import {
 import { Badge } from "@ui/components/badge";
 import { Button } from "@ui/components/button";
 import { Separator } from "@ui/components/separator";
-import { FileText, Download, GraduationCap, Building2, Calendar } from "lucide-react";
+import { FileText, Download, GraduationCap, Building2, Calendar, AlertCircle } from "lucide-react";
 import type { VerificationDoc } from "./VerificationDocsList";
 
 interface VerificationDocPreviewProps {
@@ -19,9 +19,61 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 	doc,
 }) => {
 	const userType = doc.userType || doc.userRole || "";
-	const documentUrl = doc.documentUrl || "";
-	const fileName = documentUrl.split("/").pop() || "Document";
+	
+	// Get all available documents
+	const getAvailableDocuments = () => {
+		const documents = [];
+		
+		// Add primary verification document if available
+		if (doc.documentUrl || doc.verificationDoc) {
+			documents.push({
+				url: doc.documentUrl || doc.verificationDoc,
+				type: 'verification',
+				name: 'Verification Document',
+				bucket: 'verification-docs'
+			});
+		}
+		
+		// Add student ID card if available
+		if (doc.studentIdCardUrl) {
+			documents.push({
+				url: doc.studentIdCardUrl,
+				type: 'student-id',
+				name: 'Student ID Card',
+				bucket: 'student-id-cards'
+			});
+		}
+		
+		// Add provider verification documents if available
+		if (doc.providerVerificationDocs && typeof doc.providerVerificationDocs === 'object') {
+			Object.entries(doc.providerVerificationDocs).forEach(([key, url]) => {
+				if (url && typeof url === 'string') {
+					documents.push({
+						url: url,
+						type: 'provider-verification',
+						name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+						bucket: 'verification-docs'
+					});
+				}
+			});
+		}
+		
+		return documents;
+	};
+	
+	const availableDocuments = getAvailableDocuments();
+	
+	// State for managing which document is currently selected
+	const [selectedDocIndex, setSelectedDocIndex] = useState(0);
 	const [isLoadingStudentId, setIsLoadingStudentId] = useState(false);
+	const [previewError, setPreviewError] = useState<string | null>(null);
+	const [iframeError, setIframeError] = useState(false);
+	
+	// Get current document info
+	const currentDocument = availableDocuments[selectedDocIndex];
+	const documentUrl = currentDocument?.url || "";
+	const fileName = documentUrl ? documentUrl.split("/").pop() || "Document" : "No Document";
+	const bucketName = currentDocument?.bucket || "verification-docs";
 
 	const getSecureDownloadUrl = useCallback(async (bucket: string, path: string) => {
 		try {
@@ -117,27 +169,72 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
+					{/* Document selector for multiple documents */}
+					{availableDocuments.length > 1 && (
+						<div className="flex flex-wrap gap-2 mb-4">
+							{availableDocuments.map((document, index) => (
+								<Button
+									key={index}
+									variant={index === selectedDocIndex ? "default" : "outline"}
+									size="sm"
+									onClick={() => {
+										setSelectedDocIndex(index);
+										setPreviewError(null);
+									}}
+									className="text-xs"
+								>
+									{document.name}
+								</Button>
+							))}
+						</div>
+					)}
+					
+					{/* Document count indicator */}
+					{availableDocuments.length > 0 && (
+						<div className="text-xs text-muted-foreground mb-2 text-center">
+							{availableDocuments.length > 1 
+								? `Document ${selectedDocIndex + 1} of ${availableDocuments.length}` 
+								: `1 Document Available`
+							}
+						</div>
+					)}
+					
 					<div className="rounded border bg-muted p-3 min-h-[180px]">
-						{documentUrl ? (
+						{availableDocuments.length > 0 && currentDocument ? (
 							<div className="flex flex-col items-center gap-3 w-full">
 								<FileText className="h-12 w-12 text-muted-foreground" />
 								<div className="text-center w-full">
 									<p className="font-medium text-sm mb-3">{fileName}</p>
 									{documentUrl.match(/\.(pdf|jpg|png)$/) ? (
 										<div className="mb-4 w-full">
-											{documentUrl.endsWith(".pdf") ? (
-												<iframe
-													src={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
-													width="100%"
-													height="400px"
-													className="border rounded"
-													title="Document Preview"
-												/>
+											{previewError ? (
+												<div className="flex flex-col items-center justify-center h-32 text-muted-foreground border rounded">
+													<AlertCircle className="h-8 w-8 mb-2" />
+													<p className="text-sm">Failed to load preview</p>
+													<p className="text-xs">{previewError}</p>
+												</div>
+											) : documentUrl.endsWith(".pdf") ? (
+												<div className="relative">
+													<iframe
+														src={`/api/files/${bucketName}/${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+														width="100%"
+														height="400px"
+														className="border rounded"
+														title="Document Preview"
+														onLoad={() => setPreviewError(null)}
+														onError={() => setPreviewError('PDF could not be loaded. Please try downloading the file.')}
+													/>
+													<div className="absolute top-2 right-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
+														PDF Preview
+													</div>
+												</div>
 											) : (
 												<img
-													src={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
+													src={`/api/files/${bucketName}/${documentUrl}`}
 													alt="Document Preview"
 													className="max-w-full h-auto border rounded mx-auto"
+													onLoad={() => setPreviewError(null)}
+													onError={() => setPreviewError('Image could not be loaded. Please try downloading the file.')}
 												/>
 											)}
 										</div>
@@ -146,7 +243,7 @@ export const VerificationDocPreview: React.FC<VerificationDocPreviewProps> = ({
 									)}
 									<Button variant="outline" size="sm" asChild>
 										<a
-											href={`/api/files/${userType === "STUDENT" ? "student-id-cards" : "verification-docs"}/${documentUrl}`}
+											href={`/api/files/${bucketName}/${documentUrl}`}
 											target="_blank"
 											rel="noopener noreferrer"
 										>

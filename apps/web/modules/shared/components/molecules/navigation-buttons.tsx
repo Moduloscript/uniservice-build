@@ -1,5 +1,7 @@
 import * as React from "react";
+import { Button } from "@ui/components/button";
 import { Spinner } from "../Spinner";
+import { cn } from "@ui/lib";
 
 export interface NavigationButtonsProps {
 	step: number;
@@ -9,6 +11,7 @@ export interface NavigationButtonsProps {
 	isSubmitDisabled?: boolean;
 	onBack: () => void;
 	onNext: () => void;
+	className?: string;
 }
 
 export function NavigationButtons({
@@ -19,50 +22,61 @@ export function NavigationButtons({
 	isSubmitDisabled,
 	onBack,
 	onNext,
+	className,
 }: NavigationButtonsProps) {
+	// Check if this is the final step (review step)
+	const isFinalStep = step === stepsCount - 1;
+	
+	// Clean layout without background colors and borders
 	return (
 		<div
-			className="flex justify-between pt-4"
-			aria-label="Onboarding navigation buttons"
+			className={cn(
+				"flex items-center gap-4 pt-6 mt-6",
+				isFinalStep ? "justify-center" : "justify-between",
+				className
+			)}
+			aria-label="Navigation buttons"
 		>
+			{/* Back Button - Always show if not on first step */}
 			{step > 0 && (
-				<button
+				<Button
 					type="button"
+					variant="outline"
 					onClick={onBack}
-					className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
 					disabled={isLoading}
 					aria-label="Go to previous step"
-					tabIndex={0}
+					className="px-6 py-2.5 h-10"
 				>
 					Back
-				</button>
+				</Button>
 			)}
-			<div className="ml-auto">
-				{step < stepsCount - 1 ? (
-					<button
-						type="button"
-						onClick={onNext}
-						className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-						disabled={isLoading || isNextDisabled}
-						aria-label="Go to next step"
-						tabIndex={0}
-					>
-						{isLoading ? <Spinner className="size-4 mr-2" /> : null}
-						Next
-					</button>
-				) : (
-					<button
-						type="submit"
-						className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-						disabled={isLoading || isSubmitDisabled}
-						aria-label="Submit onboarding form"
-						tabIndex={0}
-					>
-						{isLoading ? <Spinner className="size-4 mr-2" /> : null}
-						{isLoading ? "Submitting..." : "Submit"}
-					</button>
-				)}
-			</div>
+			
+			{/* Spacer for non-final steps when back button is not shown */}
+			{step === 0 && !isFinalStep && <div />}
+			
+			{/* Next/Submit Button */}
+			{isFinalStep ? (
+				<Button
+					type="submit"
+					disabled={isLoading || isSubmitDisabled}
+					aria-label="Submit onboarding form"
+					className="px-8 py-2.5 h-10 min-w-[140px]"
+				>
+					{isLoading && <Spinner className="size-4 mr-2" />}
+					{isLoading ? "Submitting..." : "Submit"}
+				</Button>
+			) : (
+				<Button
+					type="button"
+					onClick={onNext}
+					disabled={isLoading || isNextDisabled}
+					aria-label="Go to next step"
+					className="px-6 py-2.5 h-10 min-w-[100px]"
+				>
+					{isLoading && <Spinner className="size-4 mr-2" />}
+					Next
+				</Button>
+			)}
 		</div>
 	);
 }

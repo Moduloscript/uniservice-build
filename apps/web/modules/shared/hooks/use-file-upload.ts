@@ -15,7 +15,11 @@ export function useFileUpload({
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const currentUploadRef = useRef<Promise<string | undefined> | null>(null);
-	const lastUploadHashRef = useRef<string | null>(null);
+const lastUploadHashRef = useRef<string | null>(null);
+
+	// Separate loading state for different uploads
+	const [isStudentUpload, setStudentUpload] = useState(false);
+	const [isProviderUpload, setProviderUpload] = useState(false);
 
 	async function uploadFile(
 		file: File,

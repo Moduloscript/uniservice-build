@@ -189,12 +189,24 @@ export function useOnboardingForm() {
     queryClient.setQueryData([ONBOARDING_DRAFT_KEY], null);
   }, [queryClient]);
 
-  // Submit function
+  // Submit function with additional safety checks
   const submitOnboarding = useCallback(
     (data: OnboardingFormValues) => {
-      submitOnboardingMutation.mutate(data);
+      // Prevent double submission at hook level
+      if (submitOnboardingMutation.isPending) {
+        console.warn('Submission already in progress, ignoring duplicate request');
+        return Promise.resolve();
+      }
+      
+      console.log('Hook: Starting submission with data:', data);
+      return new Promise<void>((resolve, reject) => {
+        submitOnboardingMutation.mutate(data, {
+          onSuccess: () => resolve(),
+          onError: (error) => reject(error)
+        });
+      });
     },
-    [submitOnboardingMutation.mutate]
+    [submitOnboardingMutation]
   );
 
   return {

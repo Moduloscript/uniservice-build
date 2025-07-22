@@ -29,23 +29,30 @@ const fetchPendingDocs = async (): Promise<VerificationDoc[]> => {
 			return [];
 		}
 		// Transform API response to match VerificationDoc interface
-		return data.users.map((user: any) => ({
-			id: user?.id || Math.random().toString(36),
-			userId: user?.id || '',
-			userName: user?.name || 'Unknown User',
-			userRole: user?.userType || 'Unknown',
-			documentUrl: user?.verificationDoc || user?.studentIdCardUrl || '',
-			submittedAt: user?.createdAt || new Date().toISOString(),
-			status: user?.verificationStatus || 'PENDING',
-			notes: user?.verificationNotes,
-			userType: user?.userType,
-			matricNumber: user?.matricNumber,
-			department: user?.department,
-			level: user?.level,
-			providerCategory: user?.providerCategory,
-			providerVerificationDocs: user?.providerVerificationDocs,
-			studentIdCardUrl: user?.studentIdCardUrl,
-		}));
+		console.log('Raw API response users:', data.users);
+		return data.users.map((user: any) => {
+			const transformedDoc = {
+				id: user?.id || Math.random().toString(36),
+				userId: user?.id || '',
+				userName: user?.name || 'Unknown User',
+				userRole: user?.userType || 'Unknown',
+				// Keep both document types separate - don't merge them
+				documentUrl: user?.verificationDoc || '',
+				verificationDoc: user?.verificationDoc || '',
+				studentIdCardUrl: user?.studentIdCardUrl || '',
+				submittedAt: user?.createdAt || new Date().toISOString(),
+				status: user?.verificationStatus || 'PENDING',
+				notes: user?.verificationNotes,
+				userType: user?.userType,
+				matricNumber: user?.matricNumber,
+				department: user?.department,
+				level: user?.level,
+				providerCategory: user?.providerCategory,
+				providerVerificationDocs: user?.providerVerificationDocs,
+			};
+			console.log('Transformed doc:', transformedDoc);
+			return transformedDoc;
+		});
 	} catch (error) {
 		console.error('Error fetching pending docs:', error);
 		return [];

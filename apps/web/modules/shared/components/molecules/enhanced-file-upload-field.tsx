@@ -210,49 +210,52 @@ export function EnhancedFileUploadField({
 
           {/* File preview */}
           {showPreview && value && (
-            <div className="flex items-center justify-between rounded-md border border-muted-foreground/20 bg-muted/20 px-3 py-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <CheckCircle2 className="size-4 text-green-600 shrink-0" />
-                <span className="text-sm truncate">
-                  {getFileName(value)}
-                </span>
+            <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <CheckCircle2 className="size-4 text-green-600 shrink-0" />
+                  <span className="text-sm text-green-800 truncate">
+                    {getFileName(value)}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClear();
+                  }}
+                  disabled={disabled || isLoading}
+                  className="h-7 px-2 text-xs border-green-300 text-green-700 hover:bg-green-100 shrink-0"
+                >
+                  <X className="size-3" />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear();
-                }}
-                disabled={disabled || isLoading}
-                className="h-auto p-1 shrink-0"
-              >
-                <X className="size-4" />
-                <span className="sr-only">Remove file</span>
-              </Button>
             </div>
           )}
 
           {/* Error message with retry */}
           {error && (
-            <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2">
-              <div className="flex items-center gap-2">
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2">
+              <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="size-4 text-destructive shrink-0" />
                 <span className="text-sm text-destructive">{error}</span>
               </div>
               {onRetry && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onRetry}
-                  disabled={disabled}
-                  className="h-auto px-2 py-1 shrink-0"
-                >
-                  <RefreshCw className="size-3 mr-1" />
-                  Retry
-                </Button>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onRetry}
+                    disabled={disabled}
+                    className="h-8 px-3 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                  >
+                    <RefreshCw className="size-3 mr-1" />
+                    Try Again
+                  </Button>
+                </div>
               )}
             </div>
           )}

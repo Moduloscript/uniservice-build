@@ -15,15 +15,20 @@ type AdminUser = {
 	role: string;
 };
 
-// RBAC middleware: only allow admins/superadmins
+// RBAC middleware: only allow admins/superadmins for document verification
 async function adminOnly(c: any, next: any) {
 	const session = await getSession();
+	console.log(`Admin verification docs access attempt: user=${session?.user?.email}, role=${session?.user?.role}`);
+	
 	if (
 		!session ||
 		(session.user.role !== "admin" && session.user.role !== "superadmin")
 	) {
-		return c.json({ error: "Forbidden: Admins only" }, 403);
+		console.error(`Forbidden admin verification docs access: user=${session?.user?.email || 'no-session'}, role=${session?.user?.role || 'no-role'}`);
+		return c.json({ error: "Forbidden: Admin access required for document verification" }, 403);
 	}
+	
+	console.log(`Admin verification docs access granted to: ${session.user.email}`);
 	c.set(adminUserKey, session.user as AdminUser);
 	await next();
 }
