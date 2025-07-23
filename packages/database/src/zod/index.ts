@@ -102,7 +102,7 @@ export const Payout_accountScalarFieldEnumSchema = z.enum(['id','userId','provid
 
 export const ReviewScalarFieldEnumSchema = z.enum(['id','rating','comment','bookingId','authorId','targetId','createdAt','updatedAt']);
 
-export const ServiceScalarFieldEnumSchema = z.enum(['id','name','description','price','duration','providerId','createdAt','updatedAt','isActive','categoryId']);
+export const ServiceScalarFieldEnumSchema = z.enum(['id','name','description','price','duration','providerId','createdAt','updatedAt','isActive','categoryId','availabilityStatus','serviceLevel','maxStudents']);
 
 export const ServiceFeaturesScalarFieldEnumSchema = z.enum(['id','serviceId','title','description','icon','orderIndex','isActive','createdAt','updatedAt']);
 
@@ -115,6 +115,8 @@ export const SlotScalarFieldEnumSchema = z.enum(['id','userId','dayOfWeek','star
 export const UserScalarFieldEnumSchema = z.enum(['id','name','email','emailVerified','image','createdAt','updatedAt','username','role','banned','banReason','banExpires','onboardingComplete','paymentsCustomerId','locale','userType','matricNumber','department','level','verified','verificationDoc','isStudentVerified','isVerified','studentIdCardUrl','verificationNotes','verificationReviewedAt','verificationReviewedBy','verificationStatus','providerCategory','providerVerificationDocs']);
 
 export const VerificationScalarFieldEnumSchema = z.enum(['id','identifier','value','expiresAt','createdAt','updatedAt']);
+
+export const ProviderAvailabilityScalarFieldEnumSchema = z.enum(['id','providerId','serviceId','date','startTime','endTime','isAvailable','isBooked','maxBookings','currentBookings','notes','createdAt','updatedAt']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -153,6 +155,14 @@ export type UserTypeType = `${z.infer<typeof UserTypeSchema>}`
 export const VerificationStatusSchema = z.enum(['PENDING','APPROVED','REJECTED']);
 
 export type VerificationStatusType = `${z.infer<typeof VerificationStatusSchema>}`
+
+export const AvailabilityStatusSchema = z.enum(['AVAILABLE','BUSY','UNAVAILABLE','LIMITED']);
+
+export type AvailabilityStatusType = `${z.infer<typeof AvailabilityStatusSchema>}`
+
+export const ServiceLevelSchema = z.enum(['BEGINNER','INTERMEDIATE','ADVANCED','EXPERT']);
+
+export type ServiceLevelType = `${z.infer<typeof ServiceLevelSchema>}`
 
 /////////////////////////////////////////
 // MODELS
@@ -386,6 +396,8 @@ export type review = z.infer<typeof reviewSchema>
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */
 export const serviceSchema = z.object({
+  availabilityStatus: AvailabilityStatusSchema,
+  serviceLevel: ServiceLevelSchema.nullable(),
   id: z.string(),
   name: z.string(),
   description: z.string(),
@@ -396,6 +408,7 @@ export const serviceSchema = z.object({
   updatedAt: z.coerce.date(),
   isActive: z.boolean(),
   categoryId: z.string(),
+  maxStudents: z.number().int(),
 })
 
 export type service = z.infer<typeof serviceSchema>
@@ -532,3 +545,28 @@ export const verificationSchema = z.object({
 })
 
 export type verification = z.infer<typeof verificationSchema>
+
+/////////////////////////////////////////
+// PROVIDER AVAILABILITY SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Provider availability for real-time booking calendar management
+ */
+export const ProviderAvailabilitySchema = z.object({
+  id: z.string().uuid(),
+  providerId: z.string(),
+  serviceId: z.string().nullable(),
+  date: z.coerce.date(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  isAvailable: z.boolean(),
+  isBooked: z.boolean(),
+  maxBookings: z.number().int(),
+  currentBookings: z.number().int(),
+  notes: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type ProviderAvailability = z.infer<typeof ProviderAvailabilitySchema>

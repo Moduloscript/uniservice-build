@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Home,
   Bell,
-  LogOut
+  LogOut,
+  Calendar
 } from "lucide-react";
 import { cn } from "@ui/lib";
 import { useProviderAuth } from "../hooks/useProviderAuth";
@@ -56,6 +57,12 @@ export function ProviderNavigation() {
       isActive: pathname?.startsWith("/app/provider/services"),
     },
     {
+      label: "Availability",
+      href: "/app/provider/availability",
+      icon: Calendar,
+      isActive: pathname?.startsWith("/app/provider/availability"),
+    },
+    {
       label: "Analytics",
       href: "/app/provider/analytics",
       icon: BarChart3,
@@ -88,6 +95,8 @@ export function ProviderNavigation() {
         } else if (segments.includes("features")) {
           breadcrumbs.push({ label: "Manage Features", href: "#" });
         }
+      } else if (segments.includes("availability")) {
+        breadcrumbs.push({ label: "Availability", href: "/app/provider/availability" });
       }
     }
 
@@ -167,6 +176,37 @@ export function ProviderNavigation() {
                 </Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation Sidebar */}
+      <div className="border-b bg-muted/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center space-x-8 py-4">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-2 text-sm font-medium transition-colors hover:text-foreground pb-2 border-b-2 transition-all px-3 py-2 rounded-lg",
+                    item.isActive
+                      ? "text-foreground border-primary bg-primary/10"
+                      : "text-muted-foreground border-transparent hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <Badge variant="secondary" className="text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

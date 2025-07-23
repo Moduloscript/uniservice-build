@@ -58,7 +58,7 @@ export const servicesRouter = new Hono()
 		if (categoryId) where.categoryId = categoryId;
 		if (providerId) where.providerId = providerId;
 		
-		const services = await db.service.findMany({
+const services = await db.service.findMany({
 			where,
 			include: { 
 				category: true,
@@ -78,23 +78,18 @@ export const servicesRouter = new Hono()
 						matricNumber: true,
 					}
 				},
-				...(includeRatings && {
-					bookings: {
-						include: {
-							review: {
-								select: {
-									rating: true,
-									createdAt: true,
-								}
-							}
-						}
-					}
-				})
 			},
 		});
-		
-		// Calculate rating statistics if requested
-		const servicesWithRatings = includeRatings ? services.map(service => {
+
+		// Add dynamic fields
+		const servicesWithStats = services.map(service => ({
+			...service,
+			availabilityStatus: service.availabilityStatus || 'LIMITED',
+			serviceLevel: service.serviceLevel || 'BEGINNER',
+			maxStudents: service.maxStudents || 1
+		}));
+
+		const servicesWithRatings = includeRatings ? servicesWithStats.map(service => {
 			const reviews = service.bookings?.map(booking => booking.review).filter(Boolean) || [];
 			const totalReviews = reviews.length;
 			const averageRating = totalReviews > 0 
@@ -110,7 +105,7 @@ export const servicesRouter = new Hono()
 					lastReviewDate: reviews.length > 0 ? reviews[0].createdAt : null,
 				}
 			};
-		}) : services;
+		}) : servicesWithStats;
 		
 		return c.json({ services: servicesWithRatings });
 	})
@@ -130,7 +125,7 @@ export const servicesRouter = new Hono()
 		}
 		
 		try {
-			const service = await db.service.findUnique({
+const service = await db.service.findUnique({
 				where: { id },
 				include: { 
 					category: true, 
@@ -150,35 +145,32 @@ export const servicesRouter = new Hono()
 							matricNumber: true,
 						}
 					},
-					bookings: {
-						include: {
-							review: {
-								select: {
-									rating: true,
-									createdAt: true,
-								}
-							}
-						}
-					}
 				},
 			});
-			
+
 			if (!service) {
 				console.log(`[Services API] Service not found for ID: ${id}`);
 				return c.json({ error: "Service not found" }, 404);
 			}
-			
+
 			console.log(`[Services API] Successfully found service: ${service.name}`);
+
+			const serviceWithStats = {
+				...service,
+				availabilityStatus: service.availabilityStatus || 'LIMITED',
+				serviceLevel: service.serviceLevel || 'BEGINNER',
+				maxStudents: service.maxStudents || 1
+			};
 			
 			// Calculate rating statistics
-			const reviews = service.bookings?.map(booking => booking.review).filter(Boolean) || [];
+const reviews = serviceWithStats.bookings?.map(booking => booking.review).filter(Boolean) || [];
 			const totalReviews = reviews.length;
 			const averageRating = totalReviews > 0 
 				? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
 				: 0;
-			
+
 			const serviceWithRatings = {
-				...service,
+				...serviceWithStats,
 				bookings: undefined, // Remove bookings from response
 				ratingStats: {
 					totalReviews,

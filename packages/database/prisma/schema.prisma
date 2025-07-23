@@ -187,23 +187,30 @@ model review {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model service {
-  id          String   @id
-  name        String
-  description String
-  price       Decimal
-  duration    Int
-  providerId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-  isActive    Boolean  @default(true)
-  categoryId  String
-  provider    user     @relation("ProvidedServices", fields: [providerId], references: [id])
-  category    ServiceCategory @relation(fields: [categoryId], references: [id])
-  bookings    booking[]
-  features    ServiceFeatures[]
-  outcomes    ServiceOutcomes[]
+  id               String            @id
+  name             String
+  description      String
+  price            Decimal
+  duration         Int
+  providerId       String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+  isActive         Boolean           @default(true)
+  categoryId       String
+  // Dynamic service stats fields
+  availabilityStatus AvailabilityStatus @default(AVAILABLE)
+  serviceLevel      ServiceLevel?     @default(BEGINNER)
+  maxStudents       Int              @default(1)
+  provider         user                   @relation("ProvidedServices", fields: [providerId], references: [id])
+  category         ServiceCategory        @relation(fields: [categoryId], references: [id])
+  bookings         booking[]
+  features         ServiceFeatures[]
+  outcomes         ServiceOutcomes[]
+  availability     ProviderAvailability[] @relation("ServiceAvailability")
 
   @@index([categoryId])
+  @@index([availabilityStatus])
+  @@index([serviceLevel])
 }
 
 /// Service features - what's included with each service (customizable by providers)
@@ -299,12 +306,13 @@ model user {
   providerCategory         String?
   providerVerificationDocs Json?
 
-  services           service[]       @relation("ProvidedServices")
-  providedBookings   booking[]       @relation("ProviderBookings")
-  studentBookings    booking[]       @relation("StudentBookings")
-  accounts           account[]       @relation("UserAccounts")
-  authoredReviews    review[]        @relation("AuthoredReviews")
-  receivedReviews    review[]        @relation("ReceivedReviews")
+  services             service[]             @relation("ProvidedServices")
+  providedBookings     booking[]             @relation("ProviderBookings")
+  studentBookings      booking[]             @relation("StudentBookings")
+  accounts             account[]             @relation("UserAccounts")
+  authoredReviews      review[]              @relation("AuthoredReviews")
+  receivedReviews      review[]              @relation("ReceivedReviews")
+  providerAvailability ProviderAvailability[] @relation("ProviderAvailability")
 
   @@index([userType])
 }
@@ -316,6 +324,32 @@ model verification {
   expiresAt  DateTime
   createdAt  DateTime?
   updatedAt  DateTime?
+}
+
+/// Provider availability for real-time booking calendar management
+model ProviderAvailability {
+  id               String   @id @default(uuid())
+  providerId       String
+  serviceId        String?
+  date             DateTime @db.Date
+  startTime        DateTime @db.Time(6)
+  endTime          DateTime @db.Time(6)
+  isAvailable      Boolean  @default(true)
+  isBooked         Boolean  @default(false)
+  maxBookings      Int      @default(1)
+  currentBookings  Int      @default(0)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  provider         user     @relation("ProviderAvailability", fields: [providerId], references: [id], onDelete: Cascade)
+  service          service? @relation("ServiceAvailability", fields: [serviceId], references: [id], onDelete: SetNull)
+  
+  @@unique([providerId, date, startTime])
+  @@index([providerId])
+  @@index([serviceId])
+  @@index([date])
+  @@index([date, providerId])
 }
 
 enum BookingStatus {
@@ -361,4 +395,18 @@ enum VerificationStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  UNAVAILABLE
+  LIMITED
+}
+
+enum ServiceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
 }

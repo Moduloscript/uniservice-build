@@ -5,6 +5,8 @@ import { ProviderInfo } from "../../../../../modules/services/components/provide
 import { RelatedServices } from "../../../../../modules/services/components/related-services";
 import { ServiceRatingDisplay } from "../../../../../modules/services/components/service-rating-display";
 import { ServiceFeatures } from "../../../../../modules/services/components/service-features";
+import { ServiceOutcomes } from "../../../../../modules/services/components/service-outcomes";
+import { AvailabilityCalendar } from "../../../../../modules/availability/components/availability-calendar";
 import { Badge } from "../../../../../modules/ui/components/badge";
 import { Button } from "../../../../../modules/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../modules/ui/components/card";
@@ -239,38 +241,8 @@ export default async function ServiceDetailPage({
 					{/* What's Included - Dynamic Service Features */}
 					<ServiceFeatures serviceId={service.id} />
 
-/* Learning Outcomes */
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Target className="h-5 w-5 text-primary" />
-								Learning Outcomes
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<p className="text-muted-foreground mb-4">
-								After completing this service, you will be able to:
-							</p>
-							<ul className="space-y-2">
-								<li className="flex items-start gap-3">
-									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-									<span>Master complex mathematical concepts and equations</span>
-								</li>
-								<li className="flex items-start gap-3">
-									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-									<span>Apply mathematical principles to real-world problems</span>
-								</li>
-								<li className="flex items-start gap-3">
-									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-									<span>Develop problem-solving strategies and techniques</span>
-								</li>
-								<li className="flex items-start gap-3">
-									<div className="h-2 w-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-									<span>Build confidence in mathematical reasoning</span>
-								</li>
-							</ul>
-						</CardContent>
-					</Card>
+{/* Learning Outcomes - Dynamic Service Outcomes */}
+					<ServiceOutcomes serviceId={service.id} />
 
 				{/* Reviews Section */}
 				<ReviewSection
@@ -280,27 +252,17 @@ export default async function ServiceDetailPage({
 					userBookings={userBookings}
 				/>
 
-					{/* Booking Calendar */}
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-lg">Booking Calendar</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								<div className="text-sm text-muted-foreground">
-									Select a time slot below to book:
-								</div>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-									<Button variant="ghost" className="w-full">Today, 2:00 PM</Button>
-									<Button variant="ghost" className="w-full">Today, 4:00 PM</Button>
-									<Button variant="ghost" className="w-full">Tomorrow, 10:00 AM</Button>
-									<Button variant="ghost" className="w-full">Tomorrow, 2:00 PM</Button>
-									<Button variant="ghost" className="w-full">Friday, 9:00 AM</Button>
-									<Button variant="ghost" className="w-full">Friday, 11:00 AM</Button>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+					{/* Dynamic Booking Calendar */}
+					<AvailabilityCalendar
+						providerId={service.providerId}
+						serviceId={service.id}
+						readonly={false}
+						onSlotSelect={(slot) => {
+							// Handle slot selection for booking
+							console.log('Selected slot:', slot);
+							// TODO: Open booking dialog with selected slot
+						}}
+					/>
 
 				</div>
 
@@ -330,15 +292,27 @@ export default async function ServiceDetailPage({
 							</div>
 							<div className="flex items-center justify-between">
 								<span className="text-sm text-muted-foreground">Availability:</span>
-								<span className="font-semibold text-green-600">Available Now</span>
+								<span className={`font-semibold ${
+									service.availabilityStatus === 'AVAILABLE' ? 'text-green-600' :
+									service.availabilityStatus === 'BUSY' ? 'text-yellow-600' :
+									service.availabilityStatus === 'LIMITED' ? 'text-orange-600' :
+									'text-red-600'
+								}`}>
+									{service.availabilityStatus === 'AVAILABLE' ? 'Available Now' :
+									 service.availabilityStatus === 'BUSY' ? 'Busy' :
+									 service.availabilityStatus === 'LIMITED' ? 'Limited Availability' :
+									 'Currently Unavailable'}
+								</span>
 							</div>
 							<div className="flex items-center justify-between">
 								<span className="text-sm text-muted-foreground">Level:</span>
-								<span className="font-semibold">Advanced</span>
+								<span className="font-semibold">
+									{service.serviceLevel || 'Not Specified'}
+								</span>
 							</div>
 							<div className="flex items-center justify-between">
 								<span className="text-sm text-muted-foreground">Max Students:</span>
-								<span className="font-semibold">1</span>
+								<span className="font-semibold">{service.maxStudents}</span>
 							</div>
 						</CardContent>
 					</Card>
