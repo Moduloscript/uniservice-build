@@ -13,10 +13,10 @@ import { Separator } from "@ui/components/separator"
 import type { PropsWithChildren } from "react"
 
 export function AppWrapperEnhanced({ children }: PropsWithChildren) {
-  const { useSidebarLayout } = config.ui.saas
+  const { useSidebarLayout, enableEnhancedSidebar } = config.ui.saas
 
-  // If not using sidebar layout, fallback to the original implementation
-  if (!useSidebarLayout) {
+  // If enhanced sidebar is not enabled, fallback to the original implementation
+  if (!useSidebarLayout || !enableEnhancedSidebar) {
     return (
       <div className={cn(
         "bg-[radial-gradient(farthest-corner_at_0%_0%,color-mix(in_oklch,var(--color-primary),transparent_95%)_0%,var(--color-background)_50%)] dark:bg-[radial-gradient(farthest-corner_at_0%_0%,color-mix(in_oklch,var(--color-primary),transparent_90%)_0%,var(--color-background)_50%)]"
@@ -29,7 +29,7 @@ export function AppWrapperEnhanced({ children }: PropsWithChildren) {
     )
   }
 
-  // Modern sidebar layout using the new pattern
+  // Modern enhanced sidebar layout
   return (
     <div className={cn(
       "bg-[radial-gradient(farthest-corner_at_0%_0%,color-mix(in_oklch,var(--color-primary),transparent_95%)_0%,var(--color-background)_50%)] dark:bg-[radial-gradient(farthest-corner_at_0%_0%,color-mix(in_oklch,var(--color-primary),transparent_90%)_0%,var(--color-background)_50%)]",
@@ -38,10 +38,18 @@ export function AppWrapperEnhanced({ children }: PropsWithChildren) {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4 z-40">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            {/* You can add breadcrumbs or other header content here */}
+            {/* Breadcrumbs or other header content can be added here */}
+            <div className="flex flex-1 items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {/* Future: Add dynamic breadcrumbs based on current route */}
+              </div>
+              <div className="flex items-center space-x-2">
+                {/* Future: Add header actions like notifications, search, etc. */}
+              </div>
+            </div>
           </header>
           <div className="flex flex-1 flex-col">
             <main className="flex-1 p-6">

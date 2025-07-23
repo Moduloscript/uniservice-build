@@ -44,6 +44,7 @@ export type Config = {
 		saas: {
 			enabled: boolean;
 			useSidebarLayout: boolean;
+			enableEnhancedSidebar: boolean;
 		};
 		marketing: {
 			enabled: boolean;

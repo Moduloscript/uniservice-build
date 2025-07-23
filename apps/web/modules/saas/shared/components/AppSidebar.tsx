@@ -16,6 +16,10 @@ import {
   StoreIcon,
   UserCog2Icon,
   UserCogIcon,
+  LayoutDashboard,
+  BarChart3,
+  User,
+  FileText,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -48,6 +52,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? `/app/${activeOrganization.slug}`
     : "/app"
 
+  // Check if user is a provider (has provider role or is in provider routes)
+  const isProvider = user?.role === "provider" || pathname?.startsWith("/app/provider")
+
   // Group menu items into collapsible sections
   const navigationData = [
     {
@@ -65,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? `/app/${activeOrganization.slug}/chatbot`
             : "/app/chatbot",
           icon: BotMessageSquareIcon,
-          isActive: pathname.includes("/chatbot"),
+          isActive: pathname?.includes("/chatbot"),
         },
       ],
     },
@@ -76,26 +83,53 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Services",
           url: "/app/services",
           icon: StoreIcon,
-          isActive: pathname.startsWith("/app/services"),
+          isActive: pathname?.startsWith("/app/services"),
         },
         {
           title: "Bookings",
           url: "/app/bookings",
           icon: CalendarIcon,
-          isActive: pathname.startsWith("/app/bookings"),
+          isActive: pathname?.startsWith("/app/bookings"),
         },
-        ...(user?.userType === "PROVIDER"
-          ? [
-              {
-                title: "Provider Dashboard",
-                url: "/app/provider",
-                icon: UserCogIcon,
-                isActive: pathname.startsWith("/app/provider"),
-              },
-            ]
-          : []),
       ],
     },
+    // Provider Dashboard Section - only show if user is a provider
+    ...(isProvider ? [{
+      title: "Provider Dashboard",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/app/provider",
+          icon: LayoutDashboard,
+          isActive: pathname === "/app/provider",
+        },
+        {
+          title: "My Services",
+          url: "/app/provider/services",
+          icon: SettingsIcon,
+          isActive: pathname?.startsWith("/app/provider/services"),
+        },
+        {
+          title: "Availability",
+          url: "/app/provider/availability",
+          icon: CalendarIcon,
+          isActive: pathname?.startsWith("/app/provider/availability"),
+        },
+        {
+          title: "Analytics",
+          url: "/app/provider/analytics",
+          icon: BarChart3,
+          isActive: pathname === "/app/provider/analytics",
+          badge: "Soon",
+        },
+        {
+          title: "Profile",
+          url: "/app/provider/profile",
+          icon: User,
+          isActive: pathname === "/app/provider/profile",
+        },
+      ],
+    }] : []),
     {
       title: "Settings",
       items: [
@@ -105,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 title: t("app.menu.organizationSettings"),
                 url: `${basePath}/settings`,
                 icon: SettingsIcon,
-                isActive: pathname.startsWith(`${basePath}/settings/`),
+                isActive: pathname?.startsWith(`${basePath}/settings/`),
               },
             ]
           : [
@@ -113,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 title: t("app.menu.accountSettings"),
                 url: "/app/settings",
                 icon: UserCog2Icon,
-                isActive: pathname.startsWith("/app/settings/"),
+                isActive: pathname?.startsWith("/app/settings/"),
               },
             ]),
         ...(user?.role === "admin"
@@ -122,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 title: t("app.menu.admin"),
                 url: "/app/admin",
                 icon: UserCogIcon,
-                isActive: pathname.startsWith("/app/admin/"),
+                isActive: pathname?.startsWith("/app/admin/"),
               },
             ]
           : []),
@@ -180,6 +214,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <Link href={item.url} className="flex items-center gap-2">
                             <item.icon className="size-4" />
                             <span>{item.title}</span>
+                            {/* @ts-ignore - badge property may not exist on all items */}
+                            {item.badge && (
+                              <span className="ml-auto text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                                {item.badge}
+                              </span>
+                            )}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
