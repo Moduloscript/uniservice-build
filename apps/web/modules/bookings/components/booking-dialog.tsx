@@ -72,7 +72,48 @@ if (!selectedSlot) {
 
 		try {
 			// Create ISO datetime string from selected slot
-			const dateTime = new Date(`${selectedSlot.date}T${selectedSlot.startTime}`);
+			// Handle different date and time formats from backend
+			let dateString: string;
+			let timeString: string;
+			
+			// Extract date part (handle both ISO string and date-only formats)
+			if (selectedSlot.date.includes('T')) {
+				// If date is a full ISO string like "2025-07-24T00:00:00.000Z"
+				// Extract just the date part
+				dateString = selectedSlot.date.split('T')[0];
+			} else {
+				// If it's already just date like "2025-07-24"
+				dateString = selectedSlot.date;
+			}
+			
+			// Extract time part
+			if (selectedSlot.startTime.includes('T')) {
+				// If startTime is a full ISO string like "1970-01-01T09:52:00.000Z"
+				// Extract just the time part
+				const timeDate = new Date(selectedSlot.startTime);
+				timeString = timeDate.toTimeString().split(' ')[0]; // Gets "HH:MM:SS"
+			} else {
+				// If it's already just time like "09:52:00"
+				timeString = selectedSlot.startTime;
+			}
+			
+			// Construct the final datetime string
+			const dateTime = new Date(`${dateString}T${timeString}`);
+
+			// Check if the constructed date is valid
+			if (isNaN(dateTime.getTime())) {
+				console.error('Invalid date construction:', {
+					originalDate: selectedSlot.date,
+					originalStartTime: selectedSlot.startTime,
+					dateString,
+					timeString,
+					finalDateTime: dateTime,
+					constructedString: `${dateString}T${timeString}`
+				});
+				toast.error("Invalid date/time format. Please try selecting another slot.");
+				setIsLoading(false);
+				return;
+			}
 
 			// Check if date is in the future
 			if (dateTime <= new Date()) {
@@ -81,10 +122,19 @@ if (!selectedSlot) {
 				return;
 			}
 
-		await createBooking({
-			serviceId: service.id,
-			dateTime: dateTime.toISOString(),
-		});
+			const bookingData = {
+				serviceId: service.id,
+				dateTime: dateTime.toISOString(),
+			};
+			
+			console.log('Creating booking with data:', {
+				bookingData,
+				originalSlot: selectedSlot,
+				constructedDateTime: dateTime,
+				isoString: dateTime.toISOString()
+			});
+			
+			await createBooking(bookingData);
 
 		// Invalidate availability queries to show real-time updates
 		queryClient.invalidateQueries({ 

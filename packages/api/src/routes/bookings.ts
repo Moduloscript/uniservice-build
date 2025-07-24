@@ -11,7 +11,7 @@ import {
 
 // Create booking schema
 const createBookingSchema = z.object({
-	serviceId: z.string().cuid(),
+	serviceId: z.string().uuid(),
 	dateTime: z.string().datetime(),
 });
 
@@ -62,6 +62,7 @@ export const bookingsRouter = new Hono()
 		// Create the booking
 		const booking = await prisma.booking.create({
 			data: {
+				id: crypto.randomUUID(),
 				studentId: user.id,
 				providerId: service.providerId,
 				serviceId: data.serviceId,
@@ -124,7 +125,7 @@ export const bookingsRouter = new Hono()
 		const id = c.req.param("id");
 		const user = c.get("user");
 
-		if (!z.string().cuid().safeParse(id).success) {
+		if (!z.string().uuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
 
@@ -156,7 +157,7 @@ export const bookingsRouter = new Hono()
 		const user = c.get("user");
 		const data = c.req.valid("json");
 
-		if (!z.string().cuid().safeParse(id).success) {
+		if (!z.string().uuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
 
@@ -225,7 +226,7 @@ export const bookingsRouter = new Hono()
 		const id = c.req.param("id");
 		const user = c.get("user");
 
-		if (!z.string().cuid().safeParse(id).success) {
+		if (!z.string().uuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
 

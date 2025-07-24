@@ -22,8 +22,57 @@ export async function createBooking(
 	});
 
 	if (!response.ok) {
-		const error = await response.json();
-		throw new Error(error.error || "Failed to create booking");
+		const contentType = response.headers.get('content-type');
+		
+		try {
+			if (contentType?.includes('application/json')) {
+				const errorResponse = await response.json();
+				console.error('Booking creation failed (JSON):', {
+					status: response.status,
+					statusText: response.statusText,
+					errorResponse,
+					data
+				});
+				
+				// Handle different error response formats
+				let errorMessage = "Failed to create booking";
+				
+				if (typeof errorResponse.error === 'string') {
+					// Format: { error: "message" }
+					errorMessage = errorResponse.error;
+				} else if (typeof errorResponse.error === 'object' && errorResponse.error.message) {
+					// Format: { error: { message: "message" } }
+					errorMessage = errorResponse.error.message;
+				} else if (errorResponse.message) {
+					// Format: { message: "message" }
+					errorMessage = errorResponse.message;
+				} else if (errorResponse.success === false && errorResponse.error) {
+					// Format: { success: false, error: {...} }
+					errorMessage = JSON.stringify(errorResponse.error);
+				}
+				
+				throw new Error(errorMessage);
+			} else {
+				// Handle text/html or other content types
+				const errorText = await response.text();
+				console.error('Booking creation failed (Text):', {
+					status: response.status,
+					statusText: response.statusText,
+					errorText: errorText.substring(0, 500), // Log first 500 chars
+					contentType,
+					data
+				});
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
+		} catch (parseError) {
+			console.error('Failed to parse error response:', {
+				status: response.status,
+				statusText: response.statusText,
+				parseError: parseError.message,
+				contentType
+			});
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
 	}
 
 	const result: BookingResponse = await response.json();
