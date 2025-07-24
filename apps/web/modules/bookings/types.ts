@@ -22,11 +22,11 @@ export interface Booking {
 	};
 }
 
-export type BookingStatus = 
-	| "PENDING" 
-	| "CONFIRMED" 
-	| "COMPLETED" 
-	| "CANCELLED" 
+export type BookingStatus =
+	| "PENDING"
+	| "CONFIRMED"
+	| "COMPLETED"
+	| "CANCELLED"
 	| "REFUNDED";
 
 export interface CreateBookingRequest {

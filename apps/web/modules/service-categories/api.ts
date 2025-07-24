@@ -1,9 +1,10 @@
 import type { ServiceCategory } from "./types";
 
 export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
-	const apiUrl = typeof window === "undefined" 
-		? "http://localhost:3000/api/service-categories" 
-		: "/api/service-categories";
+	const apiUrl =
+		typeof window === "undefined"
+			? "http://localhost:3000/api/service-categories"
+			: "/api/service-categories";
 
 	const res = await fetch(apiUrl, {
 		method: "GET",
@@ -13,7 +14,9 @@ export async function fetchServiceCategories(): Promise<ServiceCategory[]> {
 	});
 
 	if (!res.ok) {
-		throw new Error(`Failed to fetch service categories: ${res.status} ${res.statusText}`);
+		throw new Error(
+			`Failed to fetch service categories: ${res.status} ${res.statusText}`,
+		);
 	}
 
 	const data = await res.json();

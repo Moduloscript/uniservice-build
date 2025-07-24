@@ -18,11 +18,9 @@ export default async function ProviderLayout({ children }: PropsWithChildren) {
 		<div className="min-h-screen bg-background">
 			{/* Provider Navigation */}
 			<ProviderNavigation />
-			
+
 			{/* Main Content */}
-			<div className="flex-1">
-				{children}
-			</div>
+			<div className="flex-1">{children}</div>
 		</div>
 	);
 }

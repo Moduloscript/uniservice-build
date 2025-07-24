@@ -42,12 +42,16 @@ export function ServiceCard({ service, onClick, className }: ServiceCardProps) {
 					<span className="text-2xl font-bold text-primary">
 						₦{service.price.toLocaleString()}
 					</span>
-					<span className="text-xs text-muted-foreground">per service</span>
+					<span className="text-xs text-muted-foreground">
+						per service
+					</span>
 				</div>
-			<div className="flex items-center gap-1 px-3 py-2 bg-muted/30 rounded-md">
-				<Clock className="h-4 w-4 text-muted-foreground" />
-				<span className="text-sm font-medium text-muted-foreground">{service.duration} min</span>
-			</div>
+				<div className="flex items-center gap-1 px-3 py-2 bg-muted/30 rounded-md">
+					<Clock className="h-4 w-4 text-muted-foreground" />
+					<span className="text-sm font-medium text-muted-foreground">
+						{service.duration} min
+					</span>
+				</div>
 			</div>
 
 			{/* Provider Info */}
@@ -56,10 +60,12 @@ export function ServiceCard({ service, onClick, className }: ServiceCardProps) {
 					<div className="flex items-center justify-center w-8 h-8 bg-muted rounded-full">
 						<User className="h-4 w-4" />
 					</div>
-					<span className="font-medium">by {service.provider.name}</span>
+					<span className="font-medium">
+						by {service.provider.name}
+					</span>
 				</div>
 			)}
-			
+
 			<span className="sr-only">View service details</span>
 		</button>
 	);

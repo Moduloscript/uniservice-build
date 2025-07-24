@@ -9,8 +9,8 @@ export interface Service {
 	providerId: string;
 	isActive?: boolean;
 	// Dynamic service stats fields
-	availabilityStatus?: 'AVAILABLE' | 'BUSY' | 'UNAVAILABLE' | 'LIMITED';
-	serviceLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+	availabilityStatus?: "AVAILABLE" | "BUSY" | "UNAVAILABLE" | "LIMITED";
+	serviceLevel?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
 	maxStudents?: number;
 	createdAt?: string;
 	updatedAt?: string;

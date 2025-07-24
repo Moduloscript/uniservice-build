@@ -2,15 +2,20 @@
 
 import { Badge } from "../../ui/components/badge";
 import { Button } from "../../ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/components/card";
-import { 
-	Mail, 
-	Calendar, 
-	Shield, 
-	GraduationCap, 
-	Building2, 
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "../../ui/components/card";
+import {
+	Mail,
+	Calendar,
+	Shield,
+	GraduationCap,
+	Building2,
 	Star,
-	CheckCircle 
+	CheckCircle,
 } from "lucide-react";
 import type { Service } from "../types";
 
@@ -25,7 +30,7 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 		const date = new Date(dateString);
 		return date.toLocaleDateString("en-US", {
 			year: "numeric",
-			month: "long"
+			month: "long",
 		});
 	};
 
@@ -35,20 +40,20 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 			return {
 				label: "Verified Provider",
 				variant: "default" as const,
-				icon: <CheckCircle className="h-4 w-4" />
+				icon: <CheckCircle className="h-4 w-4" />,
 			};
 		}
 		if (provider.verificationStatus === "PENDING") {
 			return {
 				label: "Verification Pending",
 				variant: "secondary" as const,
-				icon: <Shield className="h-4 w-4" />
+				icon: <Shield className="h-4 w-4" />,
 			};
 		}
 		return {
 			label: "Unverified",
 			variant: "outline" as const,
-			icon: <Shield className="h-4 w-4" />
+			icon: <Shield className="h-4 w-4" />,
 		};
 	};
 
@@ -57,7 +62,9 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 	// Format user type
 	const formatUserType = (userType?: string) => {
 		if (!userType) return "Provider";
-		return userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase();
+		return (
+			userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase()
+		);
 	};
 
 	return (
@@ -79,7 +86,7 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 							{formatUserType(provider.userType)}
 						</p>
 					</div>
-					<Badge 
+					<Badge
 						variant={verificationInfo.variant}
 						className="flex items-center gap-1"
 					>
@@ -92,13 +99,21 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 				{provider.department && (
 					<div className="flex items-center gap-2 text-sm">
 						<Building2 className="h-4 w-4 text-muted-foreground" />
-						<span className="text-muted-foreground">Department:</span>
-						<span className="font-medium text-foreground">{provider.department}</span>
+						<span className="text-muted-foreground">
+							Department:
+						</span>
+						<span className="font-medium text-foreground">
+							{provider.department}
+						</span>
 						{provider.level && (
 							<>
 								<span className="text-muted-foreground">•</span>
-								<span className="text-muted-foreground">Level:</span>
-								<span className="font-medium text-foreground">{provider.level}</span>
+								<span className="text-muted-foreground">
+									Level:
+								</span>
+								<span className="font-medium text-foreground">
+									{provider.level}
+								</span>
 							</>
 						)}
 					</div>
@@ -108,7 +123,9 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 				{provider.providerCategory && (
 					<div className="flex items-center gap-2 text-sm">
 						<Star className="h-4 w-4 text-muted-foreground" />
-						<span className="text-muted-foreground">Specialization:</span>
+						<span className="text-muted-foreground">
+							Specialization:
+						</span>
 						<Badge variant="outline" className="text-xs">
 							{provider.providerCategory}
 						</Badge>
@@ -127,11 +144,16 @@ export function ProviderInfo({ provider }: ProviderInfoProps) {
 				{/* Contact Button */}
 				{provider.email && (
 					<div className="pt-2">
-						<Button 
-							variant="outline" 
-							size="sm" 
+						<Button
+							variant="outline"
+							size="sm"
 							className="w-full"
-							onClick={() => window.open(`mailto:${provider.email}`, '_blank')}
+							onClick={() =>
+								window.open(
+									`mailto:${provider.email}`,
+									"_blank",
+								)
+							}
 						>
 							<Mail className="h-4 w-4 mr-2" />
 							Contact Provider

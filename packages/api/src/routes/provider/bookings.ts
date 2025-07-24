@@ -7,10 +7,29 @@ import { authMiddleware } from "../../middleware/auth";
 
 // Query parameters schema
 const bookingsQuerySchema = z.object({
-	page: z.string().optional().transform(val => val ? parseInt(val) : 1),
-	limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
-	status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "REFUNDED", "all"]).optional().default("all"),
-	sortBy: z.enum(["dateTime", "createdAt", "updatedAt"]).optional().default("dateTime"),
+	page: z
+		.string()
+		.optional()
+		.transform((val) => (val ? Number.parseInt(val) : 1)),
+	limit: z
+		.string()
+		.optional()
+		.transform((val) => (val ? Number.parseInt(val) : 10)),
+	status: z
+		.enum([
+			"PENDING",
+			"CONFIRMED",
+			"COMPLETED",
+			"CANCELLED",
+			"REFUNDED",
+			"all",
+		])
+		.optional()
+		.default("all"),
+	sortBy: z
+		.enum(["dateTime", "createdAt", "updatedAt"])
+		.optional()
+		.default("dateTime"),
 	sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 	dateFrom: z.string().optional(),
 	dateTo: z.string().optional(),
@@ -19,14 +38,16 @@ const bookingsQuerySchema = z.object({
 export const providerBookingsRouter = new Hono()
 	.basePath("/provider/bookings")
 	.use(authMiddleware)
-	
+
 	// GET /api/provider/bookings - Get all bookings for authenticated provider
-	.get("/",
+	.get(
+		"/",
 		validator("query", bookingsQuerySchema),
 		describeRoute({
 			tags: ["Provider Bookings"],
 			summary: "Get provider bookings",
-			description: "Get all bookings for authenticated provider with pagination, filtering, and sorting",
+			description:
+				"Get all bookings for authenticated provider with pagination, filtering, and sorting",
 			responses: {
 				200: {
 					description: "Provider bookings list",
@@ -49,29 +70,45 @@ export const providerBookingsRouter = new Hono()
 													type: "object",
 													properties: {
 														id: { type: "string" },
-														name: { type: "string" },
-														email: { type: "string" },
-														department: { type: "string" },
-														level: { type: "number" }
-													}
+														name: {
+															type: "string",
+														},
+														email: {
+															type: "string",
+														},
+														department: {
+															type: "string",
+														},
+														level: {
+															type: "number",
+														},
+													},
 												},
 												service: {
 													type: "object",
 													properties: {
 														id: { type: "string" },
-														name: { type: "string" },
-														price: { type: "number" },
-														duration: { type: "number" },
+														name: {
+															type: "string",
+														},
+														price: {
+															type: "number",
+														},
+														duration: {
+															type: "number",
+														},
 														category: {
 															type: "object",
 															properties: {
-																name: { type: "string" }
-															}
-														}
-													}
-												}
-											}
-										}
+																name: {
+																	type: "string",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
 									},
 									pagination: {
 										type: "object",
@@ -81,26 +118,33 @@ export const providerBookingsRouter = new Hono()
 											total: { type: "number" },
 											totalPages: { type: "number" },
 											hasNext: { type: "boolean" },
-											hasPrev: { type: "boolean" }
-										}
-									}
-								}
-							}
-						}
-					}
+											hasPrev: { type: "boolean" },
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				403: {
-					description: "Unauthorized - Only providers can access their bookings"
-				}
-			}
+					description:
+						"Unauthorized - Only providers can access their bookings",
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
-			const { page, limit, status, sortBy, sortOrder, dateFrom, dateTo } = c.req.valid("query");
+			const { page, limit, status, sortBy, sortOrder, dateFrom, dateTo } =
+				c.req.valid("query");
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access their bookings" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access their bookings",
+					},
+					403,
+				);
 			}
 
 			try {
@@ -185,23 +229,30 @@ export const providerBookingsRouter = new Hono()
 						hasPrev,
 					},
 				});
-
 			} catch (error) {
 				console.error("Error fetching provider bookings:", error);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	)
 
 	// GET /api/provider/bookings/recent - Get recent bookings for dashboard
-	.get("/recent",
-		validator("query", z.object({
-			limit: z.string().optional().transform(val => val ? parseInt(val) : 5),
-		})),
+	.get(
+		"/recent",
+		validator(
+			"query",
+			z.object({
+				limit: z
+					.string()
+					.optional()
+					.transform((val) => (val ? Number.parseInt(val) : 5)),
+			}),
+		),
 		describeRoute({
 			tags: ["Provider Bookings"],
 			summary: "Get recent provider bookings",
-			description: "Get recent bookings for authenticated provider for dashboard display",
+			description:
+				"Get recent bookings for authenticated provider for dashboard display",
 			responses: {
 				200: {
 					description: "Recent provider bookings",
@@ -222,26 +273,34 @@ export const providerBookingsRouter = new Hono()
 												student: {
 													type: "object",
 													properties: {
-														name: { type: "string" },
-														email: { type: "string" }
-													}
+														name: {
+															type: "string",
+														},
+														email: {
+															type: "string",
+														},
+													},
 												},
 												service: {
 													type: "object",
 													properties: {
-														name: { type: "string" },
-														price: { type: "number" }
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+														name: {
+															type: "string",
+														},
+														price: {
+															type: "number",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
@@ -249,7 +308,12 @@ export const providerBookingsRouter = new Hono()
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access their bookings" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access their bookings",
+					},
+					403,
+				);
 			}
 
 			try {
@@ -273,7 +337,7 @@ export const providerBookingsRouter = new Hono()
 						},
 					},
 					orderBy: {
-						createdAt: 'desc',
+						createdAt: "desc",
 					},
 					take: limit,
 				});
@@ -281,24 +345,31 @@ export const providerBookingsRouter = new Hono()
 				return c.json({
 					bookings,
 				});
-
 			} catch (error) {
-				console.error("Error fetching recent provider bookings:", error);
+				console.error(
+					"Error fetching recent provider bookings:",
+					error,
+				);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	)
 
 	// GET /api/provider/bookings/stats - Get booking statistics
-	.get("/stats",
-		validator("query", z.object({
-			startDate: z.string().optional(),
-			endDate: z.string().optional(),
-		})),
+	.get(
+		"/stats",
+		validator(
+			"query",
+			z.object({
+				startDate: z.string().optional(),
+				endDate: z.string().optional(),
+			}),
+		),
 		describeRoute({
 			tags: ["Provider Bookings"],
 			summary: "Get provider booking statistics",
-			description: "Get booking statistics for authenticated provider including counts by status and time periods",
+			description:
+				"Get booking statistics for authenticated provider including counts by status and time periods",
 			responses: {
 				200: {
 					description: "Provider booking statistics",
@@ -315,8 +386,8 @@ export const providerBookingsRouter = new Hono()
 											confirmed: { type: "number" },
 											completed: { type: "number" },
 											cancelled: { type: "number" },
-											refunded: { type: "number" }
-										}
+											refunded: { type: "number" },
+										},
 									},
 									byTimeframe: {
 										type: "object",
@@ -324,15 +395,15 @@ export const providerBookingsRouter = new Hono()
 											today: { type: "number" },
 											thisWeek: { type: "number" },
 											thisMonth: { type: "number" },
-											lastMonth: { type: "number" }
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+											lastMonth: { type: "number" },
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
@@ -340,42 +411,81 @@ export const providerBookingsRouter = new Hono()
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access their bookings" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access their bookings",
+					},
+					403,
+				);
 			}
 
 			try {
 				// Date range setup
 				const dateFilter = {
 					...(startDate && { gte: new Date(startDate) }),
-					...(endDate && { lte: new Date(endDate) })
+					...(endDate && { lte: new Date(endDate) }),
 				};
 
 				// Get current date boundaries
 				const now = new Date();
-				const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-				const weekStart = new Date(todayStart.getTime() - (todayStart.getDay() * 24 * 60 * 60 * 1000));
-				const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-				const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-				const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+				const todayStart = new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					now.getDate(),
+				);
+				const weekStart = new Date(
+					todayStart.getTime() -
+						todayStart.getDay() * 24 * 60 * 60 * 1000,
+				);
+				const monthStart = new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					1,
+				);
+				const lastMonthStart = new Date(
+					now.getFullYear(),
+					now.getMonth() - 1,
+					1,
+				);
+				const lastMonthEnd = new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					0,
+				);
 
 				// Get booking statistics by status
 				const statusStats = await db.booking.groupBy({
-					by: ['status'],
+					by: ["status"],
 					where: {
 						providerId: user.id,
-						...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+						...(Object.keys(dateFilter).length > 0 && {
+							createdAt: dateFilter,
+						}),
 					},
 					_count: {
 						id: true,
 					},
 				});
 
-				const total = statusStats.reduce((sum, stat) => sum + stat._count.id, 0);
-				const pending = statusStats.find(stat => stat.status === 'PENDING')?._count.id || 0;
-				const confirmed = statusStats.find(stat => stat.status === 'CONFIRMED')?._count.id || 0;
-				const completed = statusStats.find(stat => stat.status === 'COMPLETED')?._count.id || 0;
-				const cancelled = statusStats.find(stat => stat.status === 'CANCELLED')?._count.id || 0;
-				const refunded = statusStats.find(stat => stat.status === 'REFUNDED')?._count.id || 0;
+				const total = statusStats.reduce(
+					(sum, stat) => sum + stat._count.id,
+					0,
+				);
+				const pending =
+					statusStats.find((stat) => stat.status === "PENDING")
+						?._count.id || 0;
+				const confirmed =
+					statusStats.find((stat) => stat.status === "CONFIRMED")
+						?._count.id || 0;
+				const completed =
+					statusStats.find((stat) => stat.status === "COMPLETED")
+						?._count.id || 0;
+				const cancelled =
+					statusStats.find((stat) => stat.status === "CANCELLED")
+						?._count.id || 0;
+				const refunded =
+					statusStats.find((stat) => stat.status === "REFUNDED")
+						?._count.id || 0;
 
 				// Get booking statistics by timeframe
 				const todayCount = await db.booking.count({
@@ -431,10 +541,12 @@ export const providerBookingsRouter = new Hono()
 						lastMonth: lastMonthCount,
 					},
 				});
-
 			} catch (error) {
-				console.error("Error fetching provider booking statistics:", error);
+				console.error(
+					"Error fetching provider booking statistics:",
+					error,
+				);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	);

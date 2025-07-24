@@ -12,9 +12,14 @@ const orgCache = new Map<string, any>();
  */
 export async function getSession() {
 	const headersList = await headers();
-	const sessionId = headersList.get('authorization') || headersList.get('cookie') || 'anonymous';
+	const sessionId =
+		headersList.get("authorization") ||
+		headersList.get("cookie") ||
+		"anonymous";
 	const cacheKey = `session:${sessionId}`;
-	if (sessionCache.has(cacheKey)) { return sessionCache.get(cacheKey); }
+	if (sessionCache.has(cacheKey)) {
+		return sessionCache.get(cacheKey);
+	}
 	const session = await auth.api.getSession({
 		headers: await headers(),
 		query: { disableCookieCache: true },
@@ -30,7 +35,7 @@ export async function getSession() {
  * @param slug - The organization slug to fetch.
  */
 export async function getActiveOrganization(slug: string) {
-	if (orgCache.has(slug)) { 
+	if (orgCache.has(slug)) {
 		return orgCache.get(slug);
 	}
 	try {

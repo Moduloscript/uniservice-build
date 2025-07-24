@@ -24,8 +24,13 @@ const sortOptions: { value: SortOption; label: string }[] = [
 export function ServiceSort({ value, onChange }: ServiceSortProps) {
 	return (
 		<div className="space-y-2">
-			<label className="text-sm font-medium text-foreground">Sort by</label>
-			<Select value={value} onValueChange={(val) => onChange(val as SortOption)}>
+			<label className="text-sm font-medium text-foreground">
+				Sort by
+			</label>
+			<Select
+				value={value}
+				onValueChange={(val) => onChange(val as SortOption)}
+			>
 				<SelectTrigger className="w-full h-11">
 					<SelectValue placeholder="Choose sorting..." />
 				</SelectTrigger>

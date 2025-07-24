@@ -5,7 +5,10 @@ interface BookingStatusBadgeProps {
 	className?: string;
 }
 
-export function BookingStatusBadge({ status, className = "" }: BookingStatusBadgeProps) {
+export function BookingStatusBadge({
+	status,
+	className = "",
+}: BookingStatusBadgeProps) {
 	const getStatusColor = (status: BookingStatus) => {
 		switch (status) {
 			case "PENDING":
@@ -41,7 +44,7 @@ export function BookingStatusBadge({ status, className = "" }: BookingStatusBadg
 	};
 
 	return (
-		<span 
+		<span
 			className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(status)} ${className}`}
 		>
 			{getStatusText(status)}

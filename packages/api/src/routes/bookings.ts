@@ -12,7 +12,9 @@ const createBookingSchema = z.object({
 
 // Update booking schema
 const updateBookingSchema = z.object({
-	status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "REFUNDED"]).optional(),
+	status: z
+		.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "REFUNDED"])
+		.optional(),
 });
 
 export const bookingsRouter = new Hono()
@@ -54,7 +56,7 @@ export const bookingsRouter = new Hono()
 	// Get all bookings for current user
 	.get("/", async (c) => {
 		const user = c.get("user");
-		
+
 		// Build query based on user type
 		let whereClause = {};
 		if (user.userType === "STUDENT") {
@@ -81,7 +83,7 @@ export const bookingsRouter = new Hono()
 	.get(":id", async (c) => {
 		const id = c.req.param("id");
 		const user = c.get("user");
-		
+
 		if (!z.string().cuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
@@ -92,13 +94,17 @@ export const bookingsRouter = new Hono()
 				service: { include: { category: true } },
 			},
 		});
-		
+
 		if (!booking) {
 			return c.json({ error: "Booking not found" }, 404);
 		}
 
 		// Check authorization
-		if (user.userType !== "ADMIN" && booking.studentId !== user.id && booking.providerId !== user.id) {
+		if (
+			user.userType !== "ADMIN" &&
+			booking.studentId !== user.id &&
+			booking.providerId !== user.id
+		) {
 			return c.json({ error: "Unauthorized" }, 403);
 		}
 
@@ -109,7 +115,7 @@ export const bookingsRouter = new Hono()
 		const id = c.req.param("id");
 		const user = c.get("user");
 		const data = c.req.valid("json");
-		
+
 		if (!z.string().cuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
@@ -122,13 +128,25 @@ export const bookingsRouter = new Hono()
 		// Check authorization and allowed status transitions
 		if (user.userType === "PROVIDER" && booking.providerId === user.id) {
 			// Providers can confirm pending bookings or mark as completed
-			if (data.status && !["CONFIRMED", "COMPLETED", "CANCELLED"].includes(data.status)) {
-				return c.json({ error: "Invalid status transition for provider" }, 400);
+			if (
+				data.status &&
+				!["CONFIRMED", "COMPLETED", "CANCELLED"].includes(data.status)
+			) {
+				return c.json(
+					{ error: "Invalid status transition for provider" },
+					400,
+				);
 			}
-		} else if (user.userType === "STUDENT" && booking.studentId === user.id) {
+		} else if (
+			user.userType === "STUDENT" &&
+			booking.studentId === user.id
+		) {
 			// Students can only cancel their bookings
 			if (data.status && data.status !== "CANCELLED") {
-				return c.json({ error: "Students can only cancel bookings" }, 400);
+				return c.json(
+					{ error: "Students can only cancel bookings" },
+					400,
+				);
 			}
 		} else if (user.userType !== "ADMIN") {
 			return c.json({ error: "Unauthorized" }, 403);
@@ -147,7 +165,7 @@ export const bookingsRouter = new Hono()
 	.delete(":id", async (c) => {
 		const id = c.req.param("id");
 		const user = c.get("user");
-		
+
 		if (!z.string().cuid().safeParse(id).success) {
 			return c.json({ error: "Invalid booking ID" }, 400);
 		}
@@ -159,7 +177,12 @@ export const bookingsRouter = new Hono()
 
 		// Check authorization
 		if (user.userType !== "ADMIN" && booking.studentId !== user.id) {
-			return c.json({ error: "Only students can delete their own bookings or admins" }, 403);
+			return c.json(
+				{
+					error: "Only students can delete their own bookings or admins",
+				},
+				403,
+			);
 		}
 
 		// Instead of deleting, update status to CANCELLED for audit trail
@@ -169,4 +192,3 @@ export const bookingsRouter = new Hono()
 		});
 		return c.json({ success: true, booking: cancelledBooking });
 	});
-

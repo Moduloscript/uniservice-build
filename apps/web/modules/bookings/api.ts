@@ -1,15 +1,17 @@
-import type { 
-	Booking, 
-	CreateBookingRequest, 
-	UpdateBookingRequest, 
-	BookingListResponse, 
-	BookingResponse 
+import type {
+	Booking,
+	CreateBookingRequest,
+	UpdateBookingRequest,
+	BookingListResponse,
+	BookingResponse,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 // Create a new booking
-export async function createBooking(data: CreateBookingRequest): Promise<Booking> {
+export async function createBooking(
+	data: CreateBookingRequest,
+): Promise<Booking> {
 	const response = await fetch(`${API_BASE_URL}/bookings`, {
 		method: "POST",
 		headers: {
@@ -68,8 +70,8 @@ export async function fetchBookingById(id: string): Promise<Booking> {
 
 // Update booking status
 export async function updateBookingStatus(
-	id: string, 
-	data: UpdateBookingRequest
+	id: string,
+	data: UpdateBookingRequest,
 ): Promise<Booking> {
 	const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
 		method: "PUT",

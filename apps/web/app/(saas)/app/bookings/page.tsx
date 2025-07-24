@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function BookingsPage() {
 	const session = await auth();
-	
+
 	if (!session?.user) {
 		redirect("/auth/login");
 	}

@@ -84,7 +84,9 @@ export function MetadataDisplay({
 	const { metadata = {} } = doc;
 	const submittedDate = new Date(doc.submittedAt).toLocaleDateString();
 	const submittedTime = new Date(doc.submittedAt).toLocaleTimeString();
-	const category = (metadata?.category || metadata?.providerCategory) as string | undefined;
+	const category = (metadata?.category || metadata?.providerCategory) as
+		| string
+		| undefined;
 
 	return (
 		<div className={cn("space-y-2", className)}>

@@ -14,14 +14,16 @@ const dateRangeSchema = z.object({
 export const providerDashboardRouter = new Hono()
 	.basePath("/provider/dashboard")
 	.use(authMiddleware)
-	
+
 	// GET /api/provider/dashboard/stats - Get provider dashboard statistics
-	.get("/stats",
+	.get(
+		"/stats",
 		validator("query", dateRangeSchema),
 		describeRoute({
 			tags: ["Provider Dashboard"],
 			summary: "Get provider dashboard statistics",
-			description: "Get comprehensive dashboard metrics for authenticated provider including services, bookings, revenue, and student stats",
+			description:
+				"Get comprehensive dashboard metrics for authenticated provider including services, bookings, revenue, and student stats",
 			responses: {
 				200: {
 					description: "Provider dashboard statistics",
@@ -35,8 +37,8 @@ export const providerDashboardRouter = new Hono()
 										properties: {
 											total: { type: "number" },
 											active: { type: "number" },
-											inactive: { type: "number" }
-										}
+											inactive: { type: "number" },
+										},
 									},
 									bookings: {
 										type: "object",
@@ -45,8 +47,8 @@ export const providerDashboardRouter = new Hono()
 											pending: { type: "number" },
 											confirmed: { type: "number" },
 											completed: { type: "number" },
-											cancelled: { type: "number" }
-										}
+											cancelled: { type: "number" },
+										},
 									},
 									revenue: {
 										type: "object",
@@ -54,26 +56,27 @@ export const providerDashboardRouter = new Hono()
 											total: { type: "number" },
 											thisMonth: { type: "number" },
 											lastMonth: { type: "number" },
-											currency: { type: "string" }
-										}
+											currency: { type: "string" },
+										},
 									},
 									students: {
 										type: "object",
 										properties: {
 											total: { type: "number" },
 											active: { type: "number" },
-											thisMonth: { type: "number" }
-										}
-									}
-								}
-							}
-						}
-					}
+											thisMonth: { type: "number" },
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				403: {
-					description: "Unauthorized - Only providers can access dashboard stats"
-				}
-			}
+					description:
+						"Unauthorized - Only providers can access dashboard stats",
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
@@ -81,73 +84,116 @@ export const providerDashboardRouter = new Hono()
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access dashboard stats" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access dashboard stats",
+					},
+					403,
+				);
 			}
 
 			try {
 				// Date range setup
 				const dateFilter = {
 					...(startDate && { gte: new Date(startDate) }),
-					...(endDate && { lte: new Date(endDate) })
+					...(endDate && { lte: new Date(endDate) }),
 				};
 
 				// Get current month boundaries
 				const now = new Date();
-				const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-				const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-				const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+				const thisMonthStart = new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					1,
+				);
+				const lastMonthStart = new Date(
+					now.getFullYear(),
+					now.getMonth() - 1,
+					1,
+				);
+				const lastMonthEnd = new Date(
+					now.getFullYear(),
+					now.getMonth(),
+					0,
+				);
 
 				// 1. Services Statistics
 				const servicesStats = await db.service.groupBy({
-					by: ['isActive'],
+					by: ["isActive"],
 					where: {
 						providerId: user.id,
-						...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+						...(Object.keys(dateFilter).length > 0 && {
+							createdAt: dateFilter,
+						}),
 					},
 					_count: {
-						id: true
-					}
+						id: true,
+					},
 				});
 
-				const totalServices = servicesStats.reduce((sum, stat) => sum + stat._count.id, 0);
-				const activeServices = servicesStats.find(stat => stat.isActive)?._count.id || 0;
-				const inactiveServices = servicesStats.find(stat => !stat.isActive)?._count.id || 0;
+				const totalServices = servicesStats.reduce(
+					(sum, stat) => sum + stat._count.id,
+					0,
+				);
+				const activeServices =
+					servicesStats.find((stat) => stat.isActive)?._count.id || 0;
+				const inactiveServices =
+					servicesStats.find((stat) => !stat.isActive)?._count.id ||
+					0;
 
 				// 2. Bookings Statistics
 				const bookingsStats = await db.booking.groupBy({
-					by: ['status'],
+					by: ["status"],
 					where: {
 						providerId: user.id,
-						...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+						...(Object.keys(dateFilter).length > 0 && {
+							createdAt: dateFilter,
+						}),
 					},
 					_count: {
-						id: true
-					}
+						id: true,
+					},
 				});
 
-				const totalBookings = bookingsStats.reduce((sum, stat) => sum + stat._count.id, 0);
-				const pendingBookings = bookingsStats.find(stat => stat.status === 'PENDING')?._count.id || 0;
-				const confirmedBookings = bookingsStats.find(stat => stat.status === 'CONFIRMED')?._count.id || 0;
-				const completedBookings = bookingsStats.find(stat => stat.status === 'COMPLETED')?._count.id || 0;
-				const cancelledBookings = bookingsStats.find(stat => stat.status === 'CANCELLED')?._count.id || 0;
+				const totalBookings = bookingsStats.reduce(
+					(sum, stat) => sum + stat._count.id,
+					0,
+				);
+				const pendingBookings =
+					bookingsStats.find((stat) => stat.status === "PENDING")
+						?._count.id || 0;
+				const confirmedBookings =
+					bookingsStats.find((stat) => stat.status === "CONFIRMED")
+						?._count.id || 0;
+				const completedBookings =
+					bookingsStats.find((stat) => stat.status === "COMPLETED")
+						?._count.id || 0;
+				const cancelledBookings =
+					bookingsStats.find((stat) => stat.status === "CANCELLED")
+						?._count.id || 0;
 
 				// 3. Revenue Statistics
 				const revenueData = await db.booking.findMany({
 					where: {
 						providerId: user.id,
 						status: "COMPLETED",
-						...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+						...(Object.keys(dateFilter).length > 0 && {
+							createdAt: dateFilter,
+						}),
 					},
 					include: {
 						service: {
 							select: {
-								price: true
-							}
-						}
-					}
+								price: true,
+							},
+						},
+					},
 				});
 
-				const totalRevenue = revenueData.reduce((sum, booking) => sum + Number(booking.service.price), 0);
+				const totalRevenue = revenueData.reduce(
+					(sum, booking) => sum + Number(booking.service.price),
+					0,
+				);
 
 				// This month revenue
 				const thisMonthRevenue = await db.booking.findMany({
@@ -156,19 +202,22 @@ export const providerDashboardRouter = new Hono()
 						status: "COMPLETED",
 						createdAt: {
 							gte: thisMonthStart,
-							lte: now
-						}
+							lte: now,
+						},
 					},
 					include: {
 						service: {
 							select: {
-								price: true
-							}
-						}
-					}
+								price: true,
+							},
+						},
+					},
 				});
 
-				const thisMonthTotal = thisMonthRevenue.reduce((sum, booking) => sum + Number(booking.service.price), 0);
+				const thisMonthTotal = thisMonthRevenue.reduce(
+					(sum, booking) => sum + Number(booking.service.price),
+					0,
+				);
 
 				// Last month revenue
 				const lastMonthRevenue = await db.booking.findMany({
@@ -177,31 +226,36 @@ export const providerDashboardRouter = new Hono()
 						status: "COMPLETED",
 						createdAt: {
 							gte: lastMonthStart,
-							lte: lastMonthEnd
-						}
+							lte: lastMonthEnd,
+						},
 					},
 					include: {
 						service: {
 							select: {
-								price: true
-							}
-						}
-					}
+								price: true,
+							},
+						},
+					},
 				});
 
-				const lastMonthTotal = lastMonthRevenue.reduce((sum, booking) => sum + Number(booking.service.price), 0);
+				const lastMonthTotal = lastMonthRevenue.reduce(
+					(sum, booking) => sum + Number(booking.service.price),
+					0,
+				);
 
 				// 4. Students Statistics
 				const studentsData = await db.booking.findMany({
 					where: {
 						providerId: user.id,
-						...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+						...(Object.keys(dateFilter).length > 0 && {
+							createdAt: dateFilter,
+						}),
 					},
 					select: {
 						studentId: true,
-						createdAt: true
+						createdAt: true,
 					},
-					distinct: ['studentId']
+					distinct: ["studentId"],
 				});
 
 				const totalStudents = studentsData.length;
@@ -214,20 +268,22 @@ export const providerDashboardRouter = new Hono()
 					where: {
 						providerId: user.id,
 						createdAt: {
-							gte: thirtyDaysAgo
-						}
+							gte: thirtyDaysAgo,
+						},
 					},
 					select: {
-						studentId: true
+						studentId: true,
 					},
-					distinct: ['studentId']
+					distinct: ["studentId"],
 				});
 
 				const activeStudents = activeStudentsData.length;
 
 				// Students this month
-				const thisMonthStudents = studentsData.filter(booking => 
-					booking.createdAt >= thisMonthStart && booking.createdAt <= now
+				const thisMonthStudents = studentsData.filter(
+					(booking) =>
+						booking.createdAt >= thisMonthStart &&
+						booking.createdAt <= now,
 				).length;
 
 				// Return comprehensive statistics
@@ -235,31 +291,33 @@ export const providerDashboardRouter = new Hono()
 					services: {
 						total: totalServices,
 						active: activeServices,
-						inactive: inactiveServices
+						inactive: inactiveServices,
 					},
 					bookings: {
 						total: totalBookings,
 						pending: pendingBookings,
 						confirmed: confirmedBookings,
 						completed: completedBookings,
-						cancelled: cancelledBookings
+						cancelled: cancelledBookings,
 					},
 					revenue: {
 						total: totalRevenue,
 						thisMonth: thisMonthTotal,
 						lastMonth: lastMonthTotal,
-						currency: "NGN"
+						currency: "NGN",
 					},
 					students: {
 						total: totalStudents,
 						active: activeStudents,
-						thisMonth: thisMonthStudents
-					}
+						thisMonth: thisMonthStudents,
+					},
 				});
-
 			} catch (error) {
-				console.error("Error fetching provider dashboard stats:", error);
+				console.error(
+					"Error fetching provider dashboard stats:",
+					error,
+				);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	);

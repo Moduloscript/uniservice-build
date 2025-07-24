@@ -59,7 +59,7 @@ export default async function middleware(req: NextRequest) {
 			pathname !== "/app/verification-pending"
 		) {
 			return NextResponse.redirect(
-				new URL("/app/verification-pending", origin)
+				new URL("/app/verification-pending", origin),
 			);
 		}
 
@@ -167,33 +167,35 @@ export default async function middleware(req: NextRequest) {
 				),
 			);
 		}
-		
+
 		// Check if user has PROVIDER userType
 		if (session.user.userType !== "PROVIDER") {
 			// Redirect students to main app
 			if (session.user.userType === "STUDENT") {
 				return NextResponse.redirect(new URL("/app", origin));
 			}
-			
-			// Redirect admins to admin dashboard  
+
+			// Redirect admins to admin dashboard
 			if (session.user.role === "admin") {
 				return NextResponse.redirect(new URL("/app/admin", origin));
 			}
-			
+
 			// Redirect others to main app
 			return NextResponse.redirect(new URL("/app", origin));
 		}
-		
+
 		// Check if provider has completed onboarding
 		if (!session.user.onboardingComplete) {
 			return NextResponse.redirect(new URL("/app/onboarding", origin));
 		}
-		
+
 		// Check if provider is verified (if verification is required)
 		if (!session.user.isVerified) {
-			return NextResponse.redirect(new URL("/app/verification-pending", origin));
+			return NextResponse.redirect(
+				new URL("/app/verification-pending", origin),
+			);
 		}
-		
+
 		return NextResponse.next();
 	}
 

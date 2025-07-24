@@ -13,7 +13,9 @@ async function main() {
 		});
 
 		if (providers.length === 0) {
-			logger.warn("No providers found. Please seed users and services first.");
+			logger.warn(
+				"No providers found. Please seed users and services first.",
+			);
 			return;
 		}
 
@@ -32,7 +34,11 @@ async function main() {
 				const availabilitySlots = [];
 
 				// Generate time slots for next 14 days
-				for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+				for (
+					let date = new Date(startDate);
+					date <= endDate;
+					date.setDate(date.getDate() + 1)
+				) {
 					// Skip weekends for this example
 					const dayOfWeek = date.getDay();
 					if (dayOfWeek === 0 || dayOfWeek === 6) continue;
@@ -59,7 +65,7 @@ async function main() {
 
 						const id = nanoid();
 						const currentDate = new Date(date);
-						
+
 						availabilitySlots.push({
 							id,
 							providerId: provider.id,
@@ -71,7 +77,10 @@ async function main() {
 							isBooked: Math.random() < 0.1, // 10% chance of being booked
 							maxBookings: Math.floor(Math.random() * 2) + 1, // 1-2 max bookings
 							currentBookings: 0,
-							notes: Math.random() < 0.1 ? "Special session available" : null,
+							notes:
+								Math.random() < 0.1
+									? "Special session available"
+									: null,
 							createdAt: new Date(),
 							updatedAt: new Date(),
 						});
@@ -86,12 +95,16 @@ async function main() {
 					});
 
 					totalSlotsCreated += availabilitySlots.length;
-					logger.success(`  ✅ Created ${availabilitySlots.length} availability slots for service: ${service.name}`);
+					logger.success(
+						`  ✅ Created ${availabilitySlots.length} availability slots for service: ${service.name}`,
+					);
 				}
 			}
 		}
 
-		logger.success(`✅ Provider availability seeding completed! Created ${totalSlotsCreated} total availability slots.`);
+		logger.success(
+			`✅ Provider availability seeding completed! Created ${totalSlotsCreated} total availability slots.`,
+		);
 	} catch (error) {
 		logger.error("❌ Error seeding provider availability:", error);
 		throw error;

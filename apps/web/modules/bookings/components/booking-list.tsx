@@ -13,10 +13,10 @@ interface BookingListProps {
 	showRefresh?: boolean;
 }
 
-export function BookingList({ 
-	userType, 
+export function BookingList({
+	userType,
 	title = "My Bookings",
-	showRefresh = true 
+	showRefresh = true,
 }: BookingListProps) {
 	const [bookings, setBookings] = useState<Booking[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +65,10 @@ export function BookingList({
 				<div className="grid gap-4">
 					{/* Loading skeletons */}
 					{[1, 2, 3].map((i) => (
-						<div key={i} className="border rounded-lg p-4 animate-pulse">
+						<div
+							key={i}
+							className="border rounded-lg p-4 animate-pulse"
+						>
 							<div className="flex justify-between items-start mb-3">
 								<div className="space-y-2">
 									<div className="h-5 bg-gray-200 rounded w-48"></div>
@@ -90,14 +93,20 @@ export function BookingList({
 				<div className="flex justify-between items-center">
 					<h2 className="text-2xl font-bold">{title}</h2>
 					{showRefresh && (
-						<Button onClick={handleRefresh} variant="outline" size="sm">
+						<Button
+							onClick={handleRefresh}
+							variant="outline"
+							size="sm"
+						>
 							<RefreshCw className="h-4 w-4 mr-2" />
 							Try Again
 						</Button>
 					)}
 				</div>
 				<div className="text-center py-8">
-					<div className="text-red-600 mb-2">Failed to load bookings</div>
+					<div className="text-red-600 mb-2">
+						Failed to load bookings
+					</div>
 					<div className="text-gray-500 text-sm">{error}</div>
 				</div>
 			</div>
@@ -118,7 +127,9 @@ export function BookingList({
 
 			{bookings.length === 0 ? (
 				<div className="text-center py-12">
-					<div className="text-gray-500 text-lg mb-2">No bookings found</div>
+					<div className="text-gray-500 text-lg mb-2">
+						No bookings found
+					</div>
 					<div className="text-gray-400 text-sm max-w-md mx-auto">
 						{getEmptyMessage()}
 					</div>

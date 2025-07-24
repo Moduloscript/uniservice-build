@@ -26,14 +26,14 @@ export function NavigationButtons({
 }: NavigationButtonsProps) {
 	// Check if this is the final step (review step)
 	const isFinalStep = step === stepsCount - 1;
-	
+
 	// Clean layout without background colors and borders
 	return (
 		<div
 			className={cn(
 				"flex items-center gap-4 pt-6 mt-6",
 				isFinalStep ? "justify-center" : "justify-between",
-				className
+				className,
 			)}
 			aria-label="Navigation buttons"
 		>
@@ -50,10 +50,10 @@ export function NavigationButtons({
 					Back
 				</Button>
 			)}
-			
+
 			{/* Spacer for non-final steps when back button is not shown */}
 			{step === 0 && !isFinalStep && <div />}
-			
+
 			{/* Next/Submit Button */}
 			{isFinalStep ? (
 				<Button

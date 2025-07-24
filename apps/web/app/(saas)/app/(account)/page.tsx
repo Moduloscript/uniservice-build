@@ -15,11 +15,11 @@ export default async function AppStartPage() {
 	if (session.user.role === "admin") {
 		return redirect("/app/admin");
 	}
-	
+
 	if (session.user.userType === "PROVIDER") {
 		return redirect("/app/provider");
 	}
-	
+
 	// Students stay on the main app page - no redirect needed
 
 	const t = await getTranslations();

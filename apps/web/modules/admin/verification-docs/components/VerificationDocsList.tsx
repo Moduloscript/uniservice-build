@@ -2,8 +2,16 @@ import React from "react";
 import { Card, CardContent } from "@ui/components/card";
 import { Badge } from "@ui/components/badge";
 import { Button } from "@ui/components/button";
-import { FileText, Calendar, User, GraduationCap, Building2, Hash, ChevronRight, FileCheck2 } from "lucide-react";
-import { cn } from "@ui/lib";
+import {
+	FileText,
+	Calendar,
+	User,
+	GraduationCap,
+	Building2,
+	Hash,
+	ChevronRight,
+	FileCheck2,
+} from "lucide-react";
 
 export interface VerificationDoc {
 	id: string;
@@ -26,7 +34,9 @@ export interface VerificationDoc {
 }
 
 // Helper functions
-const getStatusBadgeProps = (status: string): { status: "success" | "info" | "warning" | "error" } => {
+const getStatusBadgeProps = (
+	status: string,
+): { status: "success" | "info" | "warning" | "error" } => {
 	switch (status) {
 		case "PENDING":
 			return { status: "warning" };
@@ -65,12 +75,12 @@ const formatTimeAgo = (dateString: string) => {
 		if (!dateString) return "No date";
 		const date = new Date(dateString);
 		if (isNaN(date.getTime())) return "Invalid date";
-		
+
 		const now = new Date();
 		const diffMs = now.getTime() - date.getTime();
 		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 		const diffDays = Math.floor(diffHours / 24);
-		
+
 		if (diffHours < 1) return "Just now";
 		if (diffHours < 24) return `${diffHours}h ago`;
 		if (diffDays < 7) return `${diffDays}d ago`;
@@ -95,8 +105,12 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 				<Card className="border-dashed">
 					<CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
 						<FileCheck2 className="h-12 w-12 mb-4 text-gray-400" />
-						<p className="font-medium text-lg mb-1">No pending verifications</p>
-						<p className="text-sm">All documents have been reviewed</p>
+						<p className="font-medium text-lg mb-1">
+							No pending verifications
+						</p>
+						<p className="text-sm">
+							All documents have been reviewed
+						</p>
 					</CardContent>
 				</Card>
 			) : (
@@ -104,10 +118,16 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 					{docs.map((doc) => {
 						const docCount = getDocumentCount(doc);
 						const timeAgo = formatTimeAgo(doc.submittedAt);
-						const statusBadgeProps = getStatusBadgeProps(doc.status);
+						const statusBadgeProps = getStatusBadgeProps(
+							doc.status,
+						);
 						const UserTypeIcon = getUserTypeIcon(doc.userType);
 						return (
-							<Card key={doc.id} className="border hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => onSelect(doc)}>
+							<Card
+								key={doc.id}
+								className="border hover:shadow-md transition-shadow duration-200 cursor-pointer"
+								onClick={() => onSelect(doc)}
+							>
 								<CardContent className="p-6">
 									<div className="flex items-start justify-between">
 										{/* Left side - User info */}
@@ -115,38 +135,61 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 											{/* User header */}
 											<div className="flex items-center gap-3 mb-3">
 												<UserTypeIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-												<h3 className="font-semibold text-lg text-foreground truncate">{doc.userName}</h3>
+												<h3 className="font-semibold text-lg text-foreground truncate">
+													{doc.userName}
+												</h3>
 											</div>
 
 											{/* User details */}
 											<div className="space-y-1.5 mb-3">
-												{doc.userType === "STUDENT" && doc.matricNumber && (
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Hash className="h-3.5 w-3.5 flex-shrink-0" />
-														<span>Matric: {doc.matricNumber}</span>
-													</div>
-												)}
+												{doc.userType === "STUDENT" &&
+													doc.matricNumber && (
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<Hash className="h-3.5 w-3.5 flex-shrink-0" />
+															<span>
+																Matric:{" "}
+																{
+																	doc.matricNumber
+																}
+															</span>
+														</div>
+													)}
 
-												{doc.userType === "STUDENT" && doc.department && (
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<GraduationCap className="h-3.5 w-3.5 flex-shrink-0" />
-														<span>{doc.department}{doc.level && ` - Level ${doc.level}`}</span>
-													</div>
-												)}
+												{doc.userType === "STUDENT" &&
+													doc.department && (
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<GraduationCap className="h-3.5 w-3.5 flex-shrink-0" />
+															<span>
+																{doc.department}
+																{doc.level &&
+																	` - Level ${doc.level}`}
+															</span>
+														</div>
+													)}
 
-												{doc.userType === "PROVIDER" && doc.providerCategory && (
-													<div className="flex items-center gap-2 text-sm text-muted-foreground">
-														<Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-														<span>{doc.providerCategory}</span>
-													</div>
-												)}
+												{doc.userType === "PROVIDER" &&
+													doc.providerCategory && (
+														<div className="flex items-center gap-2 text-sm text-muted-foreground">
+															<Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+															<span>
+																{
+																	doc.providerCategory
+																}
+															</span>
+														</div>
+													)}
 											</div>
 
 											{/* Metadata */}
 											<div className="flex items-center gap-4 text-xs text-muted-foreground">
 												<div className="flex items-center gap-1.5">
 													<FileText className="h-3.5 w-3.5 flex-shrink-0" />
-													<span>{docCount} Document{docCount !== 1 ? 's' : ''}</span>
+													<span>
+														{docCount} Document
+														{docCount !== 1
+															? "s"
+															: ""}
+													</span>
 												</div>
 												<div className="flex items-center gap-1.5">
 													<Calendar className="h-3.5 w-3.5 flex-shrink-0" />
@@ -157,10 +200,17 @@ export const VerificationDocsList: React.FC<VerificationDocsListProps> = ({
 
 										{/* Right side - Status and action */}
 										<div className="flex flex-col items-end gap-2 ml-4">
-											<Badge variant="secondary" className="text-xs font-medium">
+											<Badge
+												variant="secondary"
+												className="text-xs font-medium"
+											>
 												{doc.status}
 											</Badge>
-											<Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary-dark h-auto p-1">
+											<Button
+												variant="ghost"
+												size="sm"
+												className="text-xs text-primary hover:text-primary-dark h-auto p-1"
+											>
 												<span>View</span>
 												<ChevronRight className="h-3 w-3 ml-1" />
 											</Button>

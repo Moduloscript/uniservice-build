@@ -6,7 +6,6 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
-import { cn } from "@ui/lib";
 
 export default async function AdminLayout({ children }: PropsWithChildren) {
 	const t = await getTranslations();
@@ -28,16 +27,20 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 					<div className="flex items-center gap-3 pb-4">
 						<Logo className="size-8" withLabel={false} />
 						<div className="flex min-w-0 flex-col">
-							<h1 className="truncate text-lg font-semibold">{t("admin.title")}</h1>
-							<p className="truncate text-sm text-muted-foreground">{t("admin.description")}</p>
+							<h1 className="truncate text-lg font-semibold">
+								{t("admin.title")}
+							</h1>
+							<p className="truncate text-sm text-muted-foreground">
+								{t("admin.description")}
+							</p>
 						</div>
 					</div>
 					{/* Admin Navigation Links */}
 					<nav>
 						<ul className="flex list-none items-center gap-6 text-sm">
 							<li>
-								<Link 
-									href="/app/admin/users" 
+								<Link
+									href="/app/admin/users"
 									className="flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 hover:text-foreground/80"
 								>
 									<UsersIcon className="size-4 opacity-50" />
@@ -45,8 +48,8 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 								</Link>
 							</li>
 							<li>
-								<Link 
-									href="/app/admin/verification-docs" 
+								<Link
+									href="/app/admin/verification-docs"
 									className="flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 hover:text-foreground/80"
 								>
 									<FileCheck2Icon className="size-4 opacity-50" />
@@ -55,8 +58,8 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 							</li>
 							{config.organizations.enable && (
 								<li>
-									<Link 
-										href="/app/admin/organizations" 
+									<Link
+										href="/app/admin/organizations"
 										className="flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 hover:text-foreground/80"
 									>
 										<Building2Icon className="size-4 opacity-50" />
@@ -69,9 +72,7 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 				</div>
 			</div>
 			{/* Main Content Area */}
-			<div className="container max-w-6xl px-4 py-6">
-				{children}
-			</div>
+			<div className="container max-w-6xl px-4 py-6">{children}</div>
 		</div>
 	);
 }

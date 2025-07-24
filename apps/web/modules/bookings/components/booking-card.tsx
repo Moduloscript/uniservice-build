@@ -2,12 +2,27 @@
 
 import { useState } from "react";
 import { Button } from "../../ui/components/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../../ui/components/card";
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+} from "../../ui/components/card";
 import { BookingStatusBadge } from "./booking-status-badge";
 import { updateBookingStatus, cancelBooking } from "../api";
 import type { Booking } from "../types";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../../ui/components/alert-dialog";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "../../ui/components/alert-dialog";
 
 interface BookingCardProps {
 	booking: Booking;
@@ -63,18 +78,25 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 	const { date, time } = formatDateTime(booking.dateTime);
 
 	const canConfirm = userType === "PROVIDER" && booking.status === "PENDING";
-	const canComplete = userType === "PROVIDER" && booking.status === "CONFIRMED";
-	const canCancel = (userType === "STUDENT" && ["PENDING", "CONFIRMED"].includes(booking.status)) ||
-					 (userType === "PROVIDER" && booking.status === "PENDING") ||
-					 userType === "ADMIN";
+	const canComplete =
+		userType === "PROVIDER" && booking.status === "CONFIRMED";
+	const canCancel =
+		(userType === "STUDENT" &&
+			["PENDING", "CONFIRMED"].includes(booking.status)) ||
+		(userType === "PROVIDER" && booking.status === "PENDING") ||
+		userType === "ADMIN";
 
 	return (
 		<Card className="w-full">
 			<CardHeader className="pb-3">
 				<div className="flex justify-between items-start">
 					<div>
-						<h3 className="font-semibold text-lg">{booking.service?.name}</h3>
-						<p className="text-sm text-gray-600">{booking.service?.category?.name}</p>
+						<h3 className="font-semibold text-lg">
+							{booking.service?.name}
+						</h3>
+						<p className="text-sm text-gray-600">
+							{booking.service?.category?.name}
+						</p>
 					</div>
 					<BookingStatusBadge status={booking.status} />
 				</div>
@@ -95,11 +117,17 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 				{booking.service && (
 					<div className="grid grid-cols-2 gap-4 text-sm">
 						<div>
-							<span className="font-medium text-gray-700">Price:</span>
-							<p className="text-primary font-semibold">₦{booking.service.price.toLocaleString()}</p>
+							<span className="font-medium text-gray-700">
+								Price:
+							</span>
+							<p className="text-primary font-semibold">
+								₦{booking.service.price.toLocaleString()}
+							</p>
 						</div>
 						<div>
-							<span className="font-medium text-gray-700">Duration:</span>
+							<span className="font-medium text-gray-700">
+								Duration:
+							</span>
 							<p>{booking.service.duration} min</p>
 						</div>
 					</div>
@@ -107,8 +135,12 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 
 				{booking.service?.description && (
 					<div className="text-sm">
-						<span className="font-medium text-gray-700">Description:</span>
-						<p className="text-gray-600 mt-1">{booking.service.description}</p>
+						<span className="font-medium text-gray-700">
+							Description:
+						</span>
+						<p className="text-gray-600 mt-1">
+							{booking.service.description}
+						</p>
 					</div>
 				)}
 			</CardContent>
@@ -125,7 +157,7 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 								Confirm
 							</Button>
 						)}
-						
+
 						{canComplete && (
 							<Button
 								onClick={() => handleStatusUpdate("COMPLETED")}
@@ -143,21 +175,33 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 									<Button
 										variant="destructive"
 										disabled={isLoading}
-										className={canConfirm || canComplete ? "flex-1" : "w-full"}
+										className={
+											canConfirm || canComplete
+												? "flex-1"
+												: "w-full"
+										}
 									>
 										Cancel
 									</Button>
 								</AlertDialogTrigger>
 								<AlertDialogContent>
 									<AlertDialogHeader>
-										<AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+										<AlertDialogTitle>
+											Cancel Booking
+										</AlertDialogTitle>
 										<AlertDialogDescription>
-											Are you sure you want to cancel this booking? This action cannot be undone.
+											Are you sure you want to cancel this
+											booking? This action cannot be
+											undone.
 										</AlertDialogDescription>
 									</AlertDialogHeader>
 									<AlertDialogFooter>
-										<AlertDialogCancel>No, keep booking</AlertDialogCancel>
-										<AlertDialogAction onClick={handleCancel}>
+										<AlertDialogCancel>
+											No, keep booking
+										</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={handleCancel}
+										>
 											Yes, cancel booking
 										</AlertDialogAction>
 									</AlertDialogFooter>

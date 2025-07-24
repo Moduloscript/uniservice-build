@@ -1,4 +1,7 @@
-import { fetchServiceByIdServer, fetchReviewStatsServer } from "../../../../../modules/services/api";
+import {
+	fetchServiceByIdServer,
+	fetchReviewStatsServer,
+} from "../../../../../modules/services/api";
 import type { Service } from "../../../../../modules/services/types";
 import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { ProviderInfo } from "../../../../../modules/services/components/provider-info";
@@ -9,7 +12,12 @@ import { ServiceOutcomes } from "../../../../../modules/services/components/serv
 import { AvailabilityCalendar } from "../../../../../modules/availability/components/availability-calendar";
 import { Badge } from "../../../../../modules/ui/components/badge";
 import { Button } from "../../../../../modules/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../../../modules/ui/components/card";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "../../../../../modules/ui/components/card";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ContactProviderButton } from "./components/contact-provider-button";
@@ -17,22 +25,16 @@ import { SupportButtons } from "./components/support-buttons";
 import { ReviewSection } from "../../../../../modules/services/components/review-section";
 import { getSession } from "../../../../../modules/saas/auth/lib/server";
 import { db } from "@repo/database";
-import { 
-	Clock, 
-	DollarSign, 
-	Tag, 
-	Home, 
-	ChevronRight, 
-	Star, 
-	CheckCircle, 
+import {
+	Clock,
+	DollarSign,
+	Tag,
+	Home,
+	ChevronRight,
 	Calendar,
-	Users,
 	BookOpen,
 	Target,
-	Mail,
-	Phone,
-	MessageSquare,
-	HelpCircle
+	HelpCircle,
 } from "lucide-react";
 
 interface ServiceDetailPageProps {
@@ -44,25 +46,25 @@ export default async function ServiceDetailPage({
 }: ServiceDetailPageProps) {
 	// Await params for Next.js 15 compatibility
 	const resolvedParams = await params;
-	
+
 	let service: Service | null = null;
 	let error: string | null = null;
-	
+
 	// Validate serviceId format
-	if (!resolvedParams.serviceId || resolvedParams.serviceId.trim() === '') {
+	if (!resolvedParams.serviceId || resolvedParams.serviceId.trim() === "") {
 		return notFound();
 	}
-	
+
 	try {
 		service = await fetchServiceByIdServer(resolvedParams.serviceId);
 	} catch (e) {
 		error = (e as Error).message;
-		console.error('Error fetching service:', {
+		console.error("Error fetching service:", {
 			serviceId: resolvedParams.serviceId,
 			error: e,
 		});
 	}
-	
+
 	// Fetch review statistics for server-side rendering
 	let reviewStats: {
 		totalReviews: number;
@@ -74,19 +76,19 @@ export default async function ServiceDetailPage({
 		}>;
 		lastReviewDate: string | null;
 	} | null = null;
-	
+
 	if (service) {
 		try {
 			reviewStats = await fetchReviewStatsServer(service.id);
 		} catch (error) {
-			console.error('Error fetching review stats:', error);
+			console.error("Error fetching review stats:", error);
 			// Continue without review stats - component will handle the loading
 		}
 	}
-	
+
 	// Get current session for review functionality
 	const session = await getSession();
-	
+
 	// Fetch user's bookings for this service to determine review eligibility
 	let userBookings: Array<{
 		id: string;
@@ -94,7 +96,7 @@ export default async function ServiceDetailPage({
 		status: string;
 		hasReview: boolean;
 	}> = [];
-	
+
 	if (session?.user?.id && service) {
 		try {
 			const bookings = await db.booking.findMany({
@@ -109,19 +111,19 @@ export default async function ServiceDetailPage({
 					createdAt: "desc",
 				},
 			});
-			
-			userBookings = bookings.map(booking => ({
+
+			userBookings = bookings.map((booking) => ({
 				id: booking.id,
 				serviceId: booking.serviceId,
 				status: booking.status,
 				hasReview: booking.review !== null,
 			}));
 		} catch (error) {
-			console.error('Error fetching user bookings:', error);
+			console.error("Error fetching user bookings:", error);
 			// Continue without booking data - user just won't be able to review
 		}
 	}
-	
+
 	if (error || !service) {
 		return notFound();
 	}
@@ -130,19 +132,25 @@ export default async function ServiceDetailPage({
 		<main className="max-w-7xl mx-auto py-6 px-4">
 			{/* Breadcrumb Navigation */}
 			<nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-				<Link href="/app" className="flex items-center hover:text-foreground transition-colors">
+				<Link
+					href="/app"
+					className="flex items-center hover:text-foreground transition-colors"
+				>
 					<Home className="h-4 w-4" />
 					<span className="ml-1">Home</span>
 				</Link>
 				<ChevronRight className="h-4 w-4" />
-				<Link href="/app/services" className="hover:text-foreground transition-colors">
+				<Link
+					href="/app/services"
+					className="hover:text-foreground transition-colors"
+				>
 					Services
 				</Link>
 				{service.category && (
 					<>
 						<ChevronRight className="h-4 w-4" />
-						<Link 
-							href={`/app/services/category/${service.categoryId}`} 
+						<Link
+							href={`/app/services/category/${service.categoryId}`}
 							className="hover:text-foreground transition-colors"
 						>
 							{service.category.name}
@@ -150,7 +158,9 @@ export default async function ServiceDetailPage({
 					</>
 				)}
 				<ChevronRight className="h-4 w-4" />
-				<span className="text-foreground font-medium">{service.name}</span>
+				<span className="text-foreground font-medium">
+					{service.name}
+				</span>
 			</nav>
 
 			{/* Hero Section */}
@@ -172,13 +182,16 @@ export default async function ServiceDetailPage({
 								</h1>
 								<div className="flex items-center gap-4">
 									{service.category && (
-										<Badge variant="secondary" className="text-sm">
+										<Badge
+											variant="secondary"
+											className="text-sm"
+										>
 											<Tag className="h-4 w-4 mr-1" />
 											{service.category.name}
 										</Badge>
 									)}
-									<ServiceRatingDisplay 
-										serviceId={service.id} 
+									<ServiceRatingDisplay
+										serviceId={service.id}
 										initialStats={reviewStats || undefined}
 									/>
 								</div>
@@ -194,11 +207,15 @@ export default async function ServiceDetailPage({
 								</div>
 								<div className="flex items-center gap-2 text-muted-foreground">
 									<Clock className="h-5 w-5" />
-									<span className="text-lg">{service.duration} min</span>
+									<span className="text-lg">
+										{service.duration} min
+									</span>
 								</div>
 								<div className="flex items-center gap-2 text-muted-foreground">
 									<Calendar className="h-5 w-5" />
-									<span className="text-lg">Available Now</span>
+									<span className="text-lg">
+										Available Now
+									</span>
 								</div>
 							</div>
 
@@ -210,7 +227,9 @@ export default async function ServiceDetailPage({
 									</Button>
 								</BookingDialog>
 								{service.provider?.email && (
-									<ContactProviderButton email={service.provider.email} />
+									<ContactProviderButton
+										email={service.provider.email}
+									/>
 								)}
 							</div>
 						</div>
@@ -241,16 +260,16 @@ export default async function ServiceDetailPage({
 					{/* What's Included - Dynamic Service Features */}
 					<ServiceFeatures serviceId={service.id} />
 
-{/* Learning Outcomes - Dynamic Service Outcomes */}
+					{/* Learning Outcomes - Dynamic Service Outcomes */}
 					<ServiceOutcomes serviceId={service.id} />
 
-				{/* Reviews Section */}
-				<ReviewSection
-					serviceId={service.id}
-					currentUserId={session?.user?.id}
-					userRole={session?.user?.userType}
-					userBookings={userBookings}
-				/>
+					{/* Reviews Section */}
+					<ReviewSection
+						serviceId={service.id}
+						currentUserId={session?.user?.id}
+						userRole={session?.user?.userType}
+						userBookings={userBookings}
+					/>
 
 					{/* Dynamic Booking Calendar */}
 					<AvailabilityCalendar
@@ -259,11 +278,10 @@ export default async function ServiceDetailPage({
 						readonly={false}
 						onSlotSelect={(slot) => {
 							// Handle slot selection for booking
-							console.log('Selected slot:', slot);
+							console.log("Selected slot:", slot);
 							// TODO: Open booking dialog with selected slot
 						}}
 					/>
-
 				</div>
 
 				{/* Sidebar - Right Column */}
@@ -283,40 +301,67 @@ export default async function ServiceDetailPage({
 						</CardHeader>
 						<CardContent className="space-y-3">
 							<div className="flex items-center justify-between">
-								<span className="text-sm text-muted-foreground">Price:</span>
-								<span className="font-semibold text-primary">₦{service.price.toLocaleString()}</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-muted-foreground">Duration:</span>
-								<span className="font-semibold">{service.duration} min</span>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-muted-foreground">Availability:</span>
-								<span className={`font-semibold ${
-									service.availabilityStatus === 'AVAILABLE' ? 'text-green-600' :
-									service.availabilityStatus === 'BUSY' ? 'text-yellow-600' :
-									service.availabilityStatus === 'LIMITED' ? 'text-orange-600' :
-									'text-red-600'
-								}`}>
-									{service.availabilityStatus === 'AVAILABLE' ? 'Available Now' :
-									 service.availabilityStatus === 'BUSY' ? 'Busy' :
-									 service.availabilityStatus === 'LIMITED' ? 'Limited Availability' :
-									 'Currently Unavailable'}
+								<span className="text-sm text-muted-foreground">
+									Price:
+								</span>
+								<span className="font-semibold text-primary">
+									₦{service.price.toLocaleString()}
 								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-sm text-muted-foreground">Level:</span>
+								<span className="text-sm text-muted-foreground">
+									Duration:
+								</span>
 								<span className="font-semibold">
-									{service.serviceLevel || 'Not Specified'}
+									{service.duration} min
 								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-sm text-muted-foreground">Max Students:</span>
-								<span className="font-semibold">{service.maxStudents}</span>
+								<span className="text-sm text-muted-foreground">
+									Availability:
+								</span>
+								<span
+									className={`font-semibold ${
+										service.availabilityStatus ===
+										"AVAILABLE"
+											? "text-green-600"
+											: service.availabilityStatus ===
+													"BUSY"
+												? "text-yellow-600"
+												: service.availabilityStatus ===
+														"LIMITED"
+													? "text-orange-600"
+													: "text-red-600"
+									}`}
+								>
+									{service.availabilityStatus === "AVAILABLE"
+										? "Available Now"
+										: service.availabilityStatus === "BUSY"
+											? "Busy"
+											: service.availabilityStatus ===
+													"LIMITED"
+												? "Limited Availability"
+												: "Currently Unavailable"}
+								</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">
+									Level:
+								</span>
+								<span className="font-semibold">
+									{service.serviceLevel || "Not Specified"}
+								</span>
+							</div>
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-muted-foreground">
+									Max Students:
+								</span>
+								<span className="font-semibold">
+									{service.maxStudents}
+								</span>
 							</div>
 						</CardContent>
 					</Card>
-
 
 					{/* Need Help Section */}
 					<Card>
@@ -330,7 +375,6 @@ export default async function ServiceDetailPage({
 							<SupportButtons />
 						</CardContent>
 					</Card>
-
 				</div>
 			</div>
 
@@ -350,7 +394,11 @@ export default async function ServiceDetailPage({
 								Explore other services offered by this provider
 							</div>
 							{service.providerId && (
-								<RelatedServices currentService={service} type="provider" showAll />
+								<RelatedServices
+									currentService={service}
+									type="provider"
+									showAll
+								/>
 							)}
 						</CardContent>
 					</Card>
@@ -370,7 +418,11 @@ export default async function ServiceDetailPage({
 								Discover more services in the same category
 							</div>
 							{service.categoryId && (
-								<RelatedServices currentService={service} type="category" showAll />
+								<RelatedServices
+									currentService={service}
+									type="category"
+									showAll
+								/>
 							)}
 						</CardContent>
 					</Card>

@@ -8,19 +8,25 @@ import { ServiceSearch } from "./service-search";
 import { ServiceSort } from "./service-sort";
 import { fetchServices } from "./api";
 import { fetchServiceCategories } from "../service-categories/api";
-import type { Service } from "./types";
-import type { ServiceCategory } from "../service-categories/types";
 import { Loader2 } from "lucide-react";
 import { formatErrorMessage } from "./utils/error-formatting";
 
-export type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "duration-asc" | "duration-desc";
+export type SortOption =
+	| "name-asc"
+	| "name-desc"
+	| "price-asc"
+	| "price-desc"
+	| "duration-asc"
+	| "duration-desc";
 
 // Query keys for React Query
 const servicesQueryKey = ["services"] as const;
 const categoriesQueryKey = ["service-categories"] as const;
 
 export function ServicesMarketplace() {
-	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+		null,
+	);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortOption, setSortOption] = useState<SortOption>("name-asc");
 
@@ -55,17 +61,20 @@ export function ServicesMarketplace() {
 
 		// Filter by category
 		if (selectedCategoryId) {
-			filtered = filtered.filter(service => service.categoryId === selectedCategoryId);
+			filtered = filtered.filter(
+				(service) => service.categoryId === selectedCategoryId,
+			);
 		}
 
 		// Filter by search query
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-			filtered = filtered.filter(service =>
-				service.name.toLowerCase().includes(query) ||
-				service.description.toLowerCase().includes(query) ||
-				service.provider?.name.toLowerCase().includes(query) ||
-				service.category?.name.toLowerCase().includes(query)
+			filtered = filtered.filter(
+				(service) =>
+					service.name.toLowerCase().includes(query) ||
+					service.description.toLowerCase().includes(query) ||
+					service.provider?.name.toLowerCase().includes(query) ||
+					service.category?.name.toLowerCase().includes(query),
 			);
 		}
 
@@ -153,7 +162,15 @@ export function ServicesMarketplace() {
 						<span>No services found matching your criteria</span>
 					) : (
 						<span>
-							Showing <span className="font-medium text-foreground">{filteredAndSortedServices.length}</span> of <span className="font-medium text-foreground">{services.length}</span> services
+							Showing{" "}
+							<span className="font-medium text-foreground">
+								{filteredAndSortedServices.length}
+							</span>{" "}
+							of{" "}
+							<span className="font-medium text-foreground">
+								{services.length}
+							</span>{" "}
+							services
 							{selectedCategoryId && " in selected category"}
 						</span>
 					)}
@@ -182,9 +199,12 @@ export function ServicesMarketplace() {
 								<Loader2 className="h-8 w-8 text-muted-foreground" />
 							</div>
 						</div>
-						<h3 className="text-lg font-semibold text-foreground mb-2">No services found</h3>
+						<h3 className="text-lg font-semibold text-foreground mb-2">
+							No services found
+						</h3>
 						<p className="text-muted-foreground mb-4">
-							Try adjusting your search terms or category filters to find what you're looking for.
+							Try adjusting your search terms or category filters
+							to find what you're looking for.
 						</p>
 						<button
 							onClick={() => {

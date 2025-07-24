@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../ui/components/button";
 import {
 	Dialog,
@@ -10,12 +10,13 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "../../ui/components/dialog";
-import { Input } from "../../ui/components/input";
-import { Label } from "../../ui/components/label";
 import { createBooking } from "../api";
 import type { Service } from "../../services/types";
+import type { AvailabilityTimeSlot } from "../../availability/types";
+import { AvailabilityCalendar } from "../../availability/components/availability-calendar";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Calendar, Clock, DollarSign, User } from "lucide-react";
 
 interface BookingDialogProps {
 	service: Service;
@@ -23,30 +24,40 @@ interface BookingDialogProps {
 	onSuccess?: () => void;
 }
 
-export function BookingDialog({ 
-	service, 
+export function BookingDialog({
+	service,
 	triggerText = "Book This Service",
-	onSuccess
+	onSuccess,
 }: BookingDialogProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const [selectedDate, setSelectedDate] = useState("");
-	const [selectedTime, setSelectedTime] = useState("");
+const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(null); // Use AvailabilityTimeSlot
+
+	useEffect(() => {
+		if (selectedSlot) {
+			setSelectedDate(selectedSlot.date);
+			setSelectedTime(selectedSlot.startTime);
+		}
+	}, [selectedSlot]);
+
+	const handleSlotSelect = (slot: AvailabilityTimeSlot) => {
+		setSelectedSlot(slot);
+	};
 	const router = useRouter();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		
-		if (!selectedDate || !selectedTime) {
-			toast.error("Please select both date and time");
-			return;
-		}
+
+if (!selectedSlot) {
+		toast.error("Please select a time slot from the calendar");
+		return;
+	}
 
 		setIsLoading(true);
-		
+
 		try {
 			const dateTime = new Date(`${selectedDate}T${selectedTime}`);
-			
+
 			// Check if date is in the future
 			if (dateTime <= new Date()) {
 				toast.error("Please select a future date and time");
@@ -63,7 +74,7 @@ export function BookingDialog({
 			setIsOpen(false);
 			setSelectedDate("");
 			setSelectedTime("");
-			
+
 			if (onSuccess) {
 				onSuccess();
 			} else {
@@ -96,9 +107,7 @@ export function BookingDialog({
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
-				<Button className="w-full">
-					{triggerText}
-				</Button>
+				<Button className="w-full">{triggerText}</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
@@ -107,53 +116,47 @@ export function BookingDialog({
 						Select your preferred date and time for this service.
 					</DialogDescription>
 				</DialogHeader>
-				
-				<div className="space-y-4">
-					{/* Service Details */}
-					<div className="bg-gray-50 p-4 rounded-lg">
-						<h4 className="font-medium">{service.name}</h4>
-						<p className="text-sm text-gray-600 mt-1">{service.description}</p>
-						<div className="flex justify-between items-center mt-2">
-							<span className="text-lg font-bold text-primary">
-								₦{service.price.toLocaleString()}
-							</span>
-							<span className="text-sm text-gray-500">
-								{service.duration} min
-							</span>
-						</div>
+
+<div className="space-y-4">
+				{/* Service Details */}
+				<div className="bg-gray-50 p-4 rounded-lg">
+					<h4 className="font-medium">{service.name}</h4>
+					<p className="text-sm text-gray-600 mt-1">
+						{service.description}
+					</p>
+					<div className="flex justify-between items-center mt-2">
+						<span className="text-lg font-bold text-primary">
+							₦{service.price.toLocaleString()}
+						</span>
+						<span className="text-sm text-gray-500">
+							{service.duration} min
+						</span>
 					</div>
+				</div>
 
-					{/* Booking Form */}
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="date">Select Date</Label>
-							<Input
-								id="date"
-								type="date"
-								value={selectedDate}
-								onChange={(e) => setSelectedDate(e.target.value)}
-								min={getMinDate()}
-								required
-							/>
-						</div>
+				{/* Availability Calendar */}
+				<AvailabilityCalendar
+					providerId={service.providerId}
+					serviceId={service.id}
+					showBookedSlots
+					readonly={false}
+					onSlotSelect={handleSlotSelect}
+				/>
 
-						<div className="space-y-2">
-							<Label htmlFor="time">Select Time</Label>
-							<select
-								id="time"
-								value={selectedTime}
-								onChange={(e) => setSelectedTime(e.target.value)}
-								className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-								required
-							>
-								<option value="">Choose a time</option>
-								{generateTimeSlots().map((time) => (
-									<option key={time} value={time}>
-										{time}
-									</option>
-								))}
-							</select>
-						</div>
+				{/* Booking Form */}
+				<form onSubmit={handleSubmit} className="space-y-4">
+					<div className="flex items-center justify-between">
+						<Calendar className="h-5 w-5" />
+						{selectedSlot ? (
+							<p>
+								{selectedSlot.displayTime}
+							</p>
+						) : (
+							<p className="text-muted-foreground">
+								Select a time slot from the calendar
+							</p>
+						)}
+					</div>
 
 						<div className="flex space-x-2 pt-4">
 							<Button

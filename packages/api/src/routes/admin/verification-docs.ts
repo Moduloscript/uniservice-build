@@ -1,5 +1,5 @@
 import { getSession } from "@repo/auth/lib/server";
-import { Prisma, db } from "@repo/database";
+import { db } from "@repo/database";
 import { sendEmail } from "@repo/mail";
 import { getBaseUrl } from "@repo/utils";
 import { Hono } from "hono";
@@ -18,21 +18,31 @@ type AdminUser = {
 // RBAC middleware: only allow admins/superadmins for document verification
 async function adminOnly(c: any, next: any) {
 	const session = await getSession();
-	console.log(`Admin verification docs access attempt: user=${session?.user?.email}, role=${session?.user?.role}`);
-	
+	console.log(
+		`Admin verification docs access attempt: user=${session?.user?.email}, role=${session?.user?.role}`,
+	);
+
 	if (
 		!session ||
 		(session.user.role !== "admin" && session.user.role !== "superadmin")
 	) {
-		console.error(`Forbidden admin verification docs access: user=${session?.user?.email || 'no-session'}, role=${session?.user?.role || 'no-role'}`);
-		return c.json({ error: "Forbidden: Admin access required for document verification" }, 403);
+		console.error(
+			`Forbidden admin verification docs access: user=${session?.user?.email || "no-session"}, role=${session?.user?.role || "no-role"}`,
+		);
+		return c.json(
+			{
+				error: "Forbidden: Admin access required for document verification",
+			},
+			403,
+		);
 	}
-	
-	console.log(`Admin verification docs access granted to: ${session.user.email}`);
+
+	console.log(
+		`Admin verification docs access granted to: ${session.user.email}`,
+	);
 	c.set(adminUserKey, session.user as AdminUser);
 	await next();
 }
-
 
 export const verificationDocsAdminRouter = new Hono()
 	.use(authMiddleware)
@@ -111,7 +121,8 @@ export const verificationDocsAdminRouter = new Hono()
 					verified: false, // Also set the verified field
 					verificationReviewedBy: admin.id,
 					verificationReviewedAt: new Date(),
-					verificationNotes: notes || "No specific feedback provided.",
+					verificationNotes:
+						notes || "No specific feedback provided.",
 				},
 			});
 			// Send rejection email using proper template

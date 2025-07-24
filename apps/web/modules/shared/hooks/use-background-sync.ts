@@ -1,66 +1,70 @@
 "use client";
 
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
 export function useBackgroundSync() {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  // Handle coming back online
-  const handleOnline = useCallback(() => {
-    // Resume paused mutations when coming back online
-    queryClient.resumePausedMutations();
-    
-    // Refetch failed queries
-    queryClient.refetchQueries({
-      type: 'all',
-      stale: true,
-    });
+	// Handle coming back online
+	const handleOnline = useCallback(() => {
+		// Resume paused mutations when coming back online
+		queryClient.resumePausedMutations();
 
-    toast.success('Connection restored. Syncing data...');
-  }, [queryClient]);
+		// Refetch failed queries
+		queryClient.refetchQueries({
+			type: "all",
+			stale: true,
+		});
 
-  // Handle going offline
-  const handleOffline = useCallback(() => {
-    toast.warning('Connection lost. Your progress will be saved locally.');
-  }, []);
+		toast.success("Connection restored. Syncing data...");
+	}, [queryClient]);
 
-  // Set up online/offline event listeners
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+	// Handle going offline
+	const handleOffline = useCallback(() => {
+		toast.warning("Connection lost. Your progress will be saved locally.");
+	}, []);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+	// Set up online/offline event listeners
+	useEffect(() => {
+		if (typeof window === "undefined") return;
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [handleOnline, handleOffline]);
+		window.addEventListener("online", handleOnline);
+		window.addEventListener("offline", handleOffline);
 
-  // Set up visibility change handler for tab focus
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+		return () => {
+			window.removeEventListener("online", handleOnline);
+			window.removeEventListener("offline", handleOffline);
+		};
+	}, [handleOnline, handleOffline]);
 
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Tab became visible, refetch queries
-        queryClient.refetchQueries({
-          type: 'all',
-          stale: true,
-        });
-      }
-    };
+	// Set up visibility change handler for tab focus
+	useEffect(() => {
+		if (typeof window === "undefined") return;
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [queryClient]);
+		const handleVisibilityChange = () => {
+			if (!document.hidden) {
+				// Tab became visible, refetch queries
+				queryClient.refetchQueries({
+					type: "all",
+					stale: true,
+				});
+			}
+		};
 
-  return {
-    isOnline: typeof window !== 'undefined' ? window.navigator.onLine : true,
-  };
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+
+		return () => {
+			document.removeEventListener(
+				"visibilitychange",
+				handleVisibilityChange,
+			);
+		};
+	}, [queryClient]);
+
+	return {
+		isOnline:
+			typeof window !== "undefined" ? window.navigator.onLine : true,
+	};
 }

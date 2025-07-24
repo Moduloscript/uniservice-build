@@ -7,10 +7,19 @@ import { authMiddleware } from "../../middleware/auth";
 
 // Query parameters schema
 const servicesQuerySchema = z.object({
-	page: z.string().optional().transform(val => val ? parseInt(val) : 1),
-	limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
+	page: z
+		.string()
+		.optional()
+		.transform((val) => (val ? Number.parseInt(val) : 1)),
+	limit: z
+		.string()
+		.optional()
+		.transform((val) => (val ? Number.parseInt(val) : 10)),
 	status: z.enum(["active", "inactive", "all"]).optional().default("all"),
-	sortBy: z.enum(["name", "price", "createdAt", "updatedAt"]).optional().default("updatedAt"),
+	sortBy: z
+		.enum(["name", "price", "createdAt", "updatedAt"])
+		.optional()
+		.default("updatedAt"),
 	sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 	search: z.string().optional(),
 });
@@ -18,14 +27,16 @@ const servicesQuerySchema = z.object({
 export const providerServicesRouter = new Hono()
 	.basePath("/provider/services")
 	.use(authMiddleware)
-	
+
 	// GET /api/provider/services - Get all services for authenticated provider
-	.get("/",
+	.get(
+		"/",
 		validator("query", servicesQuerySchema),
 		describeRoute({
 			tags: ["Provider Services"],
 			summary: "Get provider services",
-			description: "Get all services for authenticated provider with pagination, filtering, and sorting",
+			description:
+				"Get all services for authenticated provider with pagination, filtering, and sorting",
 			responses: {
 				200: {
 					description: "Provider services list",
@@ -51,19 +62,27 @@ export const providerServicesRouter = new Hono()
 													type: "object",
 													properties: {
 														id: { type: "string" },
-														name: { type: "string" },
-														description: { type: "string" }
-													}
+														name: {
+															type: "string",
+														},
+														description: {
+															type: "string",
+														},
+													},
 												},
 												_count: {
 													type: "object",
 													properties: {
-														bookings: { type: "number" },
-														features: { type: "number" }
-													}
-												}
-											}
-										}
+														bookings: {
+															type: "number",
+														},
+														features: {
+															type: "number",
+														},
+													},
+												},
+											},
+										},
 									},
 									pagination: {
 										type: "object",
@@ -73,26 +92,33 @@ export const providerServicesRouter = new Hono()
 											total: { type: "number" },
 											totalPages: { type: "number" },
 											hasNext: { type: "boolean" },
-											hasPrev: { type: "boolean" }
-										}
-									}
-								}
-							}
-						}
-					}
+											hasPrev: { type: "boolean" },
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				403: {
-					description: "Unauthorized - Only providers can access their services"
-				}
-			}
+					description:
+						"Unauthorized - Only providers can access their services",
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
-			const { page, limit, status, sortBy, sortOrder, search } = c.req.valid("query");
+			const { page, limit, status, sortBy, sortOrder, search } =
+				c.req.valid("query");
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access their services" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access their services",
+					},
+					403,
+				);
 			}
 
 			try {
@@ -110,7 +136,12 @@ export const providerServicesRouter = new Hono()
 				if (search) {
 					whereClause.OR = [
 						{ name: { contains: search, mode: "insensitive" } },
-						{ description: { contains: search, mode: "insensitive" } },
+						{
+							description: {
+								contains: search,
+								mode: "insensitive",
+							},
+						},
 					];
 				}
 
@@ -165,20 +196,21 @@ export const providerServicesRouter = new Hono()
 						hasPrev,
 					},
 				});
-
 			} catch (error) {
 				console.error("Error fetching provider services:", error);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	)
 
 	// GET /api/provider/services/summary - Get services summary for dashboard
-	.get("/summary",
+	.get(
+		"/summary",
 		describeRoute({
 			tags: ["Provider Services"],
 			summary: "Get provider services summary",
-			description: "Get summary statistics for provider services including counts by status and recent activity",
+			description:
+				"Get summary statistics for provider services including counts by status and recent activity",
 			responses: {
 				200: {
 					description: "Provider services summary",
@@ -203,31 +235,38 @@ export const providerServicesRouter = new Hono()
 												category: {
 													type: "object",
 													properties: {
-														name: { type: "string" }
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+														name: {
+															type: "string",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}),
 		async (c) => {
 			const user = c.get("user");
 
 			// Verify user is a provider
 			if (user.userType !== "PROVIDER") {
-				return c.json({ error: "Unauthorized - Only providers can access their services" }, 403);
+				return c.json(
+					{
+						error: "Unauthorized - Only providers can access their services",
+					},
+					403,
+				);
 			}
 
 			try {
 				// Get service counts by status
 				const serviceStats = await db.service.groupBy({
-					by: ['isActive'],
+					by: ["isActive"],
 					where: {
 						providerId: user.id,
 					},
@@ -236,9 +275,14 @@ export const providerServicesRouter = new Hono()
 					},
 				});
 
-				const total = serviceStats.reduce((sum, stat) => sum + stat._count.id, 0);
-				const active = serviceStats.find(stat => stat.isActive)?._count.id || 0;
-				const inactive = serviceStats.find(stat => !stat.isActive)?._count.id || 0;
+				const total = serviceStats.reduce(
+					(sum, stat) => sum + stat._count.id,
+					0,
+				);
+				const active =
+					serviceStats.find((stat) => stat.isActive)?._count.id || 0;
+				const inactive =
+					serviceStats.find((stat) => !stat.isActive)?._count.id || 0;
 
 				// Get recent services (last 5)
 				const recentServices = await db.service.findMany({
@@ -253,7 +297,7 @@ export const providerServicesRouter = new Hono()
 						},
 					},
 					orderBy: {
-						createdAt: 'desc',
+						createdAt: "desc",
 					},
 					take: 5,
 				});
@@ -264,10 +308,12 @@ export const providerServicesRouter = new Hono()
 					inactive,
 					recentServices,
 				});
-
 			} catch (error) {
-				console.error("Error fetching provider services summary:", error);
+				console.error(
+					"Error fetching provider services summary:",
+					error,
+				);
 				return c.json({ error: "Internal server error" }, 500);
 			}
-		}
+		},
 	);

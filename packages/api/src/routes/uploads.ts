@@ -38,13 +38,13 @@ export const uploadsRouter = new Hono().basePath("/uploads").post(
 	async (c) => {
 		const { bucket, path } = c.req.valid("query");
 		const user = c.get("user");
-		
+
 		// Get allowed buckets from config
 		const allowedBuckets = Object.values(config.storage.bucketNames);
 		if (!allowedBuckets.includes(bucket)) {
 			throw new HTTPException(403, { message: "Invalid bucket" });
 		}
-		
+
 		// Check bucket-specific permissions
 		if (
 			bucket === config.storage.bucketNames.verificationDocs &&

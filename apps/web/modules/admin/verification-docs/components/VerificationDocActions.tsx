@@ -4,8 +4,13 @@ import { Button } from "@ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/components/card";
 import { Label } from "@ui/components/label";
 import { Separator } from "@ui/components/separator";
-import { CheckCircle, XCircle, Clock, MessageSquare, Loader2 } from "lucide-react";
-import { cn } from "@ui/lib";
+import {
+	CheckCircle,
+	XCircle,
+	Clock,
+	MessageSquare,
+	Loader2,
+} from "lucide-react";
 
 interface VerificationDocActionsProps {
 	doc: VerificationDoc;
@@ -44,9 +49,9 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 						rows={4}
 					/>
 				</div>
-				
+
 				<Separator />
-				
+
 				<div className="flex flex-col gap-3 sm:gap-4">
 					{/* Primary Action Buttons */}
 					<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -65,7 +70,7 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 							)}
 							Approve Document
 						</Button>
-						
+
 						<Button
 							variant="error"
 							size="mobile"
@@ -82,7 +87,7 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 							Reject Document
 						</Button>
 					</div>
-					
+
 					{/* Secondary Action */}
 					<Button
 						variant="outline"
@@ -98,11 +103,15 @@ export const VerificationDocActions: React.FC<VerificationDocActionsProps> = ({
 						Review Later
 					</Button>
 				</div>
-				
+
 				<div className="bg-muted/50 p-4 rounded-lg">
 					<p className="text-xs text-muted-foreground flex items-start gap-2">
 						<MessageSquare className="h-3 w-3 mt-0.5 flex-shrink-0" />
-						<span>Add specific feedback to help users understand any issues with their documents. Notes will be sent to the user upon approval or rejection.</span>
+						<span>
+							Add specific feedback to help users understand any
+							issues with their documents. Notes will be sent to
+							the user upon approval or rejection.
+						</span>
 					</p>
 				</div>
 			</CardContent>
