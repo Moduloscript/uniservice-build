@@ -3,6 +3,7 @@ import {
 	fetchReviewStatsServer,
 } from "../../../../../modules/services/api";
 import type { Service } from "../../../../../modules/services/types";
+import type { AvailabilityTimeSlot } from "../../../../../modules/availability/types";
 import { BookingDialog } from "../../../../../modules/bookings/components/booking-dialog";
 import { ProviderInfo } from "../../../../../modules/services/components/provider-info";
 import { RelatedServices } from "../../../../../modules/services/components/related-services";
@@ -40,6 +41,8 @@ import {
 interface ServiceDetailPageProps {
 	params: { serviceId: string };
 }
+
+import { ServiceInteractions } from "./components/service-interactions";
 
 export default async function ServiceDetailPage({
 	params,
@@ -219,19 +222,19 @@ export default async function ServiceDetailPage({
 								</div>
 							</div>
 
-							{/* Action Buttons */}
-							<div className="flex gap-4">
-								<BookingDialog service={service}>
-									<Button size="lg" className="text-lg px-8">
-										🚀 Book This Service
-									</Button>
-								</BookingDialog>
-								{service.provider?.email && (
-									<ContactProviderButton
-										email={service.provider.email}
-									/>
-								)}
-							</div>
+						{/* Quick Booking CTA */}
+						<div className="flex gap-4">
+							<BookingDialog service={service}>
+								<Button size="lg" className="text-lg px-8">
+									🚀 Book This Service
+								</Button>
+							</BookingDialog>
+							{service.provider?.email && (
+								<ContactProviderButton
+									email={service.provider.email}
+								/>
+							)}
+						</div>
 						</div>
 					</div>
 				</CardContent>
@@ -257,30 +260,17 @@ export default async function ServiceDetailPage({
 						</CardContent>
 					</Card>
 
-					{/* What's Included - Dynamic Service Features */}
+				{/* What's Included - Dynamic Service Features */}
 					<ServiceFeatures serviceId={service.id} />
 
 					{/* Learning Outcomes - Dynamic Service Outcomes */}
 					<ServiceOutcomes serviceId={service.id} />
 
-					{/* Reviews Section */}
-					<ReviewSection
-						serviceId={service.id}
-						currentUserId={session?.user?.id}
-						userRole={session?.user?.userType}
-						userBookings={userBookings}
-					/>
-
-					{/* Dynamic Booking Calendar */}
-					<AvailabilityCalendar
-						providerId={service.providerId}
-						serviceId={service.id}
-						readonly={false}
-						onSlotSelect={(slot) => {
-							// Handle slot selection for booking
-							console.log("Selected slot:", slot);
-							// TODO: Open booking dialog with selected slot
-						}}
+					{/* Interactive Booking Section */}
+					<ServiceInteractions 
+						service={service} 
+						session={session} 
+						userBookings={userBookings} 
 					/>
 				</div>
 

@@ -17,33 +17,48 @@ import { AvailabilityCalendar } from "../../availability/components/availability
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Calendar, Clock, DollarSign, User } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BookingDialogProps {
 	service: Service;
 	triggerText?: string;
+	preSelectedSlot?: AvailabilityTimeSlot;
 	onSuccess?: () => void;
+	children?: React.ReactNode;
 }
 
 export function BookingDialog({
 	service,
 	triggerText = "Book This Service",
+	preSelectedSlot,
 	onSuccess,
+	children,
 }: BookingDialogProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(null); // Use AvailabilityTimeSlot
+const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(preSelectedSlot || null);
+	const router = useRouter();
+	const queryClient = useQueryClient();
 
+	// Update selected slot when preSelectedSlot changes
 	useEffect(() => {
-		if (selectedSlot) {
-			setSelectedDate(selectedSlot.date);
-			setSelectedTime(selectedSlot.startTime);
+		if (preSelectedSlot) {
+			setSelectedSlot(preSelectedSlot);
 		}
-	}, [selectedSlot]);
+	}, [preSelectedSlot]);
 
 	const handleSlotSelect = (slot: AvailabilityTimeSlot) => {
 		setSelectedSlot(slot);
 	};
-	const router = useRouter();
+
+	// Reset dialog state when closed
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		if (!open) {
+			// Reset to preSelectedSlot if provided, otherwise null
+			setSelectedSlot(preSelectedSlot || null);
+		}
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -56,7 +71,8 @@ if (!selectedSlot) {
 		setIsLoading(true);
 
 		try {
-			const dateTime = new Date(`${selectedDate}T${selectedTime}`);
+			// Create ISO datetime string from selected slot
+			const dateTime = new Date(`${selectedSlot.date}T${selectedSlot.startTime}`);
 
 			// Check if date is in the future
 			if (dateTime <= new Date()) {
@@ -65,21 +81,31 @@ if (!selectedSlot) {
 				return;
 			}
 
-			await createBooking({
-				serviceId: service.id,
-				dateTime: dateTime.toISOString(),
-			});
+		await createBooking({
+			serviceId: service.id,
+			dateTime: dateTime.toISOString(),
+		});
 
-			toast.success("Booking request sent successfully!");
-			setIsOpen(false);
-			setSelectedDate("");
-			setSelectedTime("");
+		// Invalidate availability queries to show real-time updates
+		queryClient.invalidateQueries({ 
+			queryKey: ["serviceAvailability", service.providerId, service.id] 
+		});
+		queryClient.invalidateQueries({ 
+			queryKey: ["provider-availability", service.providerId] 
+		});
+		queryClient.invalidateQueries({ 
+			queryKey: ["bookings"] 
+		});
 
-			if (onSuccess) {
-				onSuccess();
-			} else {
-				router.push("/bookings");
-			}
+		toast.success("Booking created successfully! Availability updated in real-time.");
+		setIsOpen(false);
+		setSelectedSlot(null); // Reset selected slot
+
+		if (onSuccess) {
+			onSuccess();
+		} else {
+			router.push("/bookings");
+		}
 		} catch (error) {
 			toast.error((error as Error).message);
 		} finally {
@@ -87,29 +113,17 @@ if (!selectedSlot) {
 		}
 	};
 
-	// Generate time slots (9 AM to 6 PM, 30-minute intervals)
-	const generateTimeSlots = () => {
-		const slots = [];
-		for (let hour = 9; hour < 18; hour++) {
-			slots.push(`${hour.toString().padStart(2, "0")}:00`);
-			slots.push(`${hour.toString().padStart(2, "0")}:30`);
-		}
-		return slots;
-	};
-
-	// Get minimum date (tomorrow)
-	const getMinDate = () => {
-		const tomorrow = new Date();
-		tomorrow.setDate(tomorrow.getDate() + 1);
-		return tomorrow.toISOString().split("T")[0];
-	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				<Button className="w-full">{triggerText}</Button>
-			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
+		<Dialog open={isOpen} onOpenChange={handleOpenChange}>
+			{children ? (
+				<DialogTrigger asChild>{children}</DialogTrigger>
+			) : (
+				<DialogTrigger asChild>
+					<Button className="w-full">{triggerText}</Button>
+				</DialogTrigger>
+			)}
+			<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>Book {service.name}</DialogTitle>
 					<DialogDescription>
@@ -145,18 +159,27 @@ if (!selectedSlot) {
 
 				{/* Booking Form */}
 				<form onSubmit={handleSubmit} className="space-y-4">
-					<div className="flex items-center justify-between">
-						<Calendar className="h-5 w-5" />
-						{selectedSlot ? (
-							<p>
-								{selectedSlot.displayTime}
-							</p>
-						) : (
-							<p className="text-muted-foreground">
-								Select a time slot from the calendar
-							</p>
-						)}
-					</div>
+					{/* Selected Slot Summary */}
+					{selectedSlot && (
+						<div className="bg-primary/10 p-4 rounded-lg border">
+							<div className="flex items-center gap-2 mb-2">
+								<Calendar className="h-4 w-4 text-primary" />
+								<h5 className="font-medium text-primary">
+									Selected Appointment
+								</h5>
+							</div>
+							<div className="flex items-center gap-4 text-sm">
+								<div className="flex items-center gap-1">
+									<Clock className="h-4 w-4" />
+									<span>{selectedSlot.displayTime}</span>
+								</div>
+								<div className="flex items-center gap-1">
+									<Calendar className="h-4 w-4" />
+									<span>{new Date(selectedSlot.date).toLocaleDateString()}</span>
+								</div>
+							</div>
+						</div>
+					)}
 
 						<div className="flex space-x-2 pt-4">
 							<Button
@@ -169,10 +192,10 @@ if (!selectedSlot) {
 							</Button>
 							<Button
 								type="submit"
-								disabled={isLoading}
+								disabled={isLoading || !selectedSlot}
 								className="flex-1"
 							>
-								{isLoading ? "Booking..." : "Confirm Booking"}
+								{isLoading ? "Booking..." : selectedSlot ? "Confirm Booking" : "Select a Time Slot"}
 							</Button>
 						</div>
 					</form>

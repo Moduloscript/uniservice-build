@@ -3,6 +3,11 @@ import { z } from "zod";
 import { db } from "@repo/database";
 import { validator } from "hono-openapi/zod";
 import { authMiddleware } from "../middleware/auth";
+import {
+	updateAvailabilityOnBookingCreate,
+	updateAvailabilityOnBookingCancel,
+	validateBookingAvailability,
+} from "../utils/availability-sync";
 
 // Create booking schema
 const createBookingSchema = z.object({
@@ -29,17 +34,33 @@ export const bookingsRouter = new Hono()
 			return c.json({ error: "Only students can create bookings" }, 403);
 		}
 
-		// Verify service exists
-		const service = await db.service.findUnique({
-			where: { id: data.serviceId },
-			include: { category: true },
-		});
-		if (!service) {
-			return c.json({ error: "Service not found" }, 404);
-		}
+	// Verify service exists
+	const service = await db.service.findUnique({
+		where: { id: data.serviceId },
+		include: { category: true },
+	});
+	if (!service) {
+		return c.json({ error: "Service not found" }, 404);
+	}
 
-		// Create booking
-		const booking = await db.booking.create({
+	// Validate availability before creating booking
+	const availabilityCheck = await validateBookingAvailability(
+		service.providerId,
+		data.serviceId,
+		new Date(data.dateTime)
+	);
+
+	if (!availabilityCheck.isValid) {
+		return c.json(
+			{ error: availabilityCheck.message || "Time slot not available" },
+			400
+		);
+	}
+
+	// Create booking in a transaction with availability update
+	const result = await db.$transaction(async (prisma) => {
+		// Create the booking
+		const booking = await prisma.booking.create({
 			data: {
 				studentId: user.id,
 				providerId: service.providerId,
@@ -51,7 +72,26 @@ export const bookingsRouter = new Hono()
 				service: { include: { category: true } },
 			},
 		});
-		return c.json({ booking });
+
+		// Update availability (outside transaction to avoid blocking)
+		setImmediate(async () => {
+			const syncResult = await updateAvailabilityOnBookingCreate(
+				service.providerId,
+				data.serviceId,
+				new Date(data.dateTime)
+			);
+			if (!syncResult.success) {
+				console.warn("Failed to sync availability:", syncResult.message);
+			}
+		});
+
+		return booking;
+	});
+
+	return c.json({ 
+		booking: result,
+		message: "Booking created successfully"
+	});
 	})
 	// Get all bookings for current user
 	.get("/", async (c) => {
@@ -152,14 +192,33 @@ export const bookingsRouter = new Hono()
 			return c.json({ error: "Unauthorized" }, 403);
 		}
 
-		const updatedBooking = await db.booking.update({
-			where: { id },
-			data: data,
-			include: {
-				service: { include: { category: true } },
-			},
+	const updatedBooking = await db.booking.update({
+		where: { id },
+		data: data,
+		include: {
+			service: { include: { category: true } },
+		},
+	});
+
+	// Handle availability sync for status changes
+	if (data.status === "CANCELLED") {
+		// Update availability after cancellation
+		setImmediate(async () => {
+			const syncResult = await updateAvailabilityOnBookingCancel(
+				updatedBooking.providerId,
+				updatedBooking.serviceId,
+				updatedBooking.dateTime
+			);
+			if (!syncResult.success) {
+				console.warn("Failed to sync availability on status change:", syncResult.message);
+			}
 		});
-		return c.json({ booking: updatedBooking });
+	}
+
+	return c.json({ 
+		booking: updatedBooking,
+		message: data.status === "CANCELLED" ? "Booking cancelled and availability updated" : "Booking status updated"
+	});
 	})
 	// Delete/cancel a booking
 	.delete(":id", async (c) => {
@@ -185,10 +244,30 @@ export const bookingsRouter = new Hono()
 			);
 		}
 
-		// Instead of deleting, update status to CANCELLED for audit trail
-		const cancelledBooking = await db.booking.update({
-			where: { id },
-			data: { status: "CANCELLED" },
-		});
-		return c.json({ success: true, booking: cancelledBooking });
+	// Instead of deleting, update status to CANCELLED for audit trail
+	const cancelledBooking = await db.booking.update({
+		where: { id },
+		data: { status: "CANCELLED" },
+		include: {
+			service: true,
+		},
+	});
+
+	// Update availability after cancellation
+	setImmediate(async () => {
+		const syncResult = await updateAvailabilityOnBookingCancel(
+			cancelledBooking.providerId,
+			cancelledBooking.serviceId,
+			cancelledBooking.dateTime
+		);
+		if (!syncResult.success) {
+			console.warn("Failed to sync availability on cancellation:", syncResult.message);
+		}
+	});
+
+	return c.json({ 
+		success: true, 
+		booking: cancelledBooking,
+		message: "Booking cancelled and availability updated"
+	});
 	});
