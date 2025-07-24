@@ -168,3 +168,146 @@ export const studentBookingsQueryKeys = {
 		[...studentBookingsQueryKeys.all, "list", filters] as const,
 	detail: (id: string) => [...studentBookingsQueryKeys.all, "detail", id] as const,
 };
+
+// Profile management types
+export interface StudentProfile {
+	id: string;
+	name: string;
+	email: string;
+	username?: string;
+	matricNumber?: string;
+	department?: string;
+	level?: number;
+	phone?: string;
+	bio?: string;
+	location?: string;
+	dateOfBirth?: string;
+	image?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ProfileUpdateData {
+	name: string;
+	username?: string;
+	matricNumber?: string;
+	department?: string;
+	level?: number;
+	phone?: string;
+	bio?: string;
+	location?: string;
+	dateOfBirth?: string;
+}
+
+// Notification preferences types
+export interface NotificationPreferences {
+	// Email notifications
+	emailBookingConfirmations: boolean;
+	emailBookingReminders: boolean;
+	emailBookingUpdates: boolean;
+	emailPaymentConfirmations: boolean;
+	emailReviewRequests: boolean;
+	emailPromotions: boolean;
+	
+	// SMS notifications  
+	smsBookingReminders: boolean;
+	smsBookingConfirmations: boolean;
+	smsPaymentAlerts: boolean;
+	smsEmergencyAlerts: boolean;
+	
+	// Push notifications
+	pushBookingUpdates: boolean;
+	pushNewMessages: boolean;
+	pushProviderUpdates: boolean;
+	pushPromotions: boolean;
+	
+	// Timing preferences
+	reminderTiming: string;
+	digestFrequency: string;
+	
+	// Communication preferences
+	communicationLanguage: string;
+	timezone: string;
+}
+
+// Student Profile API functions
+export const studentProfileApi = {
+	// Get current user profile
+	async getProfile(): Promise<StudentProfile> {
+		const response = await apiClient.users.me.$get();
+
+		if (!response.ok) {
+			throw new Error("Failed to fetch user profile");
+		}
+
+		const result = await response.json();
+		
+		if (!result.success) {
+			throw new Error(result.error || "Failed to fetch profile data");
+		}
+
+		return result.data;
+	},
+
+	// Update user profile
+	async updateProfile(data: ProfileUpdateData): Promise<StudentProfile> {
+		const response = await apiClient.users.me.profile.$patch({
+			json: data,
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to update profile");
+		}
+
+		const result = await response.json();
+		
+		if (!result.success) {
+			throw new Error(result.error || "Failed to update profile");
+		}
+
+		return result.data;
+	},
+
+	// Get notification preferences
+	async getNotificationSettings(): Promise<NotificationPreferences> {
+		const response = await apiClient.users.me["notification-settings"].$get();
+
+		if (!response.ok) {
+			throw new Error("Failed to fetch notification settings");
+		}
+
+		const result = await response.json();
+		
+		if (!result.success) {
+			throw new Error(result.error || "Failed to fetch notification settings");
+		}
+
+		return result.data;
+	},
+
+	// Update notification preferences
+	async updateNotificationSettings(settings: NotificationPreferences): Promise<NotificationPreferences> {
+		const response = await apiClient.users.me["notification-settings"].$patch({
+			json: settings,
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to update notification settings");
+		}
+
+		const result = await response.json();
+		
+		if (!result.success) {
+			throw new Error(result.error || "Failed to update notification settings");
+		}
+
+		return result.data;
+	},
+};
+
+// Profile query keys
+export const studentProfileQueryKeys = {
+	all: ["student", "profile"] as const,
+	detail: () => [...studentProfileQueryKeys.all, "detail"] as const,
+	notificationSettings: () => [...studentProfileQueryKeys.all, "notifications"] as const,
+};

@@ -32,6 +32,7 @@ import { providerBookingsRouter } from "./routes/provider/bookings";
 import { providerAvailabilityRouter } from "./routes/provider-availability";
 import { debugUserRouter } from "./routes/debug-user";
 import { userVerificationRouter } from "./routes/user-verification";
+import { usersRouter } from "./routes/users/router";
 import studentRouter from "./routes/student";
 export const app = new Hono().basePath("/api");
 
@@ -64,6 +65,7 @@ const appRouter = app
 	.route("/providers", providerAvailabilityRouter)
 	.route("/debug", debugUserRouter);
 app.route("/", userVerificationRouter)
+    .route("/", usersRouter)
     .route("/student", studentRouter);
 app.get(
 	"/app-openapi",
