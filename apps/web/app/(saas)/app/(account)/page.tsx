@@ -20,7 +20,11 @@ export default async function AppStartPage() {
 		return redirect("/app/provider");
 	}
 
-	// Students stay on the main app page - no redirect needed
+	if (session.user.userType === "STUDENT") {
+		return redirect("/app/student");
+	}
+
+	// Other users stay on the main app page - no redirect needed
 
 	const t = await getTranslations();
 

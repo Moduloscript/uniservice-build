@@ -1,0 +1,3 @@
+export { UpcomingBookingWidget } from "./upcoming-booking-widget";
+export { RecentActivityWidget } from "./recent-activity-widget";
+export { MyProvidersWidget } from "./my-providers-widget";

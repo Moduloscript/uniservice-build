@@ -87,6 +87,7 @@ model booking {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   review     review?
+  payment    payment?
 }
 
 model invitation {
@@ -153,6 +154,8 @@ model payment {
   metadata       Json?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime
+  
+  booking        booking         @relation(fields: [bookingId], references: [id])
 }
 
 model payout_account {

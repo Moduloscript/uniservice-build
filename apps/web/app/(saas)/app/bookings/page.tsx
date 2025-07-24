@@ -1,9 +1,9 @@
 import { BookingList } from "../../../../modules/bookings/components/booking-list";
-import { auth } from "@repo/auth";
+import { getSession } from "@saas/auth/lib/server";
 import { redirect } from "next/navigation";
 
 export default async function BookingsPage() {
-	const session = await auth();
+	const session = await getSession();
 
 	if (!session?.user) {
 		redirect("/auth/login");
