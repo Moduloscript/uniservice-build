@@ -10,7 +10,7 @@ export interface StudentDashboardStats {
 
 export interface StudentBooking {
 	id: string;
-	dateTime: string;
+	scheduledFor: string;
 	status: string;
 	service: {
 		name: string;
@@ -70,7 +70,7 @@ export interface Pagination {
 // Booking filters interface
 export interface BookingFilters {
 	status: "all" | "upcoming" | "completed" | "cancelled" | "pending" | "confirmed";
-	sortBy: "dateTime" | "createdAt" | "updatedAt";
+	sortBy: "scheduledFor" | "createdAt" | "updatedAt";
 	sortOrder: "asc" | "desc";
 }
 
@@ -108,7 +108,7 @@ export const studentBookingsApi = {
 		status = "all",
 		page = 1,
 		limit = 10,
-		sortBy = "dateTime",
+		sortBy = "scheduledFor",
 		sortOrder = "desc",
 	}: Partial<BookingFilters & { page: number; limit: number }> = {}): Promise<StudentBookingsResponse> {
 		const searchParams = new URLSearchParams({
@@ -299,6 +299,31 @@ export const studentProfileApi = {
 		
 		if (!result.success) {
 			throw new Error(result.error || "Failed to update notification settings");
+		}
+
+		return result.data;
+	},
+
+	// Upload profile image
+	async uploadProfileImage(file: File): Promise<StudentProfile> {
+		const formData = new FormData();
+		formData.append('image', file);
+
+		// Use direct fetch since Hono client may have issues with FormData
+		const response = await fetch('/api/users/me/upload-image', {
+			method: 'POST',
+			body: formData,
+			credentials: 'include',
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to upload profile image: ${response.status} ${response.statusText}`);
+		}
+
+		const result = await response.json();
+		
+		if (!result.success) {
+			throw new Error(result.error || "Failed to upload profile image");
 		}
 
 		return result.data;

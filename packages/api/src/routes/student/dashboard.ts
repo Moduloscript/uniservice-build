@@ -24,7 +24,7 @@ app.get("/summary", authMiddleware, async (c) => {
 				status: {
 					in: ["PENDING", "CONFIRMED"],
 				},
-				dateTime: {
+				scheduledFor: {
 					gte: new Date(),
 				},
 			},
@@ -49,7 +49,7 @@ app.get("/summary", authMiddleware, async (c) => {
 				},
 			},
 			orderBy: {
-				dateTime: "asc",
+				scheduledFor: "asc",
 			},
 			take: 5,
 		});
@@ -180,7 +180,7 @@ app.get("/summary", authMiddleware, async (c) => {
 			data: {
 				upcomingBookings: upcomingBookings.map((booking) => ({
 					id: booking.id,
-					dateTime: booking.dateTime,
+					scheduledFor: booking.scheduledFor,
 					status: booking.status,
 					service: booking.service,
 					provider: booking.provider,
@@ -188,7 +188,7 @@ app.get("/summary", authMiddleware, async (c) => {
 				})),
 				recentActivity: recentActivity.map((booking) => ({
 					id: booking.id,
-					dateTime: booking.dateTime,
+					scheduledFor: booking.scheduledFor,
 					status: booking.status,
 					service: booking.service,
 					provider: booking.provider,

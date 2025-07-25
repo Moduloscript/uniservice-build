@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import crypto from "crypto";
 import { db } from "@repo/database";
 import { validator } from "hono-openapi/zod";
 import { authMiddleware } from "../middleware/auth";
@@ -12,7 +13,7 @@ import {
 // Create booking schema
 const createBookingSchema = z.object({
 	serviceId: z.string().uuid(),
-	dateTime: z.string().datetime(),
+	scheduledFor: z.string().datetime(),
 });
 
 // Update booking schema
@@ -47,7 +48,7 @@ export const bookingsRouter = new Hono()
 	const availabilityCheck = await validateBookingAvailability(
 		service.providerId,
 		data.serviceId,
-		new Date(data.dateTime)
+		new Date(data.scheduledFor)
 	);
 
 	if (!availabilityCheck.isValid) {
@@ -66,7 +67,7 @@ export const bookingsRouter = new Hono()
 				studentId: user.id,
 				providerId: service.providerId,
 				serviceId: data.serviceId,
-				dateTime: new Date(data.dateTime),
+				scheduledFor: new Date(data.scheduledFor),
 				status: "PENDING",
 			},
 			include: {
@@ -79,7 +80,7 @@ export const bookingsRouter = new Hono()
 			const syncResult = await updateAvailabilityOnBookingCreate(
 				service.providerId,
 				data.serviceId,
-				new Date(data.dateTime)
+				new Date(data.scheduledFor)
 			);
 			if (!syncResult.success) {
 				console.warn("Failed to sync availability:", syncResult.message);
@@ -208,7 +209,7 @@ export const bookingsRouter = new Hono()
 			const syncResult = await updateAvailabilityOnBookingCancel(
 				updatedBooking.providerId,
 				updatedBooking.serviceId,
-				updatedBooking.dateTime
+				updatedBooking.scheduledFor
 			);
 			if (!syncResult.success) {
 				console.warn("Failed to sync availability on status change:", syncResult.message);
@@ -256,11 +257,11 @@ export const bookingsRouter = new Hono()
 
 	// Update availability after cancellation
 	setImmediate(async () => {
-		const syncResult = await updateAvailabilityOnBookingCancel(
-			cancelledBooking.providerId,
-			cancelledBooking.serviceId,
-			cancelledBooking.dateTime
-		);
+	const syncResult = await updateAvailabilityOnBookingCancel(
+		cancelledBooking.providerId,
+		cancelledBooking.serviceId,
+		cancelledBooking.scheduledFor
+	);
 		if (!syncResult.success) {
 			console.warn("Failed to sync availability on cancellation:", syncResult.message);
 		}

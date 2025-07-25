@@ -33,7 +33,7 @@ import { useRouter } from "next/navigation";
 
 export default function StudentBookingsPage() {
 	const [status, setStatus] = useState<BookingFilters["status"]>("all");
-	const [sortBy, setSortBy] = useState<BookingFilters["sortBy"]>("dateTime");
+	const [sortBy, setSortBy] = useState<BookingFilters["sortBy"]>("scheduledFor");
 	const [sortOrder, setSortOrder] = useState<BookingFilters["sortOrder"]>("desc");
 	const [page, setPage] = useState<number>(1);
 	const [limit, setLimit] = useState<number>(10);

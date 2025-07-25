@@ -46,6 +46,11 @@ import {
 	Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	studentProfileApi,
+	studentProfileQueryKeys,
+} from "@/modules/student/api";
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -148,6 +153,27 @@ const LEVELS = [
 export function ProfileForm({ initialData, onSubmit, isLoading }: ProfileFormProps) {
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
+	const queryClient = useQueryClient();
+
+	// Image upload mutation
+	const imageUploadMutation = useMutation({
+		mutationFn: (file: File) => studentProfileApi.uploadProfileImage(file),
+		onSuccess: (updatedUser) => {
+			// Update React Query cache
+			queryClient.setQueryData(
+				studentProfileQueryKeys.detail(), 
+				updatedUser
+			);
+			// Clear the preview and file state
+			setImageFile(null);
+			setImagePreview(null);
+			toast.success("Profile image updated successfully!");
+		},
+		onError: (error) => {
+			toast.error("Failed to upload image. Please try again.");
+			console.error("Image upload error:", error);
+		},
+	});
 
 	const form = useForm<ProfileFormData>({
 		resolver: zodResolver(profileFormSchema),
@@ -245,292 +271,315 @@ export function ProfileForm({ initialData, onSubmit, isLoading }: ProfileFormPro
 								JPG, PNG or GIF. Max size of 5MB.
 							</p>
 							{imageFile && (
-								<Badge variant="secondary" className="text-xs">
-									{imageFile.name}
-								</Badge>
+								<div className="space-y-2">
+									<Badge variant="secondary" className="text-xs">
+										{imageFile.name}
+									</Badge>
+									<Button
+										type="button"
+										size="sm"
+										onClick={() => imageUploadMutation.mutate(imageFile)}
+										disabled={imageUploadMutation.isPending}
+										className="w-full"
+									>
+										{imageUploadMutation.isPending ? (
+											<>
+												<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+												Uploading...
+											</>
+										) : (
+											<>
+												<Camera className="h-4 w-4 mr-2" />
+												Upload Image
+											</>
+										)}
+									</Button>
+								</div>
 							)}
 						</div>
 					</div>
 				</CardContent>
 			</Card>
 
-			{/* Personal Information */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<User className="h-5 w-5" />
-						Personal Information
-					</CardTitle>
-					<CardDescription>
-						Update your personal details and contact information
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<Form {...form}>
-						<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-							<div className="grid gap-4 md:grid-cols-2">
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="flex items-center gap-2">
-												<User className="h-4 w-4" />
-												Full Name
-											</FormLabel>
-											<FormControl>
-												<Input placeholder="Enter your full name" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+			<Form {...form}>
+				<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+					{/* Personal Information */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<User className="h-5 w-5" />
+								Personal Information
+							</CardTitle>
+							<CardDescription>
+								Update your personal details and contact information
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-6">
+								<div className="grid gap-4 md:grid-cols-2">
+									<FormField
+										control={form.control}
+										name="name"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<User className="h-4 w-4" />
+													Full Name
+												</FormLabel>
+												<FormControl>
+													<Input placeholder="Enter your full name" {...field} />
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="email"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<Mail className="h-4 w-4" />
+													Email Address
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="email"
+														placeholder="Enter your email"
+														{...field}
+														disabled
+													/>
+												</FormControl>
+												<FormDescription>
+													Email cannot be changed for security reasons
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="username"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Username</FormLabel>
+												<FormControl>
+													<Input placeholder="Choose a username" {...field} />
+												</FormControl>
+												<FormDescription>
+													Optional. Used for profile URL: /student/@username
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="phone"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<Phone className="h-4 w-4" />
+													Phone Number
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="tel"
+														placeholder="+234 xxx xxx xxxx"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+
+								<div className="grid gap-4 md:grid-cols-2">
+									<FormField
+										control={form.control}
+										name="location"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<MapPin className="h-4 w-4" />
+													Location
+												</FormLabel>
+												<FormControl>
+													<Input placeholder="City, State" {...field} />
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="dateOfBirth"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<Calendar className="h-4 w-4" />
+													Date of Birth
+												</FormLabel>
+												<FormControl>
+													<Input type="date" {...field} />
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 
 								<FormField
 									control={form.control}
-									name="email"
+									name="bio"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel className="flex items-center gap-2">
-												<Mail className="h-4 w-4" />
-												Email Address
-											</FormLabel>
+											<FormLabel>Bio</FormLabel>
 											<FormControl>
-												<Input
-													type="email"
-													placeholder="Enter your email"
+												<Textarea
+													placeholder="Tell us a bit about yourself, your interests, and learning goals..."
+													className="min-h-[100px]"
 													{...field}
-													disabled
 												/>
 											</FormControl>
 											<FormDescription>
-												Email cannot be changed for security reasons
+												{form.watch("bio")?.length || 0}/500 characters
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Academic Information */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<GraduationCap className="h-5 w-5" />
+								Academic Information
+							</CardTitle>
+							<CardDescription>
+								Your academic details help providers understand your background
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-4">
+								<div className="grid gap-4 md:grid-cols-2">
+									<FormField
+										control={form.control}
+										name="matricNumber"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="flex items-center gap-2">
+													<BookOpen className="h-4 w-4" />
+													Matric Number
+												</FormLabel>
+												<FormControl>
+													<Input
+														placeholder="e.g., UNI/BEN/2021/12345"
+														{...field}
+													/>
+												</FormControl>
+												<FormDescription>
+													Your university matriculation number
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="level"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Academic Level</FormLabel>
+												<Select
+													onValueChange={(value) => field.onChange(Number(value))}
+													value={field.value?.toString()}
+												>
+													<FormControl>
+														<SelectTrigger>
+															<SelectValue placeholder="Select your level" />
+														</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+														{LEVELS.map((level) => (
+															<SelectItem
+																key={level.value}
+																value={level.value.toString()}
+															>
+																{level.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 
 								<FormField
 									control={form.control}
-									name="username"
+									name="department"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Username</FormLabel>
-											<FormControl>
-												<Input placeholder="Choose a username" {...field} />
-											</FormControl>
-											<FormDescription>
-												Optional. Used for profile URL: /student/@username
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="phone"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="flex items-center gap-2">
-												<Phone className="h-4 w-4" />
-												Phone Number
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="tel"
-													placeholder="+234 xxx xxx xxxx"
-													{...field}
-												/>
-											</FormControl>
+											<FormLabel>Department</FormLabel>
+											<Select onValueChange={field.onChange} value={field.value}>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue placeholder="Select your department" />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent className="max-h-[200px]">
+													{DEPARTMENTS.map((dept) => (
+														<SelectItem key={dept} value={dept}>
+															{dept}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 							</div>
+						</CardContent>
+					</Card>
 
-							<div className="grid gap-4 md:grid-cols-2">
-								<FormField
-									control={form.control}
-									name="location"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="flex items-center gap-2">
-												<MapPin className="h-4 w-4" />
-												Location
-											</FormLabel>
-											<FormControl>
-												<Input placeholder="City, State" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="dateOfBirth"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="flex items-center gap-2">
-												<Calendar className="h-4 w-4" />
-												Date of Birth
-											</FormLabel>
-											<FormControl>
-												<Input type="date" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</div>
-
-							<FormField
-								control={form.control}
-								name="bio"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Bio</FormLabel>
-										<FormControl>
-											<Textarea
-												placeholder="Tell us a bit about yourself, your interests, and learning goals..."
-												className="min-h-[100px]"
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription>
-											{form.watch("bio")?.length || 0}/500 characters
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</form>
-					</Form>
-				</CardContent>
-			</Card>
-
-			{/* Academic Information */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<GraduationCap className="h-5 w-5" />
-						Academic Information
-					</CardTitle>
-					<CardDescription>
-						Your academic details help providers understand your background
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="space-y-4">
-						<div className="grid gap-4 md:grid-cols-2">
-							<FormField
-								control={form.control}
-								name="matricNumber"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel className="flex items-center gap-2">
-											<BookOpen className="h-4 w-4" />
-											Matric Number
-										</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="e.g., UNI/BEN/2021/12345"
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription>
-											Your university matriculation number
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="level"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Academic Level</FormLabel>
-										<Select
-											onValueChange={(value) => field.onChange(Number(value))}
-											value={field.value?.toString()}
-										>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="Select your level" />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												{LEVELS.map((level) => (
-													<SelectItem
-														key={level.value}
-														value={level.value.toString()}
-													>
-														{level.label}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-
-						<FormField
-							control={form.control}
-							name="department"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Department</FormLabel>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="Select your department" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent className="max-h-[200px]">
-											{DEPARTMENTS.map((dept) => (
-												<SelectItem key={dept} value={dept}>
-													{dept}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
+					{/* Form Actions */}
+					<div className="flex justify-end space-x-4">
+						<Button type="button" variant="outline" onClick={() => form.reset()}>
+							Reset Changes
+						</Button>
+						<Button
+							type="submit"
+							disabled={isLoading}
+							className="min-w-[120px]"
+						>
+							{isLoading ? (
+								<>
+									<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+									Saving...
+								</>
+							) : (
+								<>
+									<Save className="h-4 w-4 mr-2" />
+									Save Changes
+								</>
 							)}
-						/>
+						</Button>
 					</div>
-				</CardContent>
-			</Card>
-
-			{/* Form Actions */}
-			<div className="flex justify-end space-x-4">
-				<Button type="button" variant="outline" onClick={() => form.reset()}>
-					Reset Changes
-				</Button>
-				<Button
-					onClick={form.handleSubmit(handleSubmit)}
-					disabled={isLoading}
-					className="min-w-[120px]"
-				>
-					{isLoading ? (
-						<>
-							<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-							Saving...
-						</>
-					) : (
-						<>
-							<Save className="h-4 w-4 mr-2" />
-							Save Changes
-						</>
-					)}
-				</Button>
-			</div>
+				</form>
+			</Form>
 		</div>
 	);
 }

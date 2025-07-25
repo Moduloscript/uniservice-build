@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { auth } from "@repo/auth";
-import { database } from "@repo/database";
+import { db } from "@repo/database";
 import { zValidator } from "@hono/zod-validator";
 import { StatusCode } from "hono/utils/http-status";
 
@@ -17,7 +17,7 @@ const ProfileUpdateSchema = z.object({
 	phone: z.string().optional(),
 	bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
 	location: z.string().optional(),
-	dateOfBirth: z.string().optional(),
+	dateOfBirth: z.string().optional().transform((val) => val ? new Date(val) : undefined),
 });
 
 // Notification preferences schema
@@ -55,10 +55,10 @@ const NotificationPreferencesSchema = z.object({
 app.get("/", async (c) => {
 	try {
 		const session = await auth.api.getSession({
-			headers: c.req.header(),
+			headers: c.req.raw.headers,
 		});
 
-		if (!session) {
+		if (!session || !session.user || !session.user.id) {
 			return c.json(
 				{
 					success: false,
@@ -68,8 +68,11 @@ app.get("/", async (c) => {
 			);
 		}
 
-		const user = await database.user.findUnique({
-			where: { id: session.user.id },
+		// Store user data immediately to avoid potential race conditions
+		const userId = session.user.id;
+
+		const user = await db.user.findUnique({
+			where: { id: userId },
 			select: {
 				id: true,
 				name: true,
@@ -81,10 +84,12 @@ app.get("/", async (c) => {
 				image: true,
 				verified: true,
 				isStudentVerified: true,
+				phone: true,
+				bio: true,
+				location: true,
+				dateOfBirth: true,
 				createdAt: true,
 				updatedAt: true,
-				// Add additional fields that might be stored in a separate profile table
-				// For now, we'll use the user table directly
 			},
 		});
 
@@ -118,10 +123,10 @@ app.get("/", async (c) => {
 app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 	try {
 		const session = await auth.api.getSession({
-			headers: c.req.header(),
+			headers: c.req.raw.headers,
 		});
 
-		if (!session) {
+		if (!session || !session.user) {
 			return c.json(
 				{
 					success: false,
@@ -132,13 +137,15 @@ app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 		}
 
 		const data = c.req.valid("json");
+		// Store user ID immediately
+		const userId = session.user.id;
 
 		// Check if username is unique (if provided)
 		if (data.username) {
-			const existingUser = await database.user.findFirst({
+			const existingUser = await db.user.findFirst({
 				where: {
 					username: data.username,
-					id: { not: session.user.id }, // Exclude current user
+					id: { not: userId }, // Exclude current user
 				},
 			});
 
@@ -155,10 +162,10 @@ app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 
 		// Check if matric number is unique (if provided)
 		if (data.matricNumber) {
-			const existingUser = await database.user.findFirst({
+			const existingUser = await db.user.findFirst({
 				where: {
 					matricNumber: data.matricNumber,
-					id: { not: session.user.id }, // Exclude current user
+					id: { not: userId }, // Exclude current user
 				},
 			});
 
@@ -173,17 +180,18 @@ app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 			}
 		}
 
-		const updatedUser = await database.user.update({
-			where: { id: session.user.id },
+		const updatedUser = await db.user.update({
+			where: { id: userId },
 			data: {
 				name: data.name,
 				username: data.username || null,
 				matricNumber: data.matricNumber || null,
 				department: data.department || null,
 				level: data.level || null,
-				// Note: Additional fields like phone, bio, location, dateOfBirth
-				// might need to be stored in a separate profile table
-				// For now, we'll focus on the core user fields
+				phone: data.phone || null,
+				bio: data.bio || null,
+				location: data.location || null,
+				dateOfBirth: data.dateOfBirth || null,
 			},
 			select: {
 				id: true,
@@ -196,6 +204,10 @@ app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 				image: true,
 				verified: true,
 				isStudentVerified: true,
+				phone: true,
+				bio: true,
+				location: true,
+				dateOfBirth: true,
 				createdAt: true,
 				updatedAt: true,
 			},
@@ -221,10 +233,10 @@ app.patch("/profile", zValidator("json", ProfileUpdateSchema), async (c) => {
 app.get("/notification-settings", async (c) => {
 	try {
 		const session = await auth.api.getSession({
-			headers: c.req.header(),
+			headers: c.req.raw.headers,
 		});
 
-		if (!session) {
+		if (!session || !session.user) {
 			return c.json(
 				{
 					success: false,
@@ -286,10 +298,10 @@ app.get("/notification-settings", async (c) => {
 app.patch("/notification-settings", zValidator("json", NotificationPreferencesSchema), async (c) => {
 	try {
 		const session = await auth.api.getSession({
-			headers: c.req.header(),
+			headers: c.req.raw.headers,
 		});
 
-		if (!session) {
+		if (!session || !session.user) {
 			return c.json(
 				{
 					success: false,
@@ -311,6 +323,107 @@ app.patch("/notification-settings", zValidator("json", NotificationPreferencesSc
 		});
 	} catch (error) {
 		console.error("Error updating notification settings:", error);
+		return c.json(
+			{
+				success: false,
+				error: "Internal server error",
+			},
+			500 as StatusCode
+		);
+	}
+});
+
+// Upload profile image
+app.post("/upload-image", async (c) => {
+	try {
+		const session = await auth.api.getSession({
+			headers: c.req.raw.headers,
+		});
+
+		if (!session || !session.user) {
+			return c.json(
+				{
+					success: false,
+					error: "Unauthorized - Please log in",
+				},
+				401 as StatusCode
+			);
+		}
+
+		const formData = await c.req.formData();
+		const file = formData.get('image') as File;
+
+		if (!file) {
+			return c.json(
+				{
+					success: false,
+					error: "No image file provided",
+				},
+				400 as StatusCode
+			);
+		}
+
+		// Validate file type
+		if (!file.type.startsWith('image/')) {
+			return c.json(
+				{
+					success: false,
+					error: "File must be an image",
+				},
+				400 as StatusCode
+			);
+		}
+
+		// Validate file size (max 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			return c.json(
+				{
+					success: false,
+					error: "Image size must be less than 5MB",
+				},
+				400 as StatusCode
+			);
+		}
+
+		const userId = session.user.id;
+
+		// For now, we'll convert the image to base64 and store it directly
+		// In production, you'd want to upload to a cloud storage service
+		const arrayBuffer = await file.arrayBuffer();
+		const base64 = Buffer.from(arrayBuffer).toString('base64');
+		const imageUrl = `data:${file.type};base64,${base64}`;
+
+		// Update user with new image
+		const updatedUser = await db.user.update({
+			where: { id: userId },
+			data: { image: imageUrl },
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				username: true,
+				matricNumber: true,
+				department: true,
+				level: true,
+				image: true,
+				verified: true,
+				isStudentVerified: true,
+				phone: true,
+				bio: true,
+				location: true,
+				dateOfBirth: true,
+				createdAt: true,
+				updatedAt: true,
+			},
+		});
+
+		return c.json({
+			success: true,
+			data: updatedUser,
+			message: "Profile image updated successfully",
+		});
+	} catch (error) {
+		console.error("Error uploading profile image:", error);
 		return c.json(
 			{
 				success: false,

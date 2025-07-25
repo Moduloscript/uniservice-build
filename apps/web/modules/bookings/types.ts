@@ -5,7 +5,7 @@ export interface Booking {
 	providerId: string;
 	serviceId: string;
 	status: BookingStatus;
-	dateTime: string;
+	scheduledFor: string;
 	createdAt: string;
 	updatedAt: string;
 	service?: {
@@ -31,7 +31,7 @@ export type BookingStatus =
 
 export interface CreateBookingRequest {
 	serviceId: string;
-	dateTime: string;
+	scheduledFor: string;
 }
 
 export interface UpdateBookingRequest {

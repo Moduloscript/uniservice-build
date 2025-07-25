@@ -143,7 +143,7 @@ export function UpcomingBookingWidget({
 									<div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
 										<span className="flex items-center gap-1">
 											<Clock className="h-3 w-3" />
-											{format(new Date(booking.dateTime), "MMM d, h:mm a")}
+											{format(new Date(booking.scheduledFor), "MMM d, h:mm a")}
 										</span>
 										<Badge
 											variant={

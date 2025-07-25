@@ -362,12 +362,12 @@ export default function ProviderDashboard() {
 														<div className="text-right">
 															<p className="text-xs text-foreground font-medium">
 																{new Date(
-																	booking.dateTime,
+																	booking.scheduledFor,
 																).toLocaleDateString()}
 															</p>
 															<p className="text-xs text-muted-foreground">
 																{new Date(
-																	booking.dateTime,
+																	booking.scheduledFor,
 																).toLocaleTimeString()}
 															</p>
 														</div>

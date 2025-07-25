@@ -18,6 +18,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Calendar, Clock, DollarSign, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { PaymentMethodSelector } from "../../payments/components/payment-method-selector";
+import { PaymentProcessor } from "../../payments/components/payment-processor";
+import { PaymentSuccess } from "../../payments/components/payment-success";
+import type { PaymentProvider } from "../../payments/types";
+import { useAuth } from "@repo/auth/client";
+import { calculatePaymentFees } from "../../payments/utils/fees";
 
 interface BookingDialogProps {
 	service: Service;
@@ -27,6 +33,8 @@ interface BookingDialogProps {
 	children?: React.ReactNode;
 }
 
+type BookingStep = 'slot-selection' | 'payment-method' | 'payment-processing' | 'payment-success';
+
 export function BookingDialog({
 	service,
 	triggerText = "Book This Service",
@@ -35,10 +43,14 @@ export function BookingDialog({
 	children,
 }: BookingDialogProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(preSelectedSlot || null);
+	const [currentStep, setCurrentStep] = useState<BookingStep>('slot-selection');
+	const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(preSelectedSlot || null);
+	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentProvider | undefined>();
+	const [bookingId, setBookingId] = useState<string | null>(null);
+	const [transactionRef, setTransactionRef] = useState<string | null>(null);
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
 
 	// Update selected slot when preSelectedSlot changes
 	useEffect(() => {
@@ -55,88 +67,88 @@ const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(pr
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
 		if (!open) {
-			// Reset to preSelectedSlot if provided, otherwise null
+			// Reset all state
+			setCurrentStep('slot-selection');
 			setSelectedSlot(preSelectedSlot || null);
+			setSelectedPaymentMethod(undefined);
+			setBookingId(null);
+			setTransactionRef(null);
 		}
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const constructDateTime = (slot: AvailabilityTimeSlot): Date => {
+		let dateString: string;
+		let timeString: string;
+		
+		// Extract date part (handle both ISO string and date-only formats)
+		if (slot.date.includes('T')) {
+			dateString = slot.date.split('T')[0];
+		} else {
+			dateString = slot.date;
+		}
+		
+		// Extract time part
+		if (slot.startTime.includes('T')) {
+			const timeDate = new Date(slot.startTime);
+			timeString = timeDate.toTimeString().split(' ')[0];
+		} else {
+			timeString = slot.startTime;
+		}
+		
+		return new Date(`${dateString}T${timeString}`);
+	};
 
-if (!selectedSlot) {
-		toast.error("Please select a time slot from the calendar");
-		return;
-	}
+	const handleSlotConfirmation = async () => {
+		if (!selectedSlot) {
+			toast.error("Please select a time slot from the calendar");
+			return;
+		}
 
-		setIsLoading(true);
+		const dateTime = constructDateTime(selectedSlot);
+
+		// Validate constructed date
+		if (isNaN(dateTime.getTime())) {
+			toast.error("Invalid date/time format. Please try selecting another slot.");
+			return;
+		}
+
+		// Check if date is in the future
+		if (dateTime <= new Date()) {
+			toast.error("Please select a future date and time");
+			return;
+		}
 
 		try {
-			// Create ISO datetime string from selected slot
-			// Handle different date and time formats from backend
-			let dateString: string;
-			let timeString: string;
-			
-			// Extract date part (handle both ISO string and date-only formats)
-			if (selectedSlot.date.includes('T')) {
-				// If date is a full ISO string like "2025-07-24T00:00:00.000Z"
-				// Extract just the date part
-				dateString = selectedSlot.date.split('T')[0];
-			} else {
-				// If it's already just date like "2025-07-24"
-				dateString = selectedSlot.date;
-			}
-			
-			// Extract time part
-			if (selectedSlot.startTime.includes('T')) {
-				// If startTime is a full ISO string like "1970-01-01T09:52:00.000Z"
-				// Extract just the time part
-				const timeDate = new Date(selectedSlot.startTime);
-				timeString = timeDate.toTimeString().split(' ')[0]; // Gets "HH:MM:SS"
-			} else {
-				// If it's already just time like "09:52:00"
-				timeString = selectedSlot.startTime;
-			}
-			
-			// Construct the final datetime string
-			const dateTime = new Date(`${dateString}T${timeString}`);
-
-			// Check if the constructed date is valid
-			if (isNaN(dateTime.getTime())) {
-				console.error('Invalid date construction:', {
-					originalDate: selectedSlot.date,
-					originalStartTime: selectedSlot.startTime,
-					dateString,
-					timeString,
-					finalDateTime: dateTime,
-					constructedString: `${dateString}T${timeString}`
-				});
-				toast.error("Invalid date/time format. Please try selecting another slot.");
-				setIsLoading(false);
-				return;
-			}
-
-			// Check if date is in the future
-			if (dateTime <= new Date()) {
-				toast.error("Please select a future date and time");
-				setIsLoading(false);
-				return;
-			}
-
+			// Create booking first (with PENDING status)
 			const bookingData = {
 				serviceId: service.id,
-				dateTime: dateTime.toISOString(),
+				scheduledFor: dateTime.toISOString(),
 			};
 			
-			console.log('Creating booking with data:', {
-				bookingData,
-				originalSlot: selectedSlot,
-				constructedDateTime: dateTime,
-				isoString: dateTime.toISOString()
-			});
+			const booking = await createBooking(bookingData);
+			setBookingId(booking.id);
 			
-			await createBooking(bookingData);
+			// Move to payment method selection
+			setCurrentStep('payment-method');
+			
+		} catch (error) {
+			toast.error((error as Error).message);
+		}
+	};
 
-		// Invalidate availability queries to show real-time updates
+	const handlePaymentMethodContinue = () => {
+		if (!selectedPaymentMethod) {
+			toast.error("Please select a payment method");
+			return;
+		}
+		setCurrentStep('payment-processing');
+	};
+
+	const handlePaymentSuccess = (txRef: string) => {
+		setTransactionRef(txRef);
+		setCurrentStep('payment-success');
+		
+		// Invalidate queries to refresh data
 		queryClient.invalidateQueries({ 
 			queryKey: ["serviceAvailability", service.providerId, service.id] 
 		});
@@ -146,21 +158,27 @@ if (!selectedSlot) {
 		queryClient.invalidateQueries({ 
 			queryKey: ["bookings"] 
 		});
+	};
 
-		toast.success("Booking created successfully! Availability updated in real-time.");
+	const handlePaymentFailure = (error: string) => {
+		// Stay on payment processing step to allow retry
+		toast.error(`Payment failed: ${error}`);
+	};
+
+	const handleViewBooking = () => {
 		setIsOpen(false);
-		setSelectedSlot(null); // Reset selected slot
+		router.push("/app/student/bookings");
+	};
 
+	const handleBookAnother = () => {
+		setIsOpen(false);
 		if (onSuccess) {
 			onSuccess();
-		} else {
-			router.push("/bookings");
 		}
-		} catch (error) {
-			toast.error((error as Error).message);
-		} finally {
-			setIsLoading(false);
-		}
+	};
+
+	const handleBackToPaymentMethod = () => {
+		setCurrentStep('payment-method');
 	};
 
 
@@ -175,61 +193,69 @@ if (!selectedSlot) {
 			)}
 			<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>Book {service.name}</DialogTitle>
+					<DialogTitle>
+						{currentStep === 'slot-selection' && `Book ${service.name}`}
+						{currentStep === 'payment-method' && `Choose Payment Method`}
+						{currentStep === 'payment-processing' && `Complete Payment`}
+						{currentStep === 'payment-success' && `Booking Confirmed!`}
+					</DialogTitle>
 					<DialogDescription>
-						Select your preferred date and time for this service.
+						{currentStep === 'slot-selection' && 'Select your preferred date and time for this service.'}
+						{currentStep === 'payment-method' && 'Choose your preferred payment method to complete your booking.'}
+						{currentStep === 'payment-processing' && 'Complete your payment to confirm the booking.'}
+						{currentStep === 'payment-success' && 'Your booking has been confirmed successfully!'}
 					</DialogDescription>
 				</DialogHeader>
 
-<div className="space-y-4">
-				{/* Service Details */}
-				<div className="bg-gray-50 p-4 rounded-lg">
-					<h4 className="font-medium">{service.name}</h4>
-					<p className="text-sm text-gray-600 mt-1">
-						{service.description}
-					</p>
-					<div className="flex justify-between items-center mt-2">
-						<span className="text-lg font-bold text-primary">
-							₦{service.price.toLocaleString()}
-						</span>
-						<span className="text-sm text-gray-500">
-							{service.duration} min
-						</span>
-					</div>
-				</div>
-
-				{/* Availability Calendar */}
-				<AvailabilityCalendar
-					providerId={service.providerId}
-					serviceId={service.id}
-					showBookedSlots
-					readonly={false}
-					onSlotSelect={handleSlotSelect}
-				/>
-
-				{/* Booking Form */}
-				<form onSubmit={handleSubmit} className="space-y-4">
-					{/* Selected Slot Summary */}
-					{selectedSlot && (
-						<div className="bg-primary/10 p-4 rounded-lg border">
-							<div className="flex items-center gap-2 mb-2">
-								<Calendar className="h-4 w-4 text-primary" />
-								<h5 className="font-medium text-primary">
-									Selected Appointment
-								</h5>
-							</div>
-							<div className="flex items-center gap-4 text-sm">
-								<div className="flex items-center gap-1">
-									<Clock className="h-4 w-4" />
-									<span>{selectedSlot.displayTime}</span>
-								</div>
-								<div className="flex items-center gap-1">
-									<Calendar className="h-4 w-4" />
-									<span>{new Date(selectedSlot.date).toLocaleDateString()}</span>
-								</div>
+				{/* Step 1: Slot Selection */}
+				{currentStep === 'slot-selection' && (
+					<div className="space-y-4">
+						{/* Service Details */}
+						<div className="bg-gray-50 p-4 rounded-lg">
+							<h4 className="font-medium">{service.name}</h4>
+							<p className="text-sm text-gray-600 mt-1">
+								{service.description}
+							</p>
+							<div className="flex justify-between items-center mt-2">
+								<span className="text-lg font-bold text-primary">
+									₦{service.price.toLocaleString()}
+								</span>
+								<span className="text-sm text-gray-500">
+									{service.duration} min
+								</span>
 							</div>
 						</div>
-					)}
+
+						{/* Availability Calendar */}
+						<AvailabilityCalendar
+							providerId={service.providerId}
+							serviceId={service.id}
+							showBookedSlots
+							readonly={false}
+							onSlotSelect={handleSlotSelect}
+						/>
+
+						{/* Selected Slot Summary */}
+						{selectedSlot && (
+							<div className="bg-primary/10 p-4 rounded-lg border">
+								<div className="flex items-center gap-2 mb-2">
+									<Calendar className="h-4 w-4 text-primary" />
+									<h5 className="font-medium text-primary">
+										Selected Appointment
+									</h5>
+								</div>
+								<div className="flex items-center gap-4 text-sm">
+									<div className="flex items-center gap-1">
+										<Clock className="h-4 w-4" />
+										<span>{selectedSlot.displayTime}</span>
+									</div>
+									<div className="flex items-center gap-1">
+										<Calendar className="h-4 w-4" />
+										<span>{new Date(selectedSlot.date).toLocaleDateString()}</span>
+									</div>
+								</div>
+							</div>
+						)}
 
 						<div className="flex space-x-2 pt-4">
 							<Button
@@ -241,15 +267,55 @@ if (!selectedSlot) {
 								Cancel
 							</Button>
 							<Button
-								type="submit"
-								disabled={isLoading || !selectedSlot}
+								onClick={handleSlotConfirmation}
+								disabled={!selectedSlot}
 								className="flex-1"
 							>
-								{isLoading ? "Booking..." : selectedSlot ? "Confirm Booking" : "Select a Time Slot"}
+								{selectedSlot ? "Continue to Payment" : "Select a Time Slot"}
 							</Button>
 						</div>
-					</form>
-				</div>
+					</div>
+				)}
+
+				{/* Step 2: Payment Method Selection */}
+				{currentStep === 'payment-method' && (
+					<PaymentMethodSelector
+						selectedMethod={selectedPaymentMethod}
+						onMethodSelect={setSelectedPaymentMethod}
+						onContinue={handlePaymentMethodContinue}
+						amount={Number(service.price)}
+					/>
+				)}
+
+				{/* Step 3: Payment Processing */}
+				{currentStep === 'payment-processing' && selectedPaymentMethod && bookingId && user && (
+					<PaymentProcessor
+						provider={selectedPaymentMethod}
+						amount={Number(service.price)}
+						bookingId={bookingId}
+						serviceId={service.id}
+						providerId={service.providerId}
+						userEmail={user.email}
+						userName={user.name}
+						onSuccess={handlePaymentSuccess}
+						onFailure={handlePaymentFailure}
+						onBack={handleBackToPaymentMethod}
+					/>
+				)}
+
+				{/* Step 4: Payment Success */}
+				{currentStep === 'payment-success' && bookingId && transactionRef && selectedSlot && (
+					<PaymentSuccess
+						bookingId={bookingId}
+						transactionRef={transactionRef}
+						service={service}
+						bookingDateTime={constructDateTime(selectedSlot).toISOString()}
+						totalAmount={Number(service.price) + (selectedPaymentMethod ? 
+							calculatePaymentFees(selectedPaymentMethod, Number(service.price)) : 0)}
+						onViewBooking={handleViewBooking}
+						onBookAnother={handleBookAnother}
+					/>
+				)}
 			</DialogContent>
 		</Dialog>
 	);

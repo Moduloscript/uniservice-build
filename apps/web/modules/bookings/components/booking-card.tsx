@@ -75,7 +75,7 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 		}
 	};
 
-	const { date, time } = formatDateTime(booking.dateTime);
+	const { date, time } = formatDateTime(booking.scheduledFor);
 
 	const canConfirm = userType === "PROVIDER" && booking.status === "PENDING";
 	const canComplete =

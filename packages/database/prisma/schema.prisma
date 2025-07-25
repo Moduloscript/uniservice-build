@@ -27,7 +27,7 @@ model AiChat {
   title          String?
   messages       Json?
   createdAt      DateTime      @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime      @updatedAt
   organization   organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
@@ -41,7 +41,7 @@ model Purchase {
   productId      String
   status         String?
   createdAt      DateTime      @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime      @updatedAt
   organization   organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId])
@@ -68,26 +68,26 @@ model account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   createdAt             DateTime
-  updatedAt             DateTime
+  updatedAt             DateTime    @updatedAt
 
   user user @relation(fields: [userId], references: [id], name: "UserAccounts")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model booking {
-  id         String        @id
-  studentId  String
-  providerId String
-  student    user            @relation("StudentBookings", fields: [studentId], references: [id])
-  provider   user            @relation("ProviderBookings", fields: [providerId], references: [id])
-  serviceId  String
-  service    service         @relation(fields: [serviceId], references: [id])
-  status     BookingStatus @default(PENDING)
-  dateTime   DateTime
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  review     review?
-  payment    payment?
+  id           String        @id
+  studentId    String
+  providerId   String
+  student      user          @relation("StudentBookings", fields: [studentId], references: [id])
+  provider     user          @relation("ProviderBookings", fields: [providerId], references: [id])
+  serviceId    String
+  service      service       @relation(fields: [serviceId], references: [id])
+  status       BookingStatus @default(PENDING)
+  scheduledFor DateTime?     // Renamed from dateTime for clarity, made optional for migration
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  review       review?
+  payment      payment?
 }
 
 model invitation {
@@ -141,21 +141,27 @@ model passkey {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model payment {
-  id             String          @id
-  amount         Decimal
-  currency       String          @default("NGN")
-  status         PaymentStatus
-  provider       PaymentProvider
-  transactionRef String          @unique
-  paymentMethod  String
-  bookingId      String          @unique
-  providerId     String
-  escrowStatus   EscrowStatus?
-  metadata       Json?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime
+  id              String          @id
+  amount          Decimal
+  currency        String          @default("NGN")
+  status          PaymentStatus
+  provider        PaymentProvider
+  transactionRef  String          @unique
+  paymentMethod   String?         // card, bank, ussd, mobile_money, etc.
+  channel         String?         // Actual channel used (from Paystack)
+  gatewayResponse String?         // Gateway response message
+  fees            Decimal?        // Transaction fees
+  paidAt          DateTime?       // Actual payment time
+  bookingId       String          @unique
+  providerId      String
+  escrowStatus    EscrowStatus?
+  authorizationCode String?       // For recurring payments
+  customerCode    String?         // Paystack customer code
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   
-  booking        booking         @relation(fields: [bookingId], references: [id])
+  booking         booking         @relation(fields: [bookingId], references: [id])
 }
 
 model payout_account {
@@ -169,7 +175,7 @@ model payout_account {
   isDefault     Boolean         @default(false)
   metadata      Json?
   createdAt     DateTime        @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime        @updatedAt
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -181,7 +187,7 @@ model review {
   authorId  String
   targetId  String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   
   booking   booking  @relation(fields: [bookingId], references: [id])
   author    user     @relation("AuthoredReviews", fields: [authorId], references: [id])
@@ -197,7 +203,7 @@ model service {
   duration         Int
   providerId       String
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime    @updatedAt
   isActive         Boolean           @default(true)
   categoryId       String
   // Dynamic service stats fields
@@ -262,7 +268,7 @@ model session {
   activeOrganizationId String?
   token                String   @unique
   createdAt            DateTime
-  updatedAt            DateTime
+  updatedAt            DateTime    @updatedAt
 }
 
 model slot {
@@ -284,7 +290,7 @@ model user {
   emailVerified            Boolean
   image                    String?
   createdAt                DateTime
-  updatedAt                DateTime
+  updatedAt                DateTime    @updatedAt
   username                 String?             @unique
   role                     String?
   banned                   Boolean?
@@ -309,6 +315,12 @@ model user {
   providerCategory         String?
   providerVerificationDocs Json?
 
+  // Additional profile fields
+  phone                    String?
+  bio                      String?
+  location                 String?
+  dateOfBirth              DateTime?
+
   services             service[]             @relation("ProvidedServices")
   providedBookings     booking[]             @relation("ProviderBookings")
   studentBookings      booking[]             @relation("StudentBookings")
@@ -316,6 +328,7 @@ model user {
   authoredReviews      review[]              @relation("AuthoredReviews")
   receivedReviews      review[]              @relation("ReceivedReviews")
   providerAvailability ProviderAvailability[] @relation("ProviderAvailability")
+  notificationSettings NotificationSettings?
 
   @@index([userType])
 }
@@ -355,6 +368,64 @@ model ProviderAvailability {
   @@index([date, providerId])
 }
 
+/// User notification preferences
+/// Webhook events tracking for security and audit
+model webhook_event {
+  id          String    @id @default(uuid())
+  provider    String    // paystack, flutterwave
+  event_type  String    // charge.success, transfer.failed, etc.
+  reference   String    // transaction reference
+  processed   Boolean   @default(false)
+  retry_count Int       @default(0)
+  payload     Json      // Full webhook payload
+  error       String?   // Error message if processing failed
+  signature   String?   // Webhook signature for verification
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  
+  @@index([reference])
+  @@index([processed])
+  @@index([provider, event_type])
+}
+
+model NotificationSettings {
+  id                      String    @id @default(uuid())
+  userId                  String    @unique
+  
+  // Email notifications
+  emailBookingConfirmations Boolean  @default(true)
+  emailBookingReminders     Boolean  @default(true)
+  emailBookingUpdates       Boolean  @default(true)
+  emailPaymentConfirmations Boolean  @default(true)
+  emailReviewRequests       Boolean  @default(true)
+  emailPromotions           Boolean  @default(false)
+  
+  // SMS notifications  
+  smsBookingReminders      Boolean  @default(false)
+  smsBookingConfirmations  Boolean  @default(false)
+  smsPaymentAlerts         Boolean  @default(false)
+  smsEmergencyAlerts       Boolean  @default(true)
+  
+  // Push notifications
+  pushBookingUpdates       Boolean  @default(true)
+  pushNewMessages          Boolean  @default(true)
+  pushProviderUpdates      Boolean  @default(false)
+  pushPromotions           Boolean  @default(false)
+  
+  // Timing preferences
+  reminderTiming           String   @default("2h")
+  digestFrequency          String   @default("weekly")
+  
+  // Communication preferences
+  communicationLanguage    String   @default("en")
+  timezone                 String   @default("Africa/Lagos")
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  user                    user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -381,6 +452,7 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   DISPUTED
+  ABANDONED
 }
 
 enum PurchaseType {

@@ -11,7 +11,7 @@ const bookingsQuerySchema = z.object({
 	status: z.enum(["all", "upcoming", "completed", "cancelled", "pending", "confirmed"]).optional().default("all"),
 	page: z.string().transform(Number).pipe(z.number().min(1)).optional().default(1),
 	limit: z.string().transform(Number).pipe(z.number().min(1).max(50)).optional().default(10),
-	sortBy: z.enum(["dateTime", "createdAt", "updatedAt"]).optional().default("dateTime"),
+	sortBy: z.enum(["scheduledFor", "createdAt", "updatedAt"]).optional().default("scheduledFor"),
 	sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 });
 
@@ -40,7 +40,7 @@ app.get("/", authMiddleware, zValidator("query", bookingsQuerySchema), async (c)
 				whereCondition.status = {
 					in: ["PENDING", "CONFIRMED"],
 				};
-				whereCondition.dateTime = {
+				whereCondition.scheduledFor = {
 					gte: new Date(),
 				};
 				break;
@@ -120,7 +120,7 @@ app.get("/", authMiddleware, zValidator("query", bookingsQuerySchema), async (c)
 			data: {
 				bookings: bookings.map((booking) => ({
 					id: booking.id,
-					dateTime: booking.dateTime,
+					scheduledFor: booking.scheduledFor,
 					status: booking.status,
 					createdAt: booking.createdAt,
 					updatedAt: booking.updatedAt,

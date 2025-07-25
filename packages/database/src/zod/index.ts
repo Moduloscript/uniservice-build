@@ -86,7 +86,7 @@ export const ServiceCategoryScalarFieldEnumSchema = z.enum(['id','name','descrip
 
 export const AccountScalarFieldEnumSchema = z.enum(['id','accountId','providerId','userId','accessToken','refreshToken','idToken','expiresAt','password','accessTokenExpiresAt','refreshTokenExpiresAt','scope','createdAt','updatedAt']);
 
-export const BookingScalarFieldEnumSchema = z.enum(['id','studentId','providerId','serviceId','status','dateTime','createdAt','updatedAt']);
+export const BookingScalarFieldEnumSchema = z.enum(['id','studentId','providerId','serviceId','status','scheduledFor','createdAt','updatedAt']);
 
 export const InvitationScalarFieldEnumSchema = z.enum(['id','organizationId','email','role','status','expiresAt','inviterId']);
 
@@ -96,7 +96,7 @@ export const OrganizationScalarFieldEnumSchema = z.enum(['id','name','slug','log
 
 export const PasskeyScalarFieldEnumSchema = z.enum(['id','name','publicKey','userId','credentialID','counter','deviceType','backedUp','transports','createdAt']);
 
-export const PaymentScalarFieldEnumSchema = z.enum(['id','amount','currency','status','provider','transactionRef','paymentMethod','bookingId','providerId','escrowStatus','metadata','createdAt','updatedAt']);
+export const PaymentScalarFieldEnumSchema = z.enum(['id','amount','currency','status','provider','transactionRef','paymentMethod','channel','gatewayResponse','fees','paidAt','bookingId','providerId','escrowStatus','authorizationCode','customerCode','metadata','createdAt','updatedAt']);
 
 export const Payout_accountScalarFieldEnumSchema = z.enum(['id','userId','provider','accountNumber','accountName','bankCode','bankName','isDefault','metadata','createdAt','updatedAt']);
 
@@ -112,15 +112,21 @@ export const SessionScalarFieldEnumSchema = z.enum(['id','expiresAt','ipAddress'
 
 export const SlotScalarFieldEnumSchema = z.enum(['id','userId','dayOfWeek','startTime','endTime','isAvailable']);
 
-export const UserScalarFieldEnumSchema = z.enum(['id','name','email','emailVerified','image','createdAt','updatedAt','username','role','banned','banReason','banExpires','onboardingComplete','paymentsCustomerId','locale','userType','matricNumber','department','level','verified','verificationDoc','isStudentVerified','isVerified','studentIdCardUrl','verificationNotes','verificationReviewedAt','verificationReviewedBy','verificationStatus','providerCategory','providerVerificationDocs']);
+export const UserScalarFieldEnumSchema = z.enum(['id','name','email','emailVerified','image','createdAt','updatedAt','username','role','banned','banReason','banExpires','onboardingComplete','paymentsCustomerId','locale','userType','matricNumber','department','level','verified','verificationDoc','isStudentVerified','isVerified','studentIdCardUrl','verificationNotes','verificationReviewedAt','verificationReviewedBy','verificationStatus','providerCategory','providerVerificationDocs','phone','bio','location','dateOfBirth']);
 
 export const VerificationScalarFieldEnumSchema = z.enum(['id','identifier','value','expiresAt','createdAt','updatedAt']);
 
 export const ProviderAvailabilityScalarFieldEnumSchema = z.enum(['id','providerId','serviceId','date','startTime','endTime','isAvailable','isBooked','maxBookings','currentBookings','notes','createdAt','updatedAt']);
 
+export const Webhook_eventScalarFieldEnumSchema = z.enum(['id','provider','event_type','reference','processed','retry_count','payload','error','signature','createdAt','processedAt']);
+
+export const NotificationSettingsScalarFieldEnumSchema = z.enum(['id','userId','emailBookingConfirmations','emailBookingReminders','emailBookingUpdates','emailPaymentConfirmations','emailReviewRequests','emailPromotions','smsBookingReminders','smsBookingConfirmations','smsPaymentAlerts','smsEmergencyAlerts','pushBookingUpdates','pushNewMessages','pushProviderUpdates','pushPromotions','reminderTiming','digestFrequency','communicationLanguage','timezone','createdAt','updatedAt']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
+
+export const JsonNullValueInputSchema = z.enum(['JsonNull',]).transform((value) => (value === 'JsonNull' ? Prisma.JsonNull : value));
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
 
@@ -140,7 +146,7 @@ export const PaymentProviderSchema = z.enum(['PAYSTACK','FLUTTERWAVE']);
 
 export type PaymentProviderType = `${z.infer<typeof PaymentProviderSchema>}`
 
-export const PaymentStatusSchema = z.enum(['PENDING','PROCESSING','COMPLETED','FAILED','REFUNDED','DISPUTED']);
+export const PaymentStatusSchema = z.enum(['PENDING','PROCESSING','COMPLETED','FAILED','REFUNDED','DISPUTED','ABANDONED']);
 
 export type PaymentStatusType = `${z.infer<typeof PaymentStatusSchema>}`
 
@@ -251,7 +257,7 @@ export const bookingSchema = z.object({
   studentId: z.string(),
   providerId: z.string(),
   serviceId: z.string(),
-  dateTime: z.coerce.date(),
+  scheduledFor: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
@@ -338,9 +344,15 @@ export const paymentSchema = z.object({
   amount: z.instanceof(Prisma.Decimal, { message: "Field 'amount' must be a Decimal. Location: ['Models', 'payment']"}),
   currency: z.string(),
   transactionRef: z.string(),
-  paymentMethod: z.string(),
+  paymentMethod: z.string().nullable(),
+  channel: z.string().nullable(),
+  gatewayResponse: z.string().nullable(),
+  fees: z.instanceof(Prisma.Decimal, { message: "Field 'fees' must be a Decimal. Location: ['Models', 'payment']"}).nullable(),
+  paidAt: z.coerce.date().nullable(),
   bookingId: z.string(),
   providerId: z.string(),
+  authorizationCode: z.string().nullable(),
+  customerCode: z.string().nullable(),
   metadata: JsonValueSchema.nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -527,6 +539,10 @@ export const userSchema = z.object({
   verificationReviewedBy: z.string().nullable(),
   providerCategory: z.string().nullable(),
   providerVerificationDocs: JsonValueSchema.nullable(),
+  phone: z.string().nullable(),
+  bio: z.string().nullable(),
+  location: z.string().nullable(),
+  dateOfBirth: z.coerce.date().nullable(),
 })
 
 export type user = z.infer<typeof userSchema>
@@ -570,3 +586,58 @@ export const ProviderAvailabilitySchema = z.object({
 })
 
 export type ProviderAvailability = z.infer<typeof ProviderAvailabilitySchema>
+
+/////////////////////////////////////////
+// WEBHOOK EVENT SCHEMA
+/////////////////////////////////////////
+
+/**
+ * User notification preferences
+ * Webhook events tracking for security and audit
+ */
+export const webhook_eventSchema = z.object({
+  id: z.string().uuid(),
+  provider: z.string(),
+  event_type: z.string(),
+  reference: z.string(),
+  processed: z.boolean(),
+  retry_count: z.number().int(),
+  payload: JsonValueSchema,
+  error: z.string().nullable(),
+  signature: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  processedAt: z.coerce.date().nullable(),
+})
+
+export type webhook_event = z.infer<typeof webhook_eventSchema>
+
+/////////////////////////////////////////
+// NOTIFICATION SETTINGS SCHEMA
+/////////////////////////////////////////
+
+export const NotificationSettingsSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string(),
+  emailBookingConfirmations: z.boolean(),
+  emailBookingReminders: z.boolean(),
+  emailBookingUpdates: z.boolean(),
+  emailPaymentConfirmations: z.boolean(),
+  emailReviewRequests: z.boolean(),
+  emailPromotions: z.boolean(),
+  smsBookingReminders: z.boolean(),
+  smsBookingConfirmations: z.boolean(),
+  smsPaymentAlerts: z.boolean(),
+  smsEmergencyAlerts: z.boolean(),
+  pushBookingUpdates: z.boolean(),
+  pushNewMessages: z.boolean(),
+  pushProviderUpdates: z.boolean(),
+  pushPromotions: z.boolean(),
+  reminderTiming: z.string(),
+  digestFrequency: z.string(),
+  communicationLanguage: z.string(),
+  timezone: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type NotificationSettings = z.infer<typeof NotificationSettingsSchema>

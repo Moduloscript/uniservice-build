@@ -91,11 +91,11 @@ export function BookingDataTable({
 								<TableHead>
 									<Button
 										variant="ghost"
-										onClick={() => onSort("dateTime")}
+										onClick={() => onSort("scheduledFor")}
 										className="h-auto p-0 font-semibold"
 									>
 										Date & Time
-										{getSortIcon("dateTime")}
+											{getSortIcon("scheduledFor")}
 									</Button>
 								</TableHead>
 								<TableHead>Status</TableHead>
@@ -143,10 +143,10 @@ export function BookingDataTable({
 									<TableCell>
 										<div className="text-sm">
 											<p className="font-medium">
-												{format(new Date(booking.dateTime), "MMM dd, yyyy")}
+												{format(new Date(booking.scheduledFor), "MMM dd, yyyy")}
 											</p>
 											<p className="text-muted-foreground">
-												{format(new Date(booking.dateTime), "hh:mm a")}
+												{format(new Date(booking.scheduledFor), "hh:mm a")}
 											</p>
 										</div>
 									</TableCell>
@@ -223,11 +223,11 @@ export function BookingDataTable({
 						<div className="grid grid-cols-2 gap-3 text-sm">
 							<div className="flex items-center gap-2">
 								<Calendar className="h-4 w-4 text-muted-foreground" />
-								<span>{format(new Date(booking.dateTime), "MMM dd, yyyy")}</span>
+								<span>{format(new Date(booking.scheduledFor), "MMM dd, yyyy")}</span>
 							</div>
 							<div className="flex items-center gap-2">
 								<Clock className="h-4 w-4 text-muted-foreground" />
-								<span>{format(new Date(booking.dateTime), "hh:mm a")}</span>
+								<span>{format(new Date(booking.scheduledFor), "hh:mm a")}</span>
 							</div>
 							<div className="flex items-center gap-2">
 								<DollarSign className="h-4 w-4 text-muted-foreground" />
