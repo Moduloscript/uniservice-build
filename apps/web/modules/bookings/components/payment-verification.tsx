@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/components/card";
 import { Button } from "../../ui/components/button";
-import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, ArrowRight, Home, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { verifyPayment } from "../api";
 

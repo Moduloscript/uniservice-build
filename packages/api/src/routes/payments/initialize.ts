@@ -99,7 +99,7 @@ export const paymentInitializeRouter = new Hono()
                   id: booking.id,
                   status: booking.status,
                 },
-                redirectUrl: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/payments/verify`,
+           redirectUrl: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/en/payments/verify`,
               },
             });
           } 
@@ -139,7 +139,7 @@ export const paymentInitializeRouter = new Hono()
           phone: booking.student.phone || undefined,
           name: booking.student.name,
           tx_ref: transactionRef,
-          redirect_url: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/payments/verify`,
+          redirect_url: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/en/payments/verify`,
           payment_options: 'card,banktransfer,ussd',
           customizations: {
             title: 'UniService Payment',
@@ -203,7 +203,7 @@ export const paymentInitializeRouter = new Hono()
               id: booking.id,
               status: booking.status,
             },
-            redirectUrl: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/payments/verify`,
+            redirectUrl: redirectUrl || `${process.env.NEXT_PUBLIC_APP_URL}/en/payments/verify`,
           },
         });
 
