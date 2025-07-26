@@ -131,49 +131,21 @@ export function PaymentRetry({
     setIsRetrying(true);
 
     try {
-      // Create a new payment attempt
-      const response = await fetch('/api/payments/initiate-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount,
-          currency,
-          bookingId,
-          channels: selectedChannels,
-          metadata: {
-            retry_attempt: previousAttempts + 1,
-            previous_transaction_ref: transactionRef,
-            retry_reason: failureReason,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to initiate retry payment');
-      }
-
-      // Track retry attempt
+      // TODO: Implement payment retry logic
+      toast.info('Payment retry placeholder - implement backend integration');
+      
+      // Track retry attempt (placeholder)
       const newAttempt: RetryAttempt = {
         attemptNumber: previousAttempts + 1,
         timestamp: new Date(),
-        status: 'pending',
-        transactionRef: result.transactionRef,
+        status: 'failed',
+        transactionRef: 'placeholder-ref',
+        failureReason: 'Backend not implemented',
       };
 
       setRetryAttempts(prev => [...prev, newAttempt]);
-
-      // Redirect to payment URL
-      if (result.paymentUrl) {
-        toast.success('Redirecting to payment page...');
-        window.location.href = result.paymentUrl;
-      } else {
-        onRetrySuccess?.(result.transactionRef);
-      }
-
+      onRetryFailed?.('Payment backend not implemented');
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Retry failed';
       toast.error(errorMessage);

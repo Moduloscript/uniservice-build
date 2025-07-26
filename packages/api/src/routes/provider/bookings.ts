@@ -27,9 +27,9 @@ const bookingsQuerySchema = z.object({
 		.optional()
 		.default("all"),
 	sortBy: z
-		.enum(["dateTime", "createdAt", "updatedAt"])
+		.enum(["scheduledFor", "createdAt", "updatedAt"])
 		.optional()
-		.default("dateTime"),
+		.default("scheduledFor"),
 	sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 	dateFrom: z.string().optional(),
 	dateTo: z.string().optional(),
@@ -63,7 +63,7 @@ export const providerBookingsRouter = new Hono()
 											properties: {
 												id: { type: "string" },
 												status: { type: "string" },
-												dateTime: { type: "string" },
+									scheduledFor: { type: "string" },
 												createdAt: { type: "string" },
 												updatedAt: { type: "string" },
 												student: {
@@ -160,12 +160,12 @@ export const providerBookingsRouter = new Hono()
 
 				// Add date range filter
 				if (dateFrom || dateTo) {
-					whereClause.dateTime = {};
+					whereClause.scheduledFor = {};
 					if (dateFrom) {
-						whereClause.dateTime.gte = new Date(dateFrom);
+						whereClause.scheduledFor.gte = new Date(dateFrom);
 					}
 					if (dateTo) {
-						whereClause.dateTime.lte = new Date(dateTo);
+						whereClause.scheduledFor.lte = new Date(dateTo);
 					}
 				}
 
@@ -268,7 +268,7 @@ export const providerBookingsRouter = new Hono()
 											properties: {
 												id: { type: "string" },
 												status: { type: "string" },
-												dateTime: { type: "string" },
+									scheduledFor: { type: "string" },
 												createdAt: { type: "string" },
 												student: {
 													type: "object",

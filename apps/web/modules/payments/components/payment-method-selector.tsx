@@ -34,7 +34,7 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
     description: "Fast and reliable payments with Flutterwave. Multiple payment options available.",
     icon: "🚀",
     fees: "1.4% (₦10 minimum)",
-    supported: false, // Temporarily disabled for Paystack focus
+    supported: true, // Enabled for production use
   },
 ];
 

@@ -96,7 +96,7 @@ export const OrganizationScalarFieldEnumSchema = z.enum(['id','name','slug','log
 
 export const PasskeyScalarFieldEnumSchema = z.enum(['id','name','publicKey','userId','credentialID','counter','deviceType','backedUp','transports','createdAt']);
 
-export const PaymentScalarFieldEnumSchema = z.enum(['id','amount','currency','status','provider','transactionRef','paymentMethod','channel','gatewayResponse','fees','paidAt','bookingId','providerId','escrowStatus','authorizationCode','customerCode','metadata','createdAt','updatedAt']);
+export const PaymentScalarFieldEnumSchema = z.enum(['id','amount','currency','status','provider','transactionRef','paymentMethod','channel','gatewayResponse','fees','paidAt','bookingId','providerId','escrowStatus','authorizationCode','customerCode','metadata','createdAt','updatedAt','flutterwaveId','flutterwaveRef','verifiedAt']);
 
 export const Payout_accountScalarFieldEnumSchema = z.enum(['id','userId','provider','accountNumber','accountName','bankCode','bankName','isDefault','metadata','createdAt','updatedAt']);
 
@@ -356,6 +356,9 @@ export const paymentSchema = z.object({
   metadata: JsonValueSchema.nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+  flutterwaveId: z.string().nullable(),
+  flutterwaveRef: z.string().nullable(),
+  verifiedAt: z.coerce.date().nullable(),
 })
 
 export type payment = z.infer<typeof paymentSchema>

@@ -66,7 +66,7 @@ export interface ProviderServicesSummary {
 export interface ProviderBooking {
 	id: string;
 	status: string;
-	dateTime: string;
+	scheduledFor: string;
 	createdAt: string;
 	student: {
 		name: string;

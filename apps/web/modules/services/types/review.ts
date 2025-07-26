@@ -20,7 +20,7 @@ export interface Review {
 	booking: {
 		id: string;
 		serviceId: string;
-		dateTime: string;
+		scheduledFor: string;
 		status: string;
 	};
 }

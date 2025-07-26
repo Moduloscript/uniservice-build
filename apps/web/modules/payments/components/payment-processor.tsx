@@ -7,8 +7,7 @@ import { Badge } from "../../ui/components/badge";
 import { Progress } from "../../ui/components/progress";
 import { Loader2, ExternalLink, CheckCircle, XCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { paymentsApi } from "../api";
-import type { PaymentProvider, PaymentStatus } from "../types";
+import type { PaymentProvider } from "../types";
 import { calculatePaymentFees, calculateTotalAmount, formatNairaAmount } from "../utils/fees";
 
 interface PaymentProcessorProps {
@@ -57,190 +56,164 @@ export function PaymentProcessor({
   onBack,
 }: PaymentProcessorProps) {
   const [currentStep, setCurrentStep] = useState<ProcessingStep>('initiating');
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [transactionRef, setTransactionRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
-  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const fees = calculatePaymentFees(provider, amount);
   const totalAmount = calculateTotalAmount(provider, amount);
 
-  const initiatePayment = async () => {
-    // Prevent duplicate initializations
-    if (isInitializing) {
-      console.log('[PaymentProcessor] Skipping duplicate initialization');
-      return;
-    }
-    
+  // Prepare payment with backend
+  const preparePayment = async () => {
     try {
-      setIsInitializing(true);
       setCurrentStep('initiating');
       setError(null);
-
-      const response = await paymentsApi.initiatePayment({
-        amount: totalAmount,
+      
+      const { paymentsApi } = await import('../api');
+      const result = await paymentsApi.initiatePayment({
+        amount,
         currency: "NGN",
         email: userEmail,
         name: userName,
         bookingId,
         serviceId,
         providerId,
-        metadata: {
-          provider,
-          originalAmount: amount,
-          fees: fees,
-        },
       });
-
-      if (!response.success || !response.transactionRef) {
-        throw new Error(response.message || "Failed to initialize payment");
-      }
-
-      setTransactionRef(response.transactionRef);
       
-      // Check if payment already exists and needs verification
-      if (response.existingPayment) {
-        setCurrentStep('verifying');
-        toast.info(response.message || "Checking existing payment status...");
-        
-        // Start verification polling for existing payment
-        setTimeout(() => {
-          startPolling(response.transactionRef);
-        }, 1000);
-        return;
+      if (result.success && result.paymentUrl && result.transactionRef) {
+        setTransactionRef(result.transactionRef);
+        setPaymentUrl(result.paymentUrl);
+        setIsReady(true);
+        toast.info('Payment prepared. Click "Proceed to Payment" to continue.');
+      } else {
+        throw new Error('Failed to initialize payment');
       }
-      
-      // Handle new payment initialization
-      if (!response.paymentUrl) {
-        throw new Error("Payment URL not provided");
-      }
-      
-      setPaymentUrl(response.paymentUrl);
-      setCurrentStep('redirecting');
-
-      // Auto-redirect after a short delay
-      setTimeout(() => {
-        window.open(response.paymentUrl, '_blank', 'noopener,noreferrer');
-        setCurrentStep('processing');
-        startPolling(response.transactionRef);
-      }, 2000);
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setError(errorMessage);
+    } catch (error: any) {
+      console.error('Payment preparation error:', error);
       setCurrentStep('failed');
-      toast.error(errorMessage);
-    } finally {
-      setIsInitializing(false);
+      setError(error.message || 'Failed to prepare payment');
+      onFailure(error.message);
+      toast.error(`Payment failed: ${error.message}`);
     }
   };
 
-  const stopPolling = () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      setPollInterval(null);
-    }
-    setIsPolling(false);
-  };
-
-  const startPolling = (txRef: string) => {
-    // Clear any existing polling interval
-    stopPolling();
+  // Redirect to payment page (no popup blocking issues)
+  const redirectToPayment = async () => {
+    if (!paymentUrl || !transactionRef) return;
     
-    setIsPolling(true);
-    const newPollInterval = setInterval(async () => {
+    try {
+      setCurrentStep('redirecting');
+      
+      // Store payment info in sessionStorage for when user returns
+      sessionStorage.setItem('pendingPayment', JSON.stringify({
+        transactionRef,
+        bookingId,
+        provider,
+        timestamp: Date.now()
+      }));
+      
+      // Show a brief message before redirecting
+      toast.info('Redirecting to Flutterwave payment page...');
+      
+      // Use a small delay to ensure the toast shows
+      setTimeout(() => {
+        // Redirect to Flutterwave payment page in the same tab
+        window.location.href = paymentUrl;
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('Payment redirect error:', error);
+      setCurrentStep('failed');
+      setError(error.message || 'Failed to redirect to payment page');
+      toast.error(`Payment failed: ${error.message}`);
+    }
+  };
+
+  // Check for returning payment on component mount
+  const checkPendingPayment = async () => {
+    const pendingPaymentStr = sessionStorage.getItem('pendingPayment');
+    if (pendingPaymentStr) {
       try {
-        setCurrentStep('verifying');
-        const verification = await paymentsApi.verifyPayment({
-          transactionRef: txRef,
-          provider,
-        });
-
-        console.log('[PaymentProcessor] Verification response:', verification);
+        const pendingPayment = JSON.parse(pendingPaymentStr);
         
-        if (verification.success && verification.status === 'success') {
-          setCurrentStep('completed');
-          stopPolling();
-          toast.success("Payment completed successfully!");
-          onSuccess(txRef);
-        } else if (verification.status === 'failed' || verification.status === 'cancelled' || verification.status === 'abandoned') {
-          stopPolling();
+        // Check if this is the same booking and payment is recent (within 1 hour)
+        if (pendingPayment.bookingId === bookingId && 
+            (Date.now() - pendingPayment.timestamp) < 3600000) {
           
-          // Handle abandoned payments (user closed payment window) differently
-          if (verification.status === 'abandoned') {
+          setTransactionRef(pendingPayment.transactionRef);
+          setCurrentStep('verifying');
+          
+          // Clear the stored payment info
+          sessionStorage.removeItem('pendingPayment');
+          
+          // Verify the payment status
+          const { paymentsApi } = await import('../api');
+          const result = await paymentsApi.verifyPayment({
+            transactionRef: pendingPayment.transactionRef,
+            provider: pendingPayment.provider,
+          });
+          
+          if (result.status === 'completed') {
+            setCurrentStep('completed');
+            onSuccess(pendingPayment.transactionRef);
+            toast.success('Payment completed successfully!');
+          } else if (result.status === 'failed') {
             setCurrentStep('failed');
-            const errorMsg = 'Payment was not completed';
-            setError('You closed the payment window before completing the transaction. You can try again below.');
-            toast.info('Payment was not completed. Click "Retry Payment" to try again.', {
-              duration: 5000,
-            });
-            // Don't call onFailure immediately - let user retry
+            setError('Payment was not completed');
+            onFailure('Payment failed');
           } else {
-            setCurrentStep('failed');
-            const errorMsg = `Payment ${verification.status}`;
-            setError(errorMsg);
-            toast.error(errorMsg);
-            onFailure(errorMsg);
+            // Payment is still pending, continue normal flow
+            preparePayment();
           }
+        } else {
+          // Old or different booking payment, clear it and start fresh
+          sessionStorage.removeItem('pendingPayment');
+          preparePayment();
         }
-        // Continue polling for pending/processing status
       } catch (error) {
-        console.error('Payment verification error:', error);
-        // Continue polling unless it's a critical error
+        // Invalid stored data, clear it and start fresh
+        sessionStorage.removeItem('pendingPayment');
+        preparePayment();
       }
-    }, 5000); // Poll every 5 seconds (reduced frequency)
-    
-    setPollInterval(newPollInterval);
-
-    // Stop polling after 10 minutes
-    setTimeout(() => {
-      stopPolling();
-      if (currentStep !== 'completed' && currentStep !== 'failed') {
-        setCurrentStep('failed');
-        setError('Payment verification timeout');
-        toast.error('Payment verification timeout. Please contact support.');
-        onFailure('Payment verification timeout');
-      }
-    }, 600000); // 10 minutes
+    } else {
+      // No pending payment, start normal flow
+      preparePayment();
+    }
   };
 
+  // Manual verification logic
   const handleManualVerify = async () => {
     if (!transactionRef) return;
     
     try {
       setCurrentStep('verifying');
-      const verification = await paymentsApi.verifyPayment({
+      const { paymentsApi } = await import('../api');
+      const result = await paymentsApi.verifyPayment({
         transactionRef,
         provider,
       });
-
-      if (verification.success && verification.status === 'success') {
+      
+      if (result.status === 'completed') {
         setCurrentStep('completed');
-        toast.success("Payment verified successfully!");
         onSuccess(transactionRef);
+        toast.success('Payment verified successfully!');
       } else {
-        setError(`Payment status: ${verification.status}`);
-        toast.error(`Payment verification failed: ${verification.status}`);
+        setCurrentStep('failed');
+        setError(`Payment status: ${result.status}`);
+        onFailure(`Payment ${result.status}`);
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Verification failed';
-      setError(errorMessage);
-      toast.error(errorMessage);
+    } catch (error: any) {
+      console.error('Payment verification error:', error);
+      setCurrentStep('failed');
+      setError(error.message || 'Failed to verify payment');
+      toast.error(`Verification failed: ${error.message}`);
     }
   };
 
-  // Auto-initiate payment on component mount
+  // Check for pending payment or prepare new payment on component mount
   useEffect(() => {
-    initiatePayment();
-  }, []);
-
-  // Cleanup polling on component unmount
-  useEffect(() => {
-    return () => {
-      stopPolling();
-    };
+    checkPendingPayment();
   }, []);
 
   const getStepIcon = (step: ProcessingStep) => {
@@ -344,13 +317,15 @@ export function PaymentProcessor({
 
             {/* Action Buttons */}
             <div className="flex space-x-2 pt-4">
-              {currentStep === 'redirecting' && paymentUrl && (
+              {isReady && currentStep === 'initiating' && (
                 <Button
-                  onClick={() => window.open(paymentUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={redirectToPayment}
+                  variant="default"
+                  size="lg"
                   className="flex-1"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Payment Page
+                  Proceed to Payment
                 </Button>
               )}
 
@@ -358,19 +333,15 @@ export function PaymentProcessor({
                 <Button
                   onClick={handleManualVerify}
                   variant="outline"
-                  disabled={isPolling}
                   className="flex-1"
                 >
-                  {isPolling ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : null}
                   Verify Payment
                 </Button>
               )}
 
               {currentStep === 'failed' && (
                 <Button
-                  onClick={initiatePayment}
+                  onClick={preparePayment}
                   variant="default"
                   className="flex-1"
                 >

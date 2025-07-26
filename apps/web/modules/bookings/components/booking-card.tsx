@@ -12,6 +12,7 @@ import { BookingStatusBadge } from "./booking-status-badge";
 import { updateBookingStatus, cancelBooking } from "../api";
 import type { Booking } from "../types";
 import { toast } from "sonner";
+import { PaymentButton } from "./payment-button";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -85,6 +86,7 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 			["PENDING", "CONFIRMED"].includes(booking.status)) ||
 		(userType === "PROVIDER" && booking.status === "PENDING") ||
 		userType === "ADMIN";
+	const canPay = userType === "STUDENT" && booking.status === "PENDING";
 
 	return (
 		<Card className="w-full">
@@ -145,9 +147,24 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 				)}
 			</CardContent>
 
-			{(canConfirm || canComplete || canCancel) && (
+			{(canConfirm || canComplete || canCancel || canPay) && (
 				<CardFooter className="pt-3 border-t">
 					<div className="flex space-x-2 w-full">
+						{canPay && (
+							<PaymentButton
+								booking={booking}
+								onPaymentSuccess={() => {
+									toast.success("Payment completed successfully!");
+									if (onUpdate) onUpdate();
+								}}
+								onPaymentError={(error) => {
+									toast.error(`Payment failed: ${error}`);
+								}}
+								className="flex-1"
+								disabled={isLoading}
+							/>
+						)}
+
 						{canConfirm && (
 							<Button
 								onClick={() => handleStatusUpdate("CONFIRMED")}

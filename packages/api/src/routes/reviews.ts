@@ -161,14 +161,14 @@ export const reviewsRouter = new Hono()
 							userType: true,
 						},
 					},
-					booking: {
-						select: {
-							id: true,
-							serviceId: true,
-							dateTime: true,
-							status: true,
-						},
+				booking: {
+					select: {
+						id: true,
+						serviceId: true,
+						scheduledFor: true,
+						status: true,
 					},
+				},
 				},
 				orderBy: {
 					createdAt: "desc",
@@ -261,14 +261,14 @@ export const reviewsRouter = new Hono()
 								userType: true,
 							},
 						},
-						booking: {
-							select: {
-								id: true,
-								serviceId: true,
-								dateTime: true,
-								status: true,
-							},
+					booking: {
+						select: {
+							id: true,
+							serviceId: true,
+							scheduledFor: true,
+							status: true,
 						},
+					},
 					},
 				});
 
@@ -321,14 +321,14 @@ export const reviewsRouter = new Hono()
 								userType: true,
 							},
 						},
-						booking: {
-							select: {
-								id: true,
-								serviceId: true,
-								dateTime: true,
-								status: true,
-							},
+					booking: {
+						select: {
+							id: true,
+							serviceId: true,
+							scheduledFor: true,
+							status: true,
 						},
+					},
 					},
 				});
 
@@ -372,7 +372,7 @@ export const reviewsRouter = new Hono()
 							select: {
 								id: true,
 								serviceId: true,
-								dateTime: true,
+								scheduledFor: true,
 								status: true,
 							},
 						},
