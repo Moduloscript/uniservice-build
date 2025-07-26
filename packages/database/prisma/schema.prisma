@@ -148,7 +148,7 @@ model payment {
   provider        PaymentProvider
   transactionRef  String          @unique
   paymentMethod   String?         // card, bank, ussd, mobile_money, etc.
-  channel         String?         // Actual channel used (from Paystack)
+  channel         String?         // Actual channel used (from Paystack/Flutterwave)
   gatewayResponse String?         // Gateway response message
   fees            Decimal?        // Transaction fees
   paidAt          DateTime?       // Actual payment time
@@ -160,6 +160,11 @@ model payment {
   metadata        Json?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  
+  // Flutterwave specific fields
+  flutterwaveId   String?         @unique // Flutterwave transaction ID
+  flutterwaveRef  String?         @unique // Flutterwave reference
+  verifiedAt      DateTime?       // When transaction was verified
   
   booking         booking         @relation(fields: [bookingId], references: [id])
 }

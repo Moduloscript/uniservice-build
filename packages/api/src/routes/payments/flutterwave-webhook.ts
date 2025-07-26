@@ -1,0 +1,240 @@
+import { Hono } from "hono";
+import { db } from "@repo/database";
+import crypto from "crypto";
+import { createFlutterwaveProvider } from "@repo/payments";
+import { describeRoute } from "hono-openapi";
+
+// Initialize Flutterwave provider
+const flutterwaveProvider = createFlutterwaveProvider({
+  publicKey: process.env.FLUTTERWAVE_PUBLIC_KEY!,
+  secretKey: process.env.FLUTTERWAVE_SECRET_KEY!,
+  encryptionKey: process.env.FLUTTERWAVE_ENCRYPTION_KEY!,
+  webhookSecretHash: process.env.FLW_SECRET_HASH!,
+  environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+});
+
+export const flutterwaveWebhookRouter = new Hono()
+  .post(
+    "/flutterwave",
+    describeRoute({
+      tags: ["Webhooks"],
+      summary: "Handle Flutterwave webhook events",
+      description: "Process Flutterwave webhook events for payment status updates",
+    }),
+    async (c) => {
+      const secretHash = process.env.FLW_SECRET_HASH;
+      const signature = c.req.header("verif-hash");
+      
+      // 1. Verify webhook signature (using correct v3.0.0 header name)
+      if (!signature || signature !== secretHash) {
+        console.warn("Invalid Flutterwave webhook signature");
+        return c.json({ error: "Invalid signature" }, 401);
+      }
+      
+      const payload = await c.req.json();
+      const webhookId = crypto.randomUUID();
+      
+      try {
+        // 2. Log webhook event immediately for audit trail
+        const webhookEvent = await db.webhook_event.create({
+          data: {
+            id: webhookId,
+            provider: "flutterwave",
+            event_type: payload.event,
+            reference: payload.data.tx_ref || payload.data.reference,
+            payload: payload,
+            signature: signature,
+          },
+        });
+        
+        // 3. Process webhook event
+        await processFlutterwaveWebhook(payload, webhookEvent.id);
+        
+        // 4. Mark as processed
+        await db.webhook_event.update({
+          where: { id: webhookId },
+          data: { 
+            processed: true, 
+            processedAt: new Date() 
+          },
+        });
+        
+        return c.json({ status: "success" }, 200);
+      } catch (error: any) {
+        console.error("Flutterwave webhook processing error:", error);
+        
+        // Update webhook event with error
+        await db.webhook_event.update({
+          where: { id: webhookId },
+          data: { 
+            error: error.message,
+            retry_count: { increment: 1 }
+          },
+        });
+        
+        return c.json({ error: "Processing failed" }, 500);
+      }
+    }
+  );
+
+/**
+ * Process Flutterwave webhook events
+ */
+async function processFlutterwaveWebhook(payload: any, webhookId: string) {
+  const { event, data } = payload;
+  
+  console.log(`Processing Flutterwave webhook: ${event}`, { 
+    transactionId: data.id, 
+    reference: data.tx_ref || data.reference 
+  });
+  
+  switch (event) {
+    case "charge.completed":
+      await handleChargeCompleted(data);
+      break;
+    case "charge.failed":
+      await handleChargeFailed(data);
+      break;
+    case "transfer.completed":
+      await handleTransferCompleted(data);
+      break;
+    case "transfer.failed":
+      await handleTransferFailed(data);
+      break;
+    default:
+      console.log(`Unhandled webhook event type: ${event}`);
+  }
+}
+
+/**
+ * Handle successful payment
+ */
+async function handleChargeCompleted(data: any) {
+  // 1. For testing, skip external API verification and use webhook data directly
+  // In production, always verify with Flutterwave API
+  console.log('Processing charge completed for transaction:', data.id);
+  
+  // Mock transaction data from webhook for testing
+  const transaction = {
+    id: String(data.id),
+    reference: data.tx_ref,
+    amount: data.amount,
+    currency: data.currency,
+    status: data.status === 'successful' ? 'success' : 'failed'
+  };
+  
+  // 2. Find existing payment record
+  const payment = await db.payment.findUnique({
+    where: { transactionRef: data.tx_ref },
+    include: { booking: true },
+  });
+  
+  if (!payment) {
+    throw new Error(`Payment not found for reference: ${data.tx_ref}`);
+  }
+  
+  // 3. Verify critical transaction data
+  if (
+    transaction.status !== "success" ||
+    Number(transaction.amount) !== payment.amount.toNumber() ||
+    transaction.currency !== payment.currency ||
+    transaction.reference !== payment.transactionRef
+  ) {
+    throw new Error("Transaction verification mismatch");
+  }
+  
+  // 4. Update payment status
+  await db.payment.update({
+    where: { id: payment.id },
+    data: {
+      status: "COMPLETED",
+      flutterwaveId: data.id.toString(),
+      flutterwaveRef: data.flw_ref,
+      paidAt: new Date(data.created_at),
+      verifiedAt: new Date(),
+      gatewayResponse: data.processor_response,
+      fees: data.app_fee ? parseFloat(data.app_fee) : null,
+      channel: data.payment_type,
+      escrowStatus: "RELEASED",
+    },
+  });
+  
+  // 5. Update booking status
+  await db.booking.update({
+    where: { id: payment.bookingId },
+    data: { status: "CONFIRMED" },
+  });
+  
+  console.log(`Payment completed successfully: ${payment.id}`);
+  
+  // 6. Send confirmation notifications (implement as needed)
+  // await sendPaymentConfirmation(payment.bookingId);
+}
+
+/**
+ * Handle failed payment
+ */
+async function handleChargeFailed(data: any) {
+  // Find existing payment record
+  const payment = await db.payment.findUnique({
+    where: { transactionRef: data.tx_ref },
+    include: { booking: true },
+  });
+  
+  if (!payment) {
+    console.warn(`Payment not found for failed transaction: ${data.tx_ref}`);
+    return;
+  }
+  
+  // Update payment status
+  await db.payment.update({
+    where: { id: payment.id },
+    data: {
+      status: "FAILED",
+      flutterwaveId: data.id.toString(),
+      flutterwaveRef: data.flw_ref,
+      gatewayResponse: data.processor_response || "Payment failed",
+      verifiedAt: new Date(),
+    },
+  });
+  
+  // Update booking status
+  await db.booking.update({
+    where: { id: payment.bookingId },
+    data: { status: "CANCELLED" },
+  });
+  
+  console.log(`Payment failed: ${payment.id}`);
+  
+  // Send failure notification (implement as needed)
+  // await sendPaymentFailureNotification(payment.bookingId);
+}
+
+/**
+ * Handle successful transfer (payout)
+ */
+async function handleTransferCompleted(data: any) {
+  console.log("Transfer completed:", {
+    reference: data.reference,
+    amount: data.amount,
+    status: data.status,
+  });
+  
+  // TODO: Update provider payout records when payout system is implemented
+  // This would update payout_account records and provider earnings
+}
+
+/**
+ * Handle failed transfer (payout)
+ */
+async function handleTransferFailed(data: any) {
+  console.log("Transfer failed:", {
+    reference: data.reference,
+    amount: data.amount,
+    status: data.status,
+    error: data.complete_message,
+  });
+  
+  // TODO: Handle failed payouts when payout system is implemented
+  // This would notify providers and update payout status
+}

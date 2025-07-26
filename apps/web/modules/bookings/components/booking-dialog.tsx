@@ -45,7 +45,7 @@ export function BookingDialog({
 	const [isOpen, setIsOpen] = useState(false);
 	const [currentStep, setCurrentStep] = useState<BookingStep>('slot-selection');
 	const [selectedSlot, setSelectedSlot] = useState<AvailabilityTimeSlot | null>(preSelectedSlot || null);
-	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentProvider | undefined>();
+	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentProvider | undefined>('flutterwave');
 	const [bookingId, setBookingId] = useState<string | null>(null);
 	const [transactionRef, setTransactionRef] = useState<string | null>(null);
 	const router = useRouter();

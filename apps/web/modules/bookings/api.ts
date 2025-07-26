@@ -155,3 +155,92 @@ export async function cancelBooking(id: string): Promise<void> {
 		throw new Error(error.error || "Failed to cancel booking");
 	}
 }
+
+// Payment initialization types
+export interface PaymentInitializeRequest {
+	bookingId: string;
+	redirectUrl?: string;
+}
+
+export interface PaymentInitializeResponse {
+	success: boolean;
+	data: {
+		paymentId: string;
+		transactionRef: string;
+		amount: number;
+		currency: string;
+		paymentUrl: string;
+		service: {
+			id: string;
+			name: string;
+			price: number;
+		};
+		booking: {
+			id: string;
+			status: string;
+		};
+		redirectUrl: string;
+	};
+}
+
+export interface PaymentVerifyResponse {
+	success: boolean;
+	data: {
+		paymentId: string;
+		transactionRef: string;
+		amount: number;
+		currency: string;
+		status: string;
+		paidAt: string | null;
+		verifiedAt: string | null;
+		booking: {
+			id: string;
+			status: string;
+			service: {
+				name: string;
+				price: number;
+			};
+		};
+	};
+}
+
+// Initialize payment for a booking
+export async function initializePayment(
+	data: PaymentInitializeRequest,
+): Promise<PaymentInitializeResponse> {
+	const response = await fetch(`${API_BASE_URL}/payments/initialize`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+		body: JSON.stringify(data),
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to initialize payment");
+	}
+
+	return response.json();
+}
+
+// Verify payment status
+export async function verifyPayment(
+	transactionRef: string,
+): Promise<PaymentVerifyResponse> {
+	const response = await fetch(`${API_BASE_URL}/payments/verify/${transactionRef}`, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to verify payment");
+	}
+
+	return response.json();
+}
