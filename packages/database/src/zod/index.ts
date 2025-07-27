@@ -118,6 +118,10 @@ export const VerificationScalarFieldEnumSchema = z.enum(['id','identifier','valu
 
 export const ProviderAvailabilityScalarFieldEnumSchema = z.enum(['id','providerId','serviceId','date','startTime','endTime','isAvailable','isBooked','maxBookings','currentBookings','notes','createdAt','updatedAt']);
 
+export const EarningScalarFieldEnumSchema = z.enum(['id','providerId','bookingId','amount','platformFee','grossAmount','currency','status','clearedAt','payoutId','metadata','createdAt','updatedAt']);
+
+export const PayoutScalarFieldEnumSchema = z.enum(['id','providerId','amount','currency','status','paymentProvider','accountNumber','accountName','bankCode','bankName','transactionRef','gatewayResponse','fees','netAmount','processedAt','failureReason','metadata','createdAt','updatedAt']);
+
 export const Webhook_eventScalarFieldEnumSchema = z.enum(['id','provider','event_type','reference','processed','retry_count','payload','error','signature','createdAt','processedAt']);
 
 export const NotificationSettingsScalarFieldEnumSchema = z.enum(['id','userId','emailBookingConfirmations','emailBookingReminders','emailBookingUpdates','emailPaymentConfirmations','emailReviewRequests','emailPromotions','smsBookingReminders','smsBookingConfirmations','smsPaymentAlerts','smsEmergencyAlerts','pushBookingUpdates','pushNewMessages','pushProviderUpdates','pushPromotions','reminderTiming','digestFrequency','communicationLanguage','timezone','createdAt','updatedAt']);
@@ -169,6 +173,14 @@ export type AvailabilityStatusType = `${z.infer<typeof AvailabilityStatusSchema>
 export const ServiceLevelSchema = z.enum(['BEGINNER','INTERMEDIATE','ADVANCED','EXPERT']);
 
 export type ServiceLevelType = `${z.infer<typeof ServiceLevelSchema>}`
+
+export const EarningStatusSchema = z.enum(['PENDING_CLEARANCE','AVAILABLE','PAID_OUT','FROZEN']);
+
+export type EarningStatusType = `${z.infer<typeof EarningStatusSchema>}`
+
+export const PayoutStatusSchema = z.enum(['REQUESTED','PROCESSING','COMPLETED','FAILED','CANCELLED']);
+
+export type PayoutStatusType = `${z.infer<typeof PayoutStatusSchema>}`
 
 /////////////////////////////////////////
 // MODELS
@@ -589,6 +601,64 @@ export const ProviderAvailabilitySchema = z.object({
 })
 
 export type ProviderAvailability = z.infer<typeof ProviderAvailabilitySchema>
+
+/////////////////////////////////////////
+// EARNING SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Earnings tracking for providers - tracks every payment that should result in earnings
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export const EarningSchema = z.object({
+  status: EarningStatusSchema,
+  id: z.string().uuid(),
+  providerId: z.string(),
+  bookingId: z.string(),
+  amount: z.instanceof(Prisma.Decimal, { message: "Field 'amount' must be a Decimal. Location: ['Models', 'Earning']"}),
+  platformFee: z.instanceof(Prisma.Decimal, { message: "Field 'platformFee' must be a Decimal. Location: ['Models', 'Earning']"}).nullable(),
+  grossAmount: z.instanceof(Prisma.Decimal, { message: "Field 'grossAmount' must be a Decimal. Location: ['Models', 'Earning']"}),
+  currency: z.string(),
+  clearedAt: z.coerce.date().nullable(),
+  payoutId: z.string().nullable(),
+  metadata: JsonValueSchema.nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type Earning = z.infer<typeof EarningSchema>
+
+/////////////////////////////////////////
+// PAYOUT SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Payout requests and tracking for providers
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export const PayoutSchema = z.object({
+  status: PayoutStatusSchema,
+  paymentProvider: PaymentProviderSchema,
+  id: z.string().uuid(),
+  providerId: z.string(),
+  amount: z.instanceof(Prisma.Decimal, { message: "Field 'amount' must be a Decimal. Location: ['Models', 'Payout']"}),
+  currency: z.string(),
+  accountNumber: z.string(),
+  accountName: z.string(),
+  bankCode: z.string(),
+  bankName: z.string(),
+  transactionRef: z.string().nullable(),
+  gatewayResponse: z.string().nullable(),
+  fees: z.instanceof(Prisma.Decimal, { message: "Field 'fees' must be a Decimal. Location: ['Models', 'Payout']"}).nullable(),
+  netAmount: z.instanceof(Prisma.Decimal, { message: "Field 'netAmount' must be a Decimal. Location: ['Models', 'Payout']"}).nullable(),
+  processedAt: z.coerce.date().nullable(),
+  failureReason: z.string().nullable(),
+  metadata: JsonValueSchema.nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type Payout = z.infer<typeof PayoutSchema>
 
 /////////////////////////////////////////
 // WEBHOOK EVENT SCHEMA

@@ -356,6 +356,199 @@ export const providerAvailabilityApi = {
 	},
 };
 
+// Enhanced Provider Dashboard with Earnings Types
+export interface ProviderEarningsSummary {
+	earnings: {
+		totalLifetime: number;
+		availableBalance: number;
+		pendingClearance: number;
+		thisMonth: number;
+		lastMonth: number;
+		currency: string;
+	};
+	payouts: {
+		totalPaidOut: number;
+		pendingPayouts: number;
+		lastPayoutDate: string | null;
+	};
+	performance: {
+		totalBookings: number;
+		completedBookings: number;
+		averageRating: number;
+		totalStudents: number;
+	};
+}
+
+export interface ProviderEarning {
+	id: string;
+	amount: number;
+	platformFee: number;
+	grossAmount: number;
+	currency: string;
+	status: 'PENDING_CLEARANCE' | 'AVAILABLE' | 'PAID_OUT' | 'FROZEN';
+	clearedAt: string | null;
+	createdAt: string;
+	booking: {
+		id: string;
+		service: {
+			name: string;
+			category: {
+				name: string;
+			};
+		};
+		student: {
+			name: string;
+		};
+	};
+}
+
+export interface ProviderEarningsResponse {
+	data: ProviderEarning[];
+	meta: {
+		pagination: {
+			page: number;
+			limit: number;
+			total: number;
+			totalPages: number;
+			hasNextPage: boolean;
+			hasPrevPage: boolean;
+			nextCursor: string | null;
+		};
+	};
+}
+
+export interface ProviderAnalyticsData {
+	data: any[];
+	meta: {
+		report: string;
+		period: string;
+		dateRange: {
+			startDate?: string;
+			endDate?: string;
+		};
+	};
+}
+
+export interface PayoutRequest {
+	amount: number;
+	accountNumber: string;
+	accountName: string;
+	bankCode: string;
+	bankName: string;
+	paymentProvider: 'PAYSTACK' | 'FLUTTERWAVE';
+}
+
+export interface PayoutResponse {
+	data: {
+		id: string;
+		amount: number;
+		status: string;
+		createdAt: string;
+	};
+	message: string;
+}
+
+// Enhanced Provider Dashboard API functions
+export const providerEarningsApi = {
+	// Get enhanced dashboard summary with earnings
+	async getDashboardSummary(params?: {
+		startDate?: string;
+		endDate?: string;
+	}): Promise<ProviderEarningsSummary> {
+		const query: Record<string, string> = {};
+		if (params?.startDate) query.startDate = params.startDate;
+		if (params?.endDate) query.endDate = params.endDate;
+
+		const response = await fetch(
+			`/api/provider/dashboard-summary?${new URLSearchParams(query)}`
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch provider dashboard summary');
+		}
+
+		const result = await response.json();
+		return result.data;
+	},
+
+	// Alias for getDashboardSummary to match existing usage
+	async getEarningsSummary(params?: {
+		startDate?: string;
+		endDate?: string;
+	}): Promise<ProviderEarningsSummary> {
+		return this.getDashboardSummary(params);
+	},
+
+	// Get earnings history with pagination
+	async getEarnings(params?: {
+		page?: number;
+		limit?: number;
+		status?: 'PENDING_CLEARANCE' | 'AVAILABLE' | 'PAID_OUT' | 'FROZEN';
+		startDate?: string;
+		endDate?: string;
+		cursor?: string;
+	}): Promise<ProviderEarningsResponse> {
+		const query: Record<string, string> = {};
+		if (params?.page) query.page = params.page.toString();
+		if (params?.limit) query.limit = params.limit.toString();
+		if (params?.status) query.status = params.status;
+		if (params?.startDate) query.startDate = params.startDate;
+		if (params?.endDate) query.endDate = params.endDate;
+		if (params?.cursor) query.cursor = params.cursor;
+
+		const response = await fetch(
+			`/api/provider/earnings?${new URLSearchParams(query)}`
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch provider earnings');
+		}
+
+		return response.json();
+	},
+
+	// Get analytics data for charts
+	async getAnalytics(params: {
+		report: 'earnings_by_service' | 'earnings_over_time' | 'bookings_over_time';
+		startDate?: string;
+		endDate?: string;
+		period?: 'day' | 'week' | 'month';
+	}): Promise<ProviderAnalyticsData> {
+		const query: Record<string, string> = { report: params.report };
+		if (params.startDate) query.startDate = params.startDate;
+		if (params.endDate) query.endDate = params.endDate;
+		if (params.period) query.period = params.period;
+
+		const response = await fetch(
+			`/api/provider/analytics?${new URLSearchParams(query)}`
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch provider analytics');
+		}
+
+		return response.json();
+	},
+
+	// Request a payout
+	async requestPayout(payoutData: PayoutRequest): Promise<PayoutResponse> {
+		const response = await fetch('/api/provider/payouts', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(payoutData),
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || 'Failed to request payout');
+		}
+
+		return response.json();
+	},
+};
+
 // React Query keys for consistent caching
 export const providerDashboardQueryKeys = {
 	all: ["provider-dashboard"] as const,
@@ -364,6 +557,30 @@ export const providerDashboardQueryKeys = {
 	servicesSummary: () => ["provider-dashboard", "services-summary"] as const,
 	recentBookings: (limit = 5) =>
 		["provider-dashboard", "recent-bookings", limit] as const,
+};
+
+// Enhanced earnings query keys
+export const providerEarningsQueryKeys = {
+	all: ["provider-earnings"] as const,
+	dashboardSummary: (params?: { startDate?: string; endDate?: string }) =>
+		["provider-earnings", "dashboard-summary", params] as const,
+	// Alias for compatibility with existing code
+	summary: (params?: { startDate?: string; endDate?: string }) =>
+		["provider-earnings", "summary", params] as const,
+	earnings: (params?: {
+		page?: number;
+		limit?: number;
+		status?: string;
+		startDate?: string;
+		endDate?: string;
+		cursor?: string;
+	}) => ["provider-earnings", "list", params] as const,
+	analytics: (params: {
+		report: string;
+		startDate?: string;
+		endDate?: string;
+		period?: string;
+	}) => ["provider-earnings", "analytics", params] as const,
 };
 
 export const providerAvailabilityQueryKeys = {
@@ -375,3 +592,16 @@ export const providerAvailabilityQueryKeys = {
 		params?: { startDate?: string; endDate?: string; serviceId?: string },
 	) => ["provider-availability", providerId, "list", params] as const,
 };
+
+// Utility functions
+export function formatCurrency(amount: number, currency: string = 'NGN'): string {
+	const currencySymbols: Record<string, string> = {
+		NGN: '₦',
+		USD: '$',
+		GBP: '£',
+		EUR: '€',
+	};
+
+	const symbol = currencySymbols[currency] || currency;
+	return `${symbol}${amount.toLocaleString()}`;
+}

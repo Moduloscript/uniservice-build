@@ -88,6 +88,7 @@ model booking {
   updatedAt    DateTime      @updatedAt
   review       review?
   payment      payment?
+  earning      Earning?
 }
 
 model invitation {
@@ -334,6 +335,8 @@ model user {
   receivedReviews      review[]              @relation("ReceivedReviews")
   providerAvailability ProviderAvailability[] @relation("ProviderAvailability")
   notificationSettings NotificationSettings?
+  earnings            Earning[]
+  payouts             Payout[]
 
   @@index([userType])
 }
@@ -371,6 +374,65 @@ model ProviderAvailability {
   @@index([serviceId])
   @@index([date])
   @@index([date, providerId])
+}
+
+/// Earnings tracking for providers - tracks every payment that should result in earnings
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Earning {
+  id            String        @id @default(uuid())
+  providerId    String        // Provider who earned this amount
+  bookingId     String        @unique // Related booking
+  amount        Decimal       // Amount earned (after platform fees)
+  platformFee   Decimal?      // Platform fee deducted
+  grossAmount   Decimal       // Original service price
+  currency      String        @default("NGN")
+  status        EarningStatus @default(PENDING_CLEARANCE)
+  clearedAt     DateTime?     // When funds became available for payout
+  payoutId      String?       // If paid out, reference to payout
+  metadata      Json?         // Additional earning details
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  provider      user          @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  booking       booking       @relation(fields: [bookingId], references: [id])
+  payout        Payout?       @relation(fields: [payoutId], references: [id])
+  
+  @@index([providerId])
+  @@index([status])
+  @@index([clearedAt])
+  @@index([providerId, status])
+}
+
+/// Payout requests and tracking for providers
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Payout {
+  id                String          @id @default(uuid())
+  providerId        String          // Provider requesting payout
+  amount            Decimal         // Total payout amount
+  currency          String          @default("NGN")
+  status            PayoutStatus    @default(REQUESTED)
+  paymentProvider   PaymentProvider // Which provider to use for payout
+  accountNumber     String          // Bank account number
+  accountName       String          // Account holder name
+  bankCode          String          // Bank code
+  bankName          String          // Bank name
+  transactionRef    String?         @unique // Payment provider transaction reference
+  gatewayResponse   String?         // Response from payment gateway
+  fees              Decimal?        // Processing fees
+  netAmount         Decimal?        // Amount after fees
+  processedAt       DateTime?       // When payout was processed
+  failureReason     String?         // Reason for failure if failed
+  metadata          Json?           // Additional payout details
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  provider          user            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  earnings          Earning[]       // Earnings included in this payout
+  
+  @@index([providerId])
+  @@index([status])
+  @@index([processedAt])
+  @@index([providerId, status])
 }
 
 /// User notification preferences
@@ -489,4 +551,19 @@ enum ServiceLevel {
   INTERMEDIATE
   ADVANCED
   EXPERT
+}
+
+enum EarningStatus {
+  PENDING_CLEARANCE
+  AVAILABLE
+  PAID_OUT
+  FROZEN
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

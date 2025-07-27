@@ -20,12 +20,16 @@ import {
 	TrendingUp,
 	Clock,
 	Star,
+	DollarSign,
+	Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
 	providerDashboardApi,
 	providerDashboardQueryKeys,
+	providerEarningsApi,
+	providerEarningsQueryKeys,
 } from "@/modules/provider/api";
 
 export default function ProviderDashboard() {
@@ -118,6 +122,12 @@ export default function ProviderDashboard() {
 								<Clock className="h-3 w-3 mr-1" />
 								Live
 							</Badge>
+							<Button asChild variant="outline" size="sm">
+								<Link href="/app/provider/earnings">
+									<DollarSign className="h-4 w-4 mr-2" />
+									Earnings
+								</Link>
+							</Button>
 							<Button asChild variant="primary">
 								<Link href="/app/provider/services/new">
 									<Plus className="h-4 w-4 mr-2" />
@@ -228,7 +238,7 @@ export default function ProviderDashboard() {
 					<Separator className="my-8" />
 
 					{/* Main Action Cards */}
-					<div className="grid gap-6 md:grid-cols-2">
+					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 						<Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-card/80 backdrop-blur-lg">
 							<CardHeader className="pb-4">
 								<div className="flex items-center justify-between">
@@ -401,6 +411,68 @@ export default function ProviderDashboard() {
 												View All Bookings
 											</Link>
 										</Button>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+
+						{/* Earnings Dashboard Card */}
+						<Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-card/70 backdrop-blur-lg hover:bg-green-50/50 hover:border-green-200">
+							<CardHeader className="pb-4">
+								<div className="flex items-center justify-between">
+									<div className="flex items-center space-x-3">
+										<div className="p-2 bg-green-500 rounded-lg group-hover:bg-green-600 transition-colors">
+											<DollarSign className="h-5 w-5 text-white" />
+										</div>
+										<div>
+											<CardTitle className="text-lg font-semibold text-foreground">
+												Earnings & Payouts
+											</CardTitle>
+											<CardDescription className="text-sm text-muted-foreground">
+												Track earnings and request payouts
+											</CardDescription>
+										</div>
+									</div>
+									<Badge
+										variant="outline"
+										className="text-xs text-green-700 border-green-300"
+									>
+										<Wallet className="h-3 w-3 mr-1" />
+										New!
+									</Badge>
+								</div>
+							</CardHeader>
+							<CardContent className="pt-0">
+								<div className="space-y-4">
+									<div className="p-4 bg-green-50/50 rounded-lg border border-green-100">
+										<p className="text-sm text-foreground mb-3">
+											View detailed earnings analytics, track payouts, and manage your financial performance.
+										</p>
+										<Button
+											asChild
+											size="sm"
+											variant="default"
+											className="bg-green-600 hover:bg-green-700"
+										>
+											<Link href="/app/provider/earnings">
+												<DollarSign className="h-4 w-4 mr-2" />
+												View Earnings Dashboard
+											</Link>
+										</Button>
+									</div>
+									<div className="flex justify-between items-center text-xs text-muted-foreground">
+										<span>Quick Actions:</span>
+										<div className="flex space-x-2">
+											<Button
+												asChild
+												variant="ghost"
+												size="sm"
+											>
+												<Link href="/app/provider/earnings?tab=analytics">
+													Analytics
+												</Link>
+											</Button>
+										</div>
 									</div>
 								</div>
 							</CardContent>

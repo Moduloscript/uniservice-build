@@ -29,6 +29,7 @@ import { reviewsRouter } from "./routes/reviews";
 import { providerDashboardRouter } from "./routes/provider/dashboard";
 import { providerServicesRouter } from "./routes/provider/services";
 import { providerBookingsRouter } from "./routes/provider/bookings";
+import { providerEarningsRouter } from "./routes/provider/earnings";
 import { providerAvailabilityRouter } from "./routes/provider-availability";
 import { debugUserRouter } from "./routes/debug-user";
 import { userVerificationRouter } from "./routes/user-verification";
@@ -62,6 +63,7 @@ const appRouter = app
 	.route("/", providerDashboardRouter)
 	.route("/", providerServicesRouter)
 	.route("/", providerBookingsRouter)
+	.route("/", providerEarningsRouter)
 	.route("/providers", providerAvailabilityRouter)
 	.route("/debug", debugUserRouter);
 app.route("/", userVerificationRouter)

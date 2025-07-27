@@ -36,6 +36,9 @@
 	"main": "./index.ts",
 	"name": "@repo/api",
 	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
 		"type-check": "tsc --noEmit"
 	},
 	"version": "0.0.0"
