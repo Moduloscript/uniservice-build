@@ -15,6 +15,7 @@ interface PaymentMethodSelectorProps {
   onMethodSelect: (method: PaymentProvider, channels?: PaymentChannel[]) => void;
   onContinue: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
   amount: number;
   currency?: string;
 }
@@ -50,6 +51,7 @@ export function PaymentMethodSelector({
   onMethodSelect,
   onContinue,
   disabled = false,
+  isLoading = false,
   amount,
   currency = "NGN",
 }: PaymentMethodSelectorProps) {
@@ -193,11 +195,14 @@ export function PaymentMethodSelector({
       {/* Continue Button */}
       <Button
         onClick={onContinue}
-        disabled={!selectedMethod || disabled}
+        disabled={!selectedMethod || disabled || isLoading}
+        loading={isLoading}
         className="w-full"
         size="lg"
       >
-        {selectedMethod 
+        {isLoading 
+          ? "Processing..." 
+          : selectedMethod 
           ? `Continue with ${PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}` 
           : "Select Payment Method"
         }

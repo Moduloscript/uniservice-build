@@ -20,6 +20,7 @@ export function BookingList({
 }: BookingListProps) {
 	const [bookings, setBookings] = useState<Booking[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const loadBookings = async () => {
@@ -39,8 +40,17 @@ export function BookingList({
 		loadBookings();
 	}, []);
 
-	const handleRefresh = () => {
-		loadBookings();
+	const handleRefresh = async () => {
+		setIsRefreshing(true);
+		try {
+			setError(null);
+			const data = await fetchBookings();
+			setBookings(data);
+		} catch (err) {
+			setError((err as Error).message);
+		} finally {
+			setIsRefreshing(false);
+		}
 	};
 
 	const getEmptyMessage = () => {
@@ -92,16 +102,18 @@ export function BookingList({
 			<div className="space-y-4">
 				<div className="flex justify-between items-center">
 					<h2 className="text-2xl font-bold">{title}</h2>
-					{showRefresh && (
-						<Button
-							onClick={handleRefresh}
-							variant="outline"
-							size="sm"
-						>
-							<RefreshCw className="h-4 w-4 mr-2" />
-							Try Again
-						</Button>
-					)}
+				{showRefresh && (
+					<Button
+						onClick={handleRefresh}
+						variant="outline"
+						size="sm"
+						disabled={isRefreshing}
+						loading={isRefreshing}
+					>
+						<RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+						{isRefreshing ? 'Refreshing...' : 'Try Again'}
+					</Button>
+				)}
 				</div>
 				<div className="text-center py-8">
 					<div className="text-red-600 mb-2">
@@ -117,12 +129,18 @@ export function BookingList({
 		<div className="space-y-4">
 			<div className="flex justify-between items-center">
 				<h2 className="text-2xl font-bold">{title}</h2>
-				{showRefresh && bookings.length > 0 && (
-					<Button onClick={handleRefresh} variant="outline" size="sm">
-						<RefreshCw className="h-4 w-4 mr-2" />
-						Refresh
-					</Button>
-				)}
+			{showRefresh && bookings.length > 0 && (
+				<Button 
+					onClick={handleRefresh} 
+					variant="outline" 
+					size="sm"
+					disabled={isRefreshing}
+					loading={isRefreshing}
+				>
+					<RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+					{isRefreshing ? 'Refreshing...' : 'Refresh'}
+				</Button>
+			)}
 			</div>
 
 			{bookings.length === 0 ? (

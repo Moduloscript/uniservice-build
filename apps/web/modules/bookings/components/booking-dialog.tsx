@@ -48,6 +48,8 @@ export function BookingDialog({
 	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentProvider | undefined>('flutterwave');
 	const [bookingId, setBookingId] = useState<string | null>(null);
 	const [transactionRef, setTransactionRef] = useState<string | null>(null);
+	const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+	const [isProcessingPaymentMethod, setIsProcessingPaymentMethod] = useState(false);
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
@@ -63,7 +65,7 @@ export function BookingDialog({
 		setSelectedSlot(slot);
 	};
 
-	// Reset dialog state when closed
+		// Reset dialog state when closed
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
 		if (!open) {
@@ -73,6 +75,8 @@ export function BookingDialog({
 			setSelectedPaymentMethod(undefined);
 			setBookingId(null);
 			setTransactionRef(null);
+			setIsCreatingBooking(false);
+			setIsProcessingPaymentMethod(false);
 		}
 	};
 
@@ -118,6 +122,7 @@ export function BookingDialog({
 			return;
 		}
 
+		setIsCreatingBooking(true);
 		try {
 			// Create booking first (with PENDING status)
 			const bookingData = {
@@ -133,6 +138,8 @@ export function BookingDialog({
 			
 		} catch (error) {
 			toast.error((error as Error).message);
+		} finally {
+			setIsCreatingBooking(false);
 		}
 	};
 
@@ -141,7 +148,12 @@ export function BookingDialog({
 			toast.error("Please select a payment method");
 			return;
 		}
-		setCurrentStep('payment-processing');
+		setIsProcessingPaymentMethod(true);
+		// Add a small delay to show loading state
+		setTimeout(() => {
+			setCurrentStep('payment-processing');
+			setIsProcessingPaymentMethod(false);
+		}, 500);
 	};
 
 	const handlePaymentSuccess = (txRef: string) => {
@@ -268,10 +280,11 @@ export function BookingDialog({
 							</Button>
 							<Button
 								onClick={handleSlotConfirmation}
-								disabled={!selectedSlot}
+								disabled={!selectedSlot || isCreatingBooking}
+								loading={isCreatingBooking}
 								className="flex-1"
 							>
-								{selectedSlot ? "Continue to Payment" : "Select a Time Slot"}
+								{isCreatingBooking ? "Creating Booking..." : (selectedSlot ? "Continue to Payment" : "Select a Time Slot")}
 							</Button>
 						</div>
 					</div>
@@ -283,6 +296,7 @@ export function BookingDialog({
 						selectedMethod={selectedPaymentMethod}
 						onMethodSelect={setSelectedPaymentMethod}
 						onContinue={handlePaymentMethodContinue}
+						isLoading={isProcessingPaymentMethod}
 						amount={Number(service.price)}
 					/>
 				)}

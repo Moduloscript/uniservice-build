@@ -65,6 +65,7 @@ export function LoginForm() {
 	const { user, loaded: sessionLoaded } = useSession();
 
 	const [showPassword, setShowPassword] = useState(false);
+	const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
 	const invitationId = searchParams.get("invitationId");
 	const email = searchParams.get("email");
 	const redirectTo = searchParams.get("redirectTo");
@@ -126,6 +127,7 @@ export function LoginForm() {
 	};
 
 	const signInWithPasskey = async () => {
+		setIsPasskeyLoading(true);
 		try {
 			await authClient.signIn.passkey();
 
@@ -138,6 +140,8 @@ export function LoginForm() {
 						: undefined,
 				),
 			});
+		} finally {
+			setIsPasskeyLoading(false);
 		}
 	};
 
@@ -315,9 +319,11 @@ export function LoginForm() {
 										variant="outline"
 										className="w-full sm:col-span-2"
 										onClick={() => signInWithPasskey()}
+										disabled={isPasskeyLoading || form.formState.isSubmitting}
+										loading={isPasskeyLoading}
 									>
 										<KeyIcon className="mr-1.5 size-4 text-primary" />
-										{t("auth.login.loginWithPasskey")}
+										{isPasskeyLoading ? "Authenticating..." : t("auth.login.loginWithPasskey")}
 									</Button>
 								)}
 							</div>
