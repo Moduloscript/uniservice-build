@@ -271,6 +271,9 @@
 			"body": "Your verification has been rejected. Please review the feedback below and resubmit your documents.",
 			"resubmit": "Resubmit verification",
 			"subject": "Verification Rejected"
+		},
+		"earningsNotification": {
+			"subject": "New Earnings Available - Payment Received"
 		}
 	},
 	"newsletter": {

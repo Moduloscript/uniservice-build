@@ -431,11 +431,32 @@ export interface ProviderAnalyticsData {
 
 export interface PayoutRequest {
 	amount: number;
-	accountNumber: string;
-	accountName: string;
-	bankCode: string;
-	bankName: string;
-	paymentProvider: 'PAYSTACK' | 'FLUTTERWAVE';
+	method: string;
+	accountDetails: string;
+	notes?: string;
+}
+
+export interface PayoutRequestRecord {
+	id: string;
+	amount: number;
+	method: string;
+	accountDetails: string;
+	status: 'PENDING' | 'APPROVED' | 'PROCESSING' | 'COMPLETED' | 'REJECTED' | 'FAILED';
+	notes?: string;
+	createdAt: string;
+	processedAt?: string;
+	rejectionReason?: string;
+}
+
+export interface PayoutRequestsResponse {
+	requests: PayoutRequestRecord[];
+	meta?: {
+		pagination?: {
+			page: number;
+			limit: number;
+			total: number;
+		};
+	};
 }
 
 export interface PayoutResponse {
@@ -509,10 +530,10 @@ export const providerEarningsApi = {
 
 	// Get analytics data for charts
 	async getAnalytics(params: {
-		report: 'earnings_by_service' | 'earnings_over_time' | 'bookings_over_time';
+		report: 'earnings_by_service' | 'earnings_over_time' | 'bookings_over_time' | 'hourly_performance' | 'monthly_comparison' | 'student_retention' | 'performance_metrics';
 		startDate?: string;
 		endDate?: string;
-		period?: 'day' | 'week' | 'month';
+		period?: 'day' | 'week' | 'month' | 'hour';
 	}): Promise<ProviderAnalyticsData> {
 		const query: Record<string, string> = { report: params.report };
 		if (params.startDate) query.startDate = params.startDate;
@@ -525,6 +546,28 @@ export const providerEarningsApi = {
 
 		if (!response.ok) {
 			throw new Error('Failed to fetch provider analytics');
+		}
+
+		return response.json();
+	},
+
+	// Get payout requests history
+	async getPayoutRequests(params?: {
+		limit?: number;
+		page?: number;
+		status?: string;
+	}): Promise<PayoutRequestsResponse> {
+		const query: Record<string, string> = {};
+		if (params?.limit) query.limit = params.limit.toString();
+		if (params?.page) query.page = params.page.toString();
+		if (params?.status) query.status = params.status;
+
+		const response = await fetch(
+			`/api/provider/payout-requests?${new URLSearchParams(query)}`
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to fetch payout requests');
 		}
 
 		return response.json();
@@ -581,6 +624,11 @@ export const providerEarningsQueryKeys = {
 		endDate?: string;
 		period?: string;
 	}) => ["provider-earnings", "analytics", params] as const,
+	payouts: (params?: {
+		limit?: number;
+		page?: number;
+		status?: string;
+	}) => ["provider-earnings", "payouts", params] as const,
 };
 
 export const providerAvailabilityQueryKeys = {

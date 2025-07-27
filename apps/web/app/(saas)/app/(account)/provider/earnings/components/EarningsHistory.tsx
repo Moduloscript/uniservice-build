@@ -62,7 +62,7 @@ import {
 import {
 	providerEarningsApi,
 	providerEarningsQueryKeys,
-	type EarningRecord,
+	type ProviderEarning,
 } from "@/modules/provider/api";
 
 interface EarningsHistoryProps {
@@ -73,7 +73,7 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [selectedEarning, setSelectedEarning] = useState<EarningRecord | null>(null);
+	const [selectedEarning, setSelectedEarning] = useState<ProviderEarning | null>(null);
 	const pageSize = 20;
 
 	// Fetch earnings history
@@ -83,18 +83,16 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 		isError,
 		refetch,
 	} = useQuery({
-		queryKey: providerEarningsQueryKeys.history({
+		queryKey: providerEarningsQueryKeys.earnings({
 			page: currentPage,
 			limit: pageSize,
-			search: searchTerm,
 			status: statusFilter === "all" ? undefined : statusFilter,
 			...dateRange,
 		}),
 		queryFn: () =>
-			providerEarningsApi.getEarningsHistory({
+			providerEarningsApi.getEarnings({
 				page: currentPage,
 				limit: pageSize,
-				search: searchTerm || undefined,
 				status: statusFilter === "all" ? undefined : statusFilter,
 				...dateRange,
 			}),
@@ -102,7 +100,12 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 	});
 
 	// Format currency
-	const formatCurrency = (amount: number) => `₦${amount.toLocaleString()}`;
+	const formatCurrency = (amount: number | undefined | null) => {
+		if (amount === undefined || amount === null || isNaN(amount)) {
+			return '₦0';
+		}
+		return `₦${amount.toLocaleString()}`;
+	};
 
 	// Format date
 	const formatDate = (dateString: string) => {
@@ -166,8 +169,8 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 		console.log("Exporting earnings data...");
 	};
 
-	const totalPages = Math.ceil((earningsData?.total || 0) / pageSize);
-	const earnings = earningsData?.earnings || [];
+	const totalPages = Math.ceil((earningsData?.meta?.pagination?.total || 0) / pageSize);
+	const earnings = earningsData?.data || [];
 
 	return (
 		<Card>
@@ -289,19 +292,19 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 												<div className="flex items-center gap-2">
 													<BookOpen className="h-4 w-4 text-muted-foreground" />
 													<span className="font-medium text-sm">
-														{earning.serviceName}
+														{earning.booking.service.name}
 													</span>
 												</div>
 											</TableCell>
 											<TableCell>
 												<div className="flex items-center gap-2">
 													<User className="h-4 w-4 text-muted-foreground" />
-													<span className="text-sm">{earning.studentName}</span>
+													<span className="text-sm">{earning.booking.student.name}</span>
 												</div>
 											</TableCell>
 											<TableCell>
 												<code className="text-xs bg-muted px-2 py-1 rounded">
-													{earning.bookingId.slice(-8)}
+													{earning.booking.id.slice(-8)}
 												</code>
 											</TableCell>
 											<TableCell>
@@ -348,7 +351,7 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 														<DropdownMenuSeparator />
 														<DropdownMenuItem
 															onClick={() => {
-																navigator.clipboard.writeText(earning.bookingId);
+																navigator.clipboard.writeText(earning.booking.id);
 															}}
 														>
 															Copy Booking ID
@@ -367,8 +370,8 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 							<div className="flex items-center justify-between mt-6">
 								<div className="text-sm text-muted-foreground">
 									Showing {(currentPage - 1) * pageSize + 1} to{" "}
-									{Math.min(currentPage * pageSize, earningsData?.total || 0)} of{" "}
-									{earningsData?.total || 0} earnings
+									{Math.min(currentPage * pageSize, earningsData?.meta?.pagination?.total || 0)} of{" "}
+									{earningsData?.meta?.pagination?.total || 0} earnings
 								</div>
 								<div className="flex items-center gap-2">
 									<Button
@@ -440,7 +443,7 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 											Service
 										</label>
 										<p className="text-sm font-medium">
-											{selectedEarning.serviceName}
+											{selectedEarning.booking.service.name}
 										</p>
 									</div>
 									<div>
@@ -448,7 +451,7 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 											Student
 										</label>
 										<p className="text-sm font-medium">
-											{selectedEarning.studentName}
+											{selectedEarning.booking.student.name}
 										</p>
 									</div>
 								</div>
@@ -458,7 +461,7 @@ export function EarningsHistory({ dateRange }: EarningsHistoryProps) {
 											Booking ID
 										</label>
 										<code className="text-xs bg-muted px-2 py-1 rounded block">
-											{selectedEarning.bookingId}
+											{selectedEarning.booking.id}
 										</code>
 									</div>
 									<div>

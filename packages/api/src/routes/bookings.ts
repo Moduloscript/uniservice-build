@@ -9,6 +9,9 @@ import {
 	updateAvailabilityOnBookingCancel,
 	validateBookingAvailability,
 } from "../utils/availability-sync";
+import { createEarningsFromCompletedBooking, calculatePlatformFee } from "../utils/earnings-helper";
+import { logger } from "@repo/logs";
+import { sendEmail } from "@repo/mail";
 
 // Create booking schema
 const createBookingSchema = z.object({
@@ -83,7 +86,7 @@ export const bookingsRouter = new Hono()
 				new Date(data.scheduledFor)
 			);
 			if (!syncResult.success) {
-				console.warn("Failed to sync availability:", syncResult.message);
+				logger.warn("Failed to sync availability:", { message: syncResult.message });
 			}
 		});
 
@@ -212,15 +215,131 @@ export const bookingsRouter = new Hono()
 				updatedBooking.scheduledFor
 			);
 			if (!syncResult.success) {
-				console.warn("Failed to sync availability on status change:", syncResult.message);
+				logger.warn("Failed to sync availability on status change:", { message: syncResult.message });
 			}
 		});
 	}
 
-	return c.json({ 
-		booking: updatedBooking,
-		message: data.status === "CANCELLED" ? "Booking cancelled and availability updated" : "Booking status updated"
-	});
+  // Create earnings if booking is completed - using transaction for safety
+  if (data.status === "COMPLETED") {
+    try {
+      await db.$transaction(async (tx) => {
+        // Verify the booking is indeed completed within the transaction
+        const completedBooking = await tx.booking.findUnique({
+          where: { id: updatedBooking.id },
+          include: {
+            service: true,
+            provider: { select: { id: true, name: true, email: true } },
+            student: { select: { id: true, name: true } }
+          }
+        });
+
+        if (!completedBooking || completedBooking.status !== "COMPLETED") {
+          throw new Error(`Booking ${updatedBooking.id} is not in completed status`);
+        }
+
+        // Check if earnings already exist to prevent duplicates
+        const existingEarning = await tx.earning.findUnique({
+          where: { bookingId: updatedBooking.id }
+        });
+
+        if (existingEarning) {
+          logger.warn(`Earnings already exist for booking ${updatedBooking.id}`, {
+            earningId: existingEarning.id,
+            providerId: completedBooking.providerId
+          });
+          return;
+        }
+
+        // Calculate earnings amounts using configurable platform fee
+        const grossAmount = Number(completedBooking.service.price);
+        const platformFee = calculatePlatformFee(grossAmount);
+        const netAmount = grossAmount - platformFee;
+
+        // Create earnings record within the transaction
+        await tx.earning.create({
+          data: {
+            providerId: completedBooking.providerId,
+            bookingId: completedBooking.id,
+            grossAmount: grossAmount,
+            platformFee: platformFee,
+            amount: netAmount,
+            currency: "NGN",
+            status: "PENDING_CLEARANCE",
+            metadata: {
+              serviceName: completedBooking.service.name,
+              studentName: completedBooking.student.name,
+              completedAt: new Date().toISOString(),
+              bookingScheduledFor: completedBooking.scheduledFor?.toISOString() || new Date().toISOString()
+            }
+          }
+        });
+
+        logger.info("Earnings created successfully in transaction", {
+          bookingId: completedBooking.id,
+          providerId: completedBooking.providerId,
+          providerName: completedBooking.provider.name,
+          grossAmount,
+          platformFee,
+          netAmount,
+          serviceName: completedBooking.service.name
+        });
+
+        // Send earnings notification email to provider
+        setImmediate(async () => {
+          try {
+            const emailSent = await sendEmail({
+              to: completedBooking.provider.email,
+              templateId: "earningsNotification",
+              context: {
+                name: completedBooking.provider.name,
+                serviceName: completedBooking.service.name,
+                clientName: completedBooking.student.name,
+                earningsAmount: netAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 }),
+                totalAmount: grossAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 }),
+                platformFee: platformFee.toLocaleString('en-NG', { minimumFractionDigits: 2 }),
+                dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/app/provider/earnings`
+              }
+            });
+            
+            if (emailSent) {
+              logger.info("Earnings notification email sent successfully", {
+                bookingId: completedBooking.id,
+                providerId: completedBooking.providerId,
+                providerEmail: completedBooking.provider.email
+              });
+            } else {
+              logger.warn("Failed to send earnings notification email", {
+                bookingId: completedBooking.id,
+                providerId: completedBooking.providerId,
+                providerEmail: completedBooking.provider.email
+              });
+            }
+          } catch (emailError) {
+            logger.error("Error sending earnings notification email", {
+              bookingId: completedBooking.id,
+              providerId: completedBooking.providerId,
+              providerEmail: completedBooking.provider.email,
+              error: emailError.message
+            });
+          }
+        });
+      });
+    } catch (error) {
+      logger.error("Failed to create earnings for booking in transaction", {
+        bookingId: updatedBooking.id,
+        error: error.message,
+      });
+      
+      // Even if earnings creation fails, the booking status update should succeed
+      // This maintains data consistency while alerting about the earnings issue
+    }
+  }
+
+  return c.json({ 
+    booking: updatedBooking,
+    message: data.status === "CANCELLED" ? "Booking cancelled and availability updated" : "Booking status updated"
+  });
 	})
 	// Delete/cancel a booking
 	.delete(":id", async (c) => {
@@ -263,7 +382,7 @@ export const bookingsRouter = new Hono()
 		cancelledBooking.scheduledFor
 	);
 		if (!syncResult.success) {
-			console.warn("Failed to sync availability on cancellation:", syncResult.message);
+			logger.warn("Failed to sync availability on cancellation:", { message: syncResult.message });
 		}
 	});
 

@@ -1,7 +1,7 @@
 import { config } from "@repo/config";
 import { getSession } from "@saas/auth/lib/server";
 import { Logo } from "@shared/components/Logo";
-import { Building2Icon, FileCheck2Icon, UsersIcon } from "lucide-react";
+import { Building2Icon, FileCheck2Icon, UsersIcon, DollarSignIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -54,6 +54,15 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 								>
 									<FileCheck2Icon className="size-4 opacity-50" />
 									Verification Docs
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/app/admin/earnings"
+									className="flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 hover:text-foreground/80"
+								>
+									<DollarSignIcon className="size-4 opacity-50" />
+									Earnings Management
 								</Link>
 							</li>
 							{config.organizations.enable && (

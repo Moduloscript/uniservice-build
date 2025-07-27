@@ -1,3 +1,4 @@
+import { EarningsNotification } from "../emails/EarningsNotification";
 import { EmailVerification } from "../emails/EmailVerification";
 import { ForgotPassword } from "../emails/ForgotPassword";
 import { MagicLink } from "../emails/MagicLink";
@@ -16,4 +17,5 @@ export const mailTemplates = {
 	emailVerification: EmailVerification,
 	verificationApproved: VerificationApproved,
 	verificationRejected: VerificationRejected,
+	earningsNotification: EarningsNotification,
 } as const;

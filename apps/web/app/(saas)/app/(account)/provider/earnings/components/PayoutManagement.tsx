@@ -60,6 +60,7 @@ import {
 	providerEarningsQueryKeys,
 	type ProviderEarningsSummary,
 	type PayoutRequest,
+	type PayoutRequestRecord,
 } from "@/modules/provider/api";
 
 interface PayoutManagementProps {

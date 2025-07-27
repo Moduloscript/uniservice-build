@@ -90,6 +90,45 @@ export function EarningsAnalytics({ dateRange }: EarningsAnalyticsProps) {
 		staleTime: 5 * 60 * 1000,
 	});
 
+	const { data: monthlyComparison, isLoading: isLoadingMonthlyComparison } = useQuery({
+		queryKey: providerEarningsQueryKeys.analytics({
+			report: "monthly_comparison",
+			...dateRange,
+		}),
+		queryFn: () =>
+			providerEarningsApi.getAnalytics({
+				report: "monthly_comparison",
+				...dateRange,
+			}),
+		staleTime: 5 * 60 * 1000,
+	});
+
+	const { data: studentRetention, isLoading: isLoadingStudentRetention } = useQuery({
+		queryKey: providerEarningsQueryKeys.analytics({
+			report: "student_retention",
+			...dateRange,
+		}),
+		queryFn: () =>
+			providerEarningsApi.getAnalytics({
+				report: "student_retention",
+				...dateRange,
+			}),
+		staleTime: 5 * 60 * 1000,
+	});
+
+	const { data: performanceMetrics, isLoading: isLoadingPerformanceMetrics } = useQuery({
+		queryKey: providerEarningsQueryKeys.analytics({
+			report: "performance_metrics",
+			...dateRange,
+		}),
+		queryFn: () =>
+			providerEarningsApi.getAnalytics({
+				report: "performance_metrics",
+				...dateRange,
+			}),
+		staleTime: 5 * 60 * 1000,
+	});
+
 	// Format currency
 	const formatCurrency = (amount: number) => `₦${amount.toLocaleString()}`;
 

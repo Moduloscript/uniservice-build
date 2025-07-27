@@ -3,6 +3,7 @@ import { db } from "@repo/database";
 import crypto from "crypto";
 import { createFlutterwaveProvider } from "@repo/payments";
 import { describeRoute } from "hono-openapi";
+import { logger } from "@repo/logs";
 
 // Initialize Flutterwave provider
 const flutterwaveProvider = createFlutterwaveProvider({
@@ -27,7 +28,10 @@ export const flutterwaveWebhookRouter = new Hono()
       
       // 1. Verify webhook signature (using correct v3.0.0 header name)
       if (!signature || signature !== secretHash) {
-        console.warn("Invalid Flutterwave webhook signature");
+        logger.warn('Invalid Flutterwave webhook signature', {
+          signature: signature ? '[REDACTED]' : 'missing',
+          hasSecretHash: !!secretHash
+        });
         return c.json({ error: "Invalid signature" }, 401);
       }
       
@@ -61,7 +65,12 @@ export const flutterwaveWebhookRouter = new Hono()
         
         return c.json({ status: "success" }, 200);
       } catch (error: any) {
-        console.error("Flutterwave webhook processing error:", error);
+        logger.error('Flutterwave webhook processing error', {
+          webhookId,
+          error: error.message,
+          eventType: payload?.event,
+          reference: payload?.data?.tx_ref || payload?.data?.reference
+        });
         
         // Update webhook event with error
         await db.webhook_event.update({
@@ -83,9 +92,12 @@ export const flutterwaveWebhookRouter = new Hono()
 async function processFlutterwaveWebhook(payload: any, webhookId: string) {
   const { event, data } = payload;
   
-  console.log(`Processing Flutterwave webhook: ${event}`, { 
-    transactionId: data.id, 
-    reference: data.tx_ref || data.reference 
+  // Use structured logging to prevent format string attacks
+  logger.info('Processing Flutterwave webhook', {
+    webhookId,
+    eventType: event,
+    transactionId: data?.id,
+    reference: data?.tx_ref || data?.reference
   });
   
   switch (event) {
@@ -102,7 +114,11 @@ async function processFlutterwaveWebhook(payload: any, webhookId: string) {
       await handleTransferFailed(data);
       break;
     default:
-      console.log(`Unhandled webhook event type: ${event}`);
+      logger.warn('Unhandled webhook event type', {
+        webhookId,
+        eventType: event,
+        availableHandlers: ['charge.completed', 'charge.failed', 'transfer.completed', 'transfer.failed']
+      });
   }
 }
 
@@ -112,7 +128,12 @@ async function processFlutterwaveWebhook(payload: any, webhookId: string) {
 async function handleChargeCompleted(data: any) {
   // 1. For testing, skip external API verification and use webhook data directly
   // In production, always verify with Flutterwave API
-  console.log('Processing charge completed for transaction:', data.id);
+  logger.info('Processing charge completed', {
+    transactionId: data?.id,
+    reference: data?.tx_ref,
+    amount: data?.amount,
+    currency: data?.currency
+  });
   
   // Mock transaction data from webhook for testing
   const transaction = {
@@ -165,7 +186,13 @@ async function handleChargeCompleted(data: any) {
     data: { status: "CONFIRMED" },
   });
   
-  console.log(`Payment completed successfully: ${payment.id}`);
+  logger.info('Payment completed successfully', {
+    paymentId: payment.id,
+    bookingId: payment.bookingId,
+    amount: payment.amount.toNumber(),
+    currency: payment.currency,
+    flutterwaveId: data.id
+  });
   
   // 6. Send confirmation notifications (implement as needed)
   // await sendPaymentConfirmation(payment.bookingId);
@@ -182,7 +209,10 @@ async function handleChargeFailed(data: any) {
   });
   
   if (!payment) {
-    console.warn(`Payment not found for failed transaction: ${data.tx_ref}`);
+    logger.warn('Payment not found for failed transaction', {
+      transactionRef: data?.tx_ref,
+      transactionId: data?.id
+    });
     return;
   }
   
@@ -204,7 +234,13 @@ async function handleChargeFailed(data: any) {
     data: { status: "CANCELLED" },
   });
   
-  console.log(`Payment failed: ${payment.id}`);
+  logger.info('Payment failed', {
+    paymentId: payment.id,
+    bookingId: payment.bookingId,
+    transactionRef: data?.tx_ref,
+    flutterwaveId: data?.id,
+    reason: data?.processor_response || 'Payment failed'
+  });
   
   // Send failure notification (implement as needed)
   // await sendPaymentFailureNotification(payment.bookingId);
@@ -214,10 +250,11 @@ async function handleChargeFailed(data: any) {
  * Handle successful transfer (payout)
  */
 async function handleTransferCompleted(data: any) {
-  console.log("Transfer completed:", {
-    reference: data.reference,
-    amount: data.amount,
-    status: data.status,
+  logger.info('Transfer completed', {
+    reference: data?.reference,
+    amount: data?.amount,
+    status: data?.status,
+    currency: data?.currency
   });
   
   // TODO: Update provider payout records when payout system is implemented
@@ -228,11 +265,12 @@ async function handleTransferCompleted(data: any) {
  * Handle failed transfer (payout)
  */
 async function handleTransferFailed(data: any) {
-  console.log("Transfer failed:", {
-    reference: data.reference,
-    amount: data.amount,
-    status: data.status,
-    error: data.complete_message,
+  logger.warn('Transfer failed', {
+    reference: data?.reference,
+    amount: data?.amount,
+    status: data?.status,
+    error: data?.complete_message || 'Transfer failed',
+    currency: data?.currency
   });
   
   // TODO: Handle failed payouts when payout system is implemented

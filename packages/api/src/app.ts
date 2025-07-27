@@ -35,6 +35,7 @@ import { debugUserRouter } from "./routes/debug-user";
 import { userVerificationRouter } from "./routes/user-verification";
 import { usersRouter } from "./routes/users/router";
 import studentRouter from "./routes/student";
+import { platformConfigRouter } from "./routes/platform-config";
 export const app = new Hono().basePath("/api");
 
 app.use(loggerMiddleware);
@@ -65,6 +66,7 @@ const appRouter = app
 	.route("/", providerBookingsRouter)
 	.route("/", providerEarningsRouter)
 	.route("/providers", providerAvailabilityRouter)
+	.route("/", platformConfigRouter)
 	.route("/debug", debugUserRouter);
 app.route("/", userVerificationRouter)
     .route("/", usersRouter)
