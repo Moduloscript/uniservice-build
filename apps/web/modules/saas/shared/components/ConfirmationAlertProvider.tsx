@@ -37,6 +37,7 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 	const [confirmOptions, setConfirmOptions] = useState<ConfirmOptions | null>(
 		null,
 	);
+	const [isConfirming, setIsConfirming] = useState(false);
 
 	const confirm = (options: ConfirmOptions) => {
 		setConfirmOptions(options);
@@ -73,13 +74,20 @@ export function ConfirmationAlertProvider({ children }: PropsWithChildren) {
 									? "error"
 									: "primary"
 							}
+							disabled={isConfirming}
+							loading={isConfirming}
 							onClick={async () => {
-								await confirmOptions?.onConfirm();
-								setConfirmOptions(null);
+								setIsConfirming(true);
+								try {
+									await confirmOptions?.onConfirm();
+									setConfirmOptions(null);
+								} finally {
+									setIsConfirming(false);
+								}
 							}}
 						>
-							{confirmOptions?.confirmLabel ??
-								t("common.confirmation.confirm")}
+							{isConfirming ? "Processing..." : (confirmOptions?.confirmLabel ??
+								t("common.confirmation.confirm"))}
 						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
