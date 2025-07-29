@@ -86,6 +86,7 @@ model booking {
   scheduledFor DateTime?     // Renamed from dateTime for clarity, made optional for migration
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  messages     Message[]
   review       review?
   payment      payment?
   earning      Earning?
@@ -335,6 +336,7 @@ model user {
   receivedReviews      review[]              @relation("ReceivedReviews")
   providerAvailability ProviderAvailability[] @relation("ProviderAvailability")
   notificationSettings NotificationSettings?
+  sentMessages         Message[]
   earnings            Earning[]
   payouts             Payout[]
 
@@ -433,6 +435,28 @@ model Payout {
   @@index([status])
   @@index([processedAt])
   @@index([providerId, status])
+}
+
+/// Messages for booking-related communication
+model Message {
+  id          String      @id @default(uuid())
+  bookingId   String
+  senderId    String
+  content     String      @db.Text
+  type        MessageType @default(TEXT)
+  metadata    Json?       // For storing read receipts, reactions, etc.
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  booking     booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender      user        @relation(fields: [senderId], references: [id])
+  
+  // Indexes for performance
+  @@index([bookingId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([bookingId, createdAt])
 }
 
 /// User notification preferences
@@ -566,4 +590,10 @@ enum PayoutStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  ATTACHMENT
 }

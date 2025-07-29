@@ -122,6 +122,8 @@ export const EarningScalarFieldEnumSchema = z.enum(['id','providerId','bookingId
 
 export const PayoutScalarFieldEnumSchema = z.enum(['id','providerId','amount','currency','status','paymentProvider','accountNumber','accountName','bankCode','bankName','transactionRef','gatewayResponse','fees','netAmount','processedAt','failureReason','metadata','createdAt','updatedAt']);
 
+export const MessageScalarFieldEnumSchema = z.enum(['id','bookingId','senderId','content','type','metadata','createdAt','updatedAt']);
+
 export const Webhook_eventScalarFieldEnumSchema = z.enum(['id','provider','event_type','reference','processed','retry_count','payload','error','signature','createdAt','processedAt']);
 
 export const NotificationSettingsScalarFieldEnumSchema = z.enum(['id','userId','emailBookingConfirmations','emailBookingReminders','emailBookingUpdates','emailPaymentConfirmations','emailReviewRequests','emailPromotions','smsBookingReminders','smsBookingConfirmations','smsPaymentAlerts','smsEmergencyAlerts','pushBookingUpdates','pushNewMessages','pushProviderUpdates','pushPromotions','reminderTiming','digestFrequency','communicationLanguage','timezone','createdAt','updatedAt']);
@@ -181,6 +183,10 @@ export type EarningStatusType = `${z.infer<typeof EarningStatusSchema>}`
 export const PayoutStatusSchema = z.enum(['REQUESTED','PROCESSING','COMPLETED','FAILED','CANCELLED']);
 
 export type PayoutStatusType = `${z.infer<typeof PayoutStatusSchema>}`
+
+export const MessageTypeSchema = z.enum(['TEXT','SYSTEM','ATTACHMENT']);
+
+export type MessageTypeType = `${z.infer<typeof MessageTypeSchema>}`
 
 /////////////////////////////////////////
 // MODELS
@@ -659,6 +665,26 @@ export const PayoutSchema = z.object({
 })
 
 export type Payout = z.infer<typeof PayoutSchema>
+
+/////////////////////////////////////////
+// MESSAGE SCHEMA
+/////////////////////////////////////////
+
+/**
+ * Messages for booking-related communication
+ */
+export const MessageSchema = z.object({
+  type: MessageTypeSchema,
+  id: z.string().uuid(),
+  bookingId: z.string(),
+  senderId: z.string(),
+  content: z.string(),
+  metadata: JsonValueSchema.nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+})
+
+export type Message = z.infer<typeof MessageSchema>
 
 /////////////////////////////////////////
 // WEBHOOK EVENT SCHEMA

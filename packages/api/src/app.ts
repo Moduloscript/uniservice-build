@@ -36,6 +36,7 @@ import { userVerificationRouter } from "./routes/user-verification";
 import { usersRouter } from "./routes/users/router";
 import studentRouter from "./routes/student";
 import { platformConfigRouter } from "./routes/platform-config";
+import { messagesRouter } from "./routes/messages/router";
 export const app = new Hono().basePath("/api");
 
 app.use(loggerMiddleware);
@@ -70,7 +71,8 @@ const appRouter = app
 	.route("/debug", debugUserRouter);
 app.route("/", userVerificationRouter)
     .route("/", usersRouter)
-    .route("/student", studentRouter);
+    .route("/student", studentRouter)
+    .route("/", messagesRouter);
 app.get(
 	"/app-openapi",
 	openAPISpecs(app, {

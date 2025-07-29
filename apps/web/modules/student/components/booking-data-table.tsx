@@ -29,9 +29,11 @@ import {
 	Clock,
 	User,
 	DollarSign,
+	MessageCircle,
 } from "lucide-react";
 import { DetailedStudentBooking, BookingFilters } from "../api";
 import { BookingStatusBadge } from "@/modules/bookings/components/booking-status-badge";
+import Link from "next/link";
 
 interface BookingDataTableProps {
 	bookings: DetailedStudentBooking[];
@@ -183,6 +185,12 @@ export function BookingDataTable({
 													<Eye className="mr-2 h-4 w-4" />
 													View Details
 												</DropdownMenuItem>
+												<DropdownMenuItem asChild>
+													<Link href={`/app/bookings/${booking.id}/chat`}>
+														<MessageCircle className="mr-2 h-4 w-4" />
+														Open Chat
+													</Link>
+												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
 									</TableCell>
@@ -240,7 +248,17 @@ export function BookingDataTable({
 							</div>
 						</div>
 
-						<div className="mt-3 pt-3 border-t flex justify-end">
+						<div className="mt-3 pt-3 border-t flex justify-end space-x-2">
+							<Button
+								variant="outline"
+								size="sm"
+								asChild
+							>
+								<Link href={`/app/bookings/${booking.id}/chat`}>
+									<MessageCircle className="mr-2 h-4 w-4" />
+									Chat
+								</Link>
+							</Button>
 							<Button
 								variant="outline"
 								size="sm"

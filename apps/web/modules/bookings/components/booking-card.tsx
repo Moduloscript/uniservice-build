@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "../../ui/components/button";
 import {
 	Card,
@@ -33,6 +34,7 @@ interface BookingCardProps {
 
 export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 	const [isLoading, setIsLoading] = useState(false);
+	const router = useRouter();
 
 	const formatDateTime = (dateTime: string) => {
 		const date = new Date(dateTime);
@@ -86,7 +88,8 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 			["PENDING", "CONFIRMED"].includes(booking.status)) ||
 		(userType === "PROVIDER" && booking.status === "PENDING") ||
 		userType === "ADMIN";
-	const canPay = userType === "STUDENT" && booking.status === "PENDING";
+    const canPay = userType === "STUDENT" && booking.status === "PENDING";
+    const canChat = userType === "PROVIDER";
 
 	return (
 		<Card className="w-full">
@@ -147,7 +150,7 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 				)}
 			</CardContent>
 
-			{(canConfirm || canComplete || canCancel || canPay) && (
+    {(canConfirm || canComplete || canCancel || canPay || canChat) && (
 				<CardFooter className="pt-3 border-t">
 					<div className="flex space-x-2 w-full">
 						{canPay && (
@@ -225,9 +228,18 @@ export function BookingCard({ booking, userType, onUpdate }: BookingCardProps) {
 								</AlertDialogContent>
 							</AlertDialog>
 						)}
-					</div>
-				</CardFooter>
-			)}
-		</Card>
+                        {canChat && (
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => router.push(`/app/bookings/${booking.id}/chat`)}
+                            >
+                                Chat
+                            </Button>
+                        )}
+                    </div>
+                </CardFooter>
+            )}
+        </Card>
 	);
 }
