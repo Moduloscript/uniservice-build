@@ -224,6 +224,18 @@ pnpm preview
 - Verify Supabase is running
 - Check firewall settings
 
+4. **Redis & Workers**
+- Verify Redis connection settings in .env
+- For serverless deployments, set ENABLE_WORKERS=false
+- For local development with workers:
+  ```bash
+  # Terminal 1: Run app without workers
+  ENABLE_WORKERS=false pnpm dev
+  
+  # Terminal 2: Run workers separately
+  pnpm --filter @repo/api worker:dev
+  ```
+
 2. **Build Errors**
 - Clear .next directory
 - Update dependencies

@@ -2,6 +2,7 @@
 	"dependencies": {
 		"@repo/ai": "workspace:*",
 		"@repo/auth": "workspace:*",
+		"@repo/cache": "workspace:*",
 		"@repo/config": "workspace:*",
 		"@repo/database": "workspace:*",
 		"@repo/i18n": "workspace:*",
@@ -30,6 +31,7 @@
 		"@vitest/ui": "^3.1.4",
 		"encoding": "^0.1.13",
 		"prisma": "^6.3.1",
+		"tsx": "^4.20.3",
 		"typescript": "5.7.3",
 		"vitest": "^3.1.4"
 	},

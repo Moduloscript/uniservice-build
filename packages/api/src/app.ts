@@ -37,6 +37,7 @@ import { usersRouter } from "./routes/users/router";
 import studentRouter from "./routes/student";
 import { platformConfigRouter } from "./routes/platform-config";
 import { messagesRouter } from "./routes/messages/router";
+
 export const app = new Hono().basePath("/api");
 
 app.use(loggerMiddleware);

@@ -257,8 +257,62 @@ async function handleTransferCompleted(data: any) {
     currency: data?.currency
   });
   
-  // TODO: Update provider payout records when payout system is implemented
-  // This would update payout_account records and provider earnings
+  try {
+    // Find the payout by transaction reference
+    const payout = await db.payout.findUnique({
+      where: { transactionRef: data.reference },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+    
+    if (!payout) {
+      logger.warn('Payout not found for transfer completion', {
+        reference: data?.reference,
+        transferId: data?.id
+      });
+      return;
+    }
+    
+    // Update payout status to COMPLETED
+    await db.payout.update({
+      where: { id: payout.id },
+      data: {
+        status: 'COMPLETED',
+        processedAt: new Date(),
+        gatewayResponse: data.complete_message || 'Transfer completed successfully',
+        fees: data.fee ? parseFloat(data.fee) : null,
+        netAmount: data.amount ? parseFloat(data.amount) : payout.amount,
+        metadata: {
+          ...payout.metadata,
+          flutterwaveTransferId: data.id,
+          completedAt: new Date().toISOString(),
+          transferData: data
+        }
+      }
+    });
+    
+    logger.info('Payout completed successfully', {
+      payoutId: payout.id,
+      providerId: payout.providerId,
+      amount: payout.amount,
+      reference: data.reference,
+      flutterwaveId: data.id
+    });
+    
+    // TODO: Send success notification to provider
+    // await sendPayoutSuccessNotification(payout.providerId, payout.id);
+    
+  } catch (error) {
+    logger.error('Error handling transfer completion:', error);
+    throw error;
+  }
 }
 
 /**
@@ -273,6 +327,72 @@ async function handleTransferFailed(data: any) {
     currency: data?.currency
   });
   
-  // TODO: Handle failed payouts when payout system is implemented
-  // This would notify providers and update payout status
+  try {
+    // Find the payout by transaction reference
+    const payout = await db.payout.findUnique({
+      where: { transactionRef: data.reference },
+      include: {
+        provider: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        earnings: true
+      }
+    });
+    
+    if (!payout) {
+      logger.warn('Payout not found for failed transfer', {
+        reference: data?.reference,
+        transferId: data?.id
+      });
+      return;
+    }
+    
+    // Update payout status to FAILED
+    await db.payout.update({
+      where: { id: payout.id },
+      data: {
+        status: 'FAILED',
+        failureReason: data.complete_message || 'Transfer failed',
+        gatewayResponse: data.complete_message,
+        metadata: {
+          ...payout.metadata,
+          flutterwaveTransferId: data.id,
+          failedAt: new Date().toISOString(),
+          transferData: data
+        }
+      }
+    });
+    
+    // Release the reserved earnings back to AVAILABLE status
+    await db.earning.updateMany({
+      where: {
+        payoutId: payout.id,
+        status: 'PAID_OUT'
+      },
+      data: {
+        payoutId: null,
+        status: 'AVAILABLE'
+      }
+    });
+    
+    logger.info('Payout failed - earnings released back to available', {
+      payoutId: payout.id,
+      providerId: payout.providerId,
+      amount: payout.amount,
+      reference: data.reference,
+      reason: data.complete_message,
+      earningsReleased: payout.earnings.length
+    });
+    
+    // TODO: Send failure notification to provider with retry options
+    // await sendPayoutFailureNotification(payout.providerId, payout.id, data.complete_message);
+    
+  } catch (error) {
+    logger.error('Error handling transfer failure:', error);
+    throw error;
+  }
 }

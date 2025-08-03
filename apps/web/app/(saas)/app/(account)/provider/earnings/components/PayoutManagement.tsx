@@ -72,7 +72,10 @@ export function PayoutManagement({ summary, isLoadingSummary }: PayoutManagement
 	const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 	const [requestAmount, setRequestAmount] = useState("");
 	const [payoutMethod, setPayoutMethod] = useState("");
-	const [accountDetails, setAccountDetails] = useState("");
+	const [accountNumber, setAccountNumber] = useState("");
+	const [accountName, setAccountName] = useState("");
+	const [bankName, setBankName] = useState("");
+	const [bankCode, setBankCode] = useState("");
 	const [notes, setNotes] = useState("");
 
 	const queryClient = useQueryClient();
@@ -92,9 +95,11 @@ export function PayoutManagement({ summary, isLoadingSummary }: PayoutManagement
 	const requestPayoutMutation = useMutation({
 		mutationFn: (data: {
 			amount: number;
-			method: string;
-			accountDetails: string;
-			notes?: string;
+			accountNumber: string;
+			accountName: string;
+			bankCode: string;
+			bankName: string;
+			paymentProvider: 'PAYSTACK' | 'FLUTTERWAVE';
 		}) => providerEarningsApi.requestPayout(data),
 		onSuccess: () => {
 			toast.success("Payout request submitted successfully!");
@@ -189,37 +194,106 @@ export function PayoutManagement({ summary, isLoadingSummary }: PayoutManagement
 	const resetForm = () => {
 		setRequestAmount("");
 		setPayoutMethod("");
-		setAccountDetails("");
+		setAccountNumber("");
+		setAccountName("");
+		setBankName("");
+		setBankCode("");
 		setNotes("");
 	};
 
 	// Handle payout request
 	const handlePayoutRequest = () => {
 		const amount = parseFloat(requestAmount);
+		
+		// Debug logging
+		console.log("=== PAYOUT REQUEST DEBUG ===");
+		console.log("Raw requestAmount:", requestAmount);
+		console.log("Parsed amount:", amount);
+		console.log("Payout method:", payoutMethod);
+		console.log("Account number:", accountNumber);
+		console.log("Account name:", accountName);
+		console.log("Bank name:", bankName);
+		console.log("Bank code:", bankCode);
+		console.log("Notes:", notes);
+		console.log("Available balance:", summary?.earnings.availableBalance);
+		
 		if (!amount || amount <= 0) {
+			console.error("Validation failed: Invalid amount");
 			toast.error("Please enter a valid amount");
 			return;
 		}
 		if (!payoutMethod) {
+			console.error("Validation failed: No payout method selected");
 			toast.error("Please select a payout method");
 			return;
 		}
-		if (!accountDetails.trim()) {
-			toast.error("Please provide account details");
+		if (!accountNumber.trim()) {
+			console.error("Validation failed: No account number provided");
+			toast.error("Please provide account number");
+			return;
+		}
+		if (!accountName.trim()) {
+			console.error("Validation failed: No account name provided");
+			toast.error("Please provide account name");
+			return;
+		}
+		if (payoutMethod === "bank_transfer" && !bankName.trim()) {
+			console.error("Validation failed: No bank selected");
+			toast.error("Please select a bank");
 			return;
 		}
 
 		if (amount > (summary?.earnings.availableBalance || 0)) {
+			console.error("Validation failed: Amount exceeds available balance");
 			toast.error("Amount exceeds available balance");
 			return;
 		}
 
-		requestPayoutMutation.mutate({
+		// Construct the new payload format
+		const payoutData = {
 			amount,
-			method: payoutMethod,
-			accountDetails: accountDetails.trim(),
-			notes: notes.trim() || undefined,
-		});
+			accountNumber: accountNumber.trim(),
+			accountName: accountName.trim(),
+			bankName: bankName.trim(),
+			bankCode: bankCode || getBankCode(bankName), // Use selected bank code or derive from bank name
+			paymentProvider: 'FLUTTERWAVE' as const,
+		};
+		
+		console.log("Final payout data being sent:", payoutData);
+		console.log("=== END PAYOUT REQUEST DEBUG ===");
+
+		requestPayoutMutation.mutate(payoutData);
+	};
+
+	// Bank data for Nigeria
+	const nigerianBanks = [
+		{ name: "Access Bank", code: "044" },
+		{ name: "Citibank", code: "023" },
+		{ name: "Diamond Bank", code: "063" },
+		{ name: "Ecobank Nigeria", code: "050" },
+		{ name: "Fidelity Bank", code: "070" },
+		{ name: "First Bank of Nigeria", code: "011" },
+		{ name: "First City Monument Bank", code: "214" },
+		{ name: "Guaranty Trust Bank", code: "058" },
+		{ name: "Heritage Bank", code: "030" },
+		{ name: "Keystone Bank", code: "082" },
+		{ name: "Polaris Bank", code: "076" },
+		{ name: "Providus Bank", code: "101" },
+		{ name: "Stanbic IBTC Bank", code: "221" },
+		{ name: "Standard Chartered Bank", code: "068" },
+		{ name: "Sterling Bank", code: "232" },
+		{ name: "Suntrust Bank", code: "100" },
+		{ name: "Union Bank of Nigeria", code: "032" },
+		{ name: "United Bank for Africa", code: "033" },
+		{ name: "Unity Bank", code: "215" },
+		{ name: "Wema Bank", code: "035" },
+		{ name: "Zenith Bank", code: "057" },
+	];
+
+	// Helper function to get bank code from bank name
+	const getBankCode = (bankName: string): string => {
+		const bank = nigerianBanks.find(b => b.name.toLowerCase() === bankName.toLowerCase());
+		return bank?.code || "999";
 	};
 
 	// Calculate minimum payout amount
@@ -319,22 +393,89 @@ export function PayoutManagement({ summary, isLoadingSummary }: PayoutManagement
 												</Select>
 											</div>
 
-											<div className="space-y-2">
-												<Label htmlFor="details">Account Details</Label>
-												<Textarea
-													id="details"
-													placeholder={
-														payoutMethod === "bank_transfer"
-															? "Bank name, account number, account name"
-															: payoutMethod === "mobile_money"
-															? "Mobile money provider, phone number, account name"
-															: "Provide your account details"
-													}
-													value={accountDetails}
-													onChange={(e) => setAccountDetails(e.target.value)}
-													rows={3}
-												/>
-											</div>
+											{payoutMethod === "bank_transfer" && (
+												<>
+													<div className="space-y-2">
+														<Label htmlFor="bank">Bank</Label>
+														<Select value={bankName} onValueChange={(value) => {
+															setBankName(value);
+															const selectedBank = nigerianBanks.find(b => b.name === value);
+															if (selectedBank) setBankCode(selectedBank.code);
+														}}>
+															<SelectTrigger>
+																<SelectValue placeholder="Select your bank" />
+															</SelectTrigger>
+															<SelectContent>
+																{nigerianBanks.map((bank) => (
+																	<SelectItem key={bank.code} value={bank.name}>
+																		{bank.name}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</div>
+
+													<div className="space-y-2">
+														<Label htmlFor="accountNumber">Account Number</Label>
+														<Input
+															id="accountNumber"
+															type="text"
+															placeholder="Enter your account number"
+															value={accountNumber}
+															onChange={(e) => setAccountNumber(e.target.value)}
+															maxLength={20}
+														/>
+													</div>
+
+													<div className="space-y-2">
+														<Label htmlFor="accountName">Account Name</Label>
+														<Input
+															id="accountName"
+															type="text"
+															placeholder="Enter your account name"
+															value={accountName}
+															onChange={(e) => setAccountName(e.target.value)}
+														/>
+													</div>
+												</>
+											)}
+
+											{payoutMethod === "mobile_money" && (
+												<>
+													<div className="space-y-2">
+														<Label htmlFor="accountNumber">Phone Number</Label>
+														<Input
+															id="accountNumber"
+															type="tel"
+															placeholder="Enter your phone number"
+															value={accountNumber}
+															onChange={(e) => setAccountNumber(e.target.value)}
+														/>
+													</div>
+
+													<div className="space-y-2">
+														<Label htmlFor="accountName">Account Name</Label>
+														<Input
+															id="accountName"
+															type="text"
+															placeholder="Enter your name"
+															value={accountName}
+															onChange={(e) => setAccountName(e.target.value)}
+														/>
+													</div>
+
+													<div className="space-y-2">
+														<Label htmlFor="provider">Mobile Money Provider</Label>
+														<Input
+															id="provider"
+															type="text"
+															placeholder="e.g., MTN, Airtel"
+															value={bankName}
+															onChange={(e) => setBankName(e.target.value)}
+														/>
+													</div>
+												</>
+											)}
 
 											<div className="space-y-2">
 												<Label htmlFor="notes">Notes (Optional)</Label>
@@ -372,7 +513,7 @@ export function PayoutManagement({ summary, isLoadingSummary }: PayoutManagement
 												disabled={
 													!requestAmount ||
 													!payoutMethod ||
-													!accountDetails.trim() ||
+!accountNumber.trim() || !accountName.trim() || !bankName.trim() ||
 													parseFloat(requestAmount) > availableBalance ||
 													requestPayoutMutation.isPending
 												}

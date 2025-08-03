@@ -1,0 +1,31 @@
+{
+	"dependencies": {
+		"@repo/config": "workspace:*",
+		"@repo/logs": "workspace:*",
+		"bullmq": "^5.56.9",
+		"redis": "^4.7.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "^22.13.5",
+		"dotenv": "^16.4.7",
+		"tsx": "^4.20.3"
+	},
+	"main": "./index.ts",
+	"exports": {
+		".": {
+			"types": "./index.ts",
+			"default": "./index.ts"
+		},
+		"./client": "./src/client.ts",
+		"./queue": "./src/queue.ts"
+	},
+	"name": "@repo/cache",
+	"scripts": {
+		"type-check": "tsc --noEmit",
+		"test-connection": "tsx test-connection.ts",
+		"debug-redis": "tsx debug-redis.ts"
+	},
+	"version": "0.0.0"
+}
