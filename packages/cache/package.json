@@ -2,8 +2,8 @@
 	"dependencies": {
 		"@repo/config": "workspace:*",
 		"@repo/logs": "workspace:*",
-		"bullmq": "^5.56.9",
-		"redis": "^4.7.1"
+		"bullmq": "^5.56.10",
+		"redis": "^5.8.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
