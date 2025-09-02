@@ -6,11 +6,11 @@
 		"redis": "^4.7.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
+		"@biomejs/biome": "2.2.2",
 		"@repo/tsconfig": "workspace:*",
-		"@types/node": "^22.13.5",
-		"dotenv": "^16.4.7",
-		"tsx": "^4.20.3"
+		"@types/node": "^24.3.0",
+		"dotenv": "^17.2.1",
+		"tsx": "^4.20.5"
 	},
 	"main": "./index.ts",
 	"exports": {
