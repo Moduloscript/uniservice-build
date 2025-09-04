@@ -1,7 +1,7 @@
 {
 	"dependencies": {
 		"@repo/config": "workspace:*",
-		"consola": "^3.4.0"
+		"consola": "^3.4.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
