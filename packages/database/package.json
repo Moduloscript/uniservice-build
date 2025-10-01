@@ -5,13 +5,13 @@
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
+		"@biomejs/biome": "2.2.4",
 		"@repo/tsconfig": "workspace:*",
-		"@types/node": "22.13.5",
-		"dotenv-cli": "^8.0.0",
-		"prisma": "^6.3.1",
-		"prisma-json-types-generator": "^3.2.2",
-		"zod-prisma-types": "^3.2.4"
+		"@types/node": "24.6.1",
+		"dotenv-cli": "^10.0.0",
+		"prisma": "^6.16.3",
+		"prisma-json-types-generator": "^3.6.1",
+		"zod-prisma-types": "^3.3.5"
 	},
 	"main": "./index.ts",
 	"name": "@repo/database",
